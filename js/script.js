@@ -13,8 +13,9 @@ let edgecolor = 0x512b58
 // let vertexcolor = 0xff2e63
 // let edgecolor = 0x010a43
 
-// TODO: Resige graph based on highest weight
+// TODO: Resize graph based on highest weight
 // TODO: Optimization move lines instead of redrawing?
+// TODO: Smoothen graph, check vertices very far from numbers, take average if so
 
 let T = THREE
 
@@ -25,8 +26,9 @@ let planeXMin = -5, planeXMax = 5
 let planeYMin = -5, planeYMax = 5
 let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
-let divisions = 200
+let divisions = 100
 let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
+let colorMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
 let vertexHeight = 3
 
 
@@ -74,9 +76,9 @@ scene.add(light)
 // scene.add( directionalLight );
 
 
-// let light2 = new T.PointLight( 0xffffff, 1)
-// light2.position.set(20, -2, 20)
-// scene.add(light2)
+let light2 = new T.PointLight( 0xffffff, 4)
+light2.position.set(0, -2, 20)
+scene.add(light2)
 
 
 // let light3 = new T.PointLight( 0xffffff, 1, 100)
@@ -164,19 +166,36 @@ function setHeights(x, y, weight) {
   heightMap[x][y] = weight
   levels = (divisions/10) * Math.abs(weight)  // Make levels dependant on height (* weight)
   percent = 1/levels
-  // percent =
-  for (levels -= 0 ; levels >= 0 ; levels--) {
+  for (let i = 0, j = levels+2 ; j >= 0 ; i += 2/levels, j--) {
     for (let angle = 0 ; angle < 360 ; angle++) {
-      new_x = Math.round(x + (levels+1)*Math.cos(angle))
-      new_y = Math.round(y + (levels+1)*Math.sin(angle))
-      new_val = weight * (1 - levels * percent)
-      if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0)
+      new_x = Math.round(x + (j)*Math.cos(angle))
+      new_y = Math.round(y + (j)*Math.sin(angle))
+      percent = ((0.5 * Math.sin(1.4*(i - 1.1))) + 0.5)
+      if (percent <= 0 && i > 1)
+        percent = 1;
+      new_val = weight * percent  // 3rd level -> 25%, 2nd level -> 50% ... etc
+      if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0) {
         if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
           heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
-        if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
-          heightMap[new_x][new_y] = new_val // 3rd level -> 25%, 2nd level -> 50% ... etc
+        else if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
+          heightMap[new_x][new_y] = new_val
+      }
     }
+
   }
+
+  // for (levels -= 0 ; levels >= 0 ; levels--) {
+  //   for (let angle = 0 ; angle < 360 ; angle++) {
+  //     new_x = Math.round(x + (levels+1)*Math.cos(angle))
+  //     new_y = Math.round(y + (levels+1)*Math.sin(angle))
+  //     new_val = weight * (1 - levels * percent)  // 3rd level -> 25%, 2nd level -> 50% ... etc
+  //     if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0)
+  //       if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
+  //         heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
+  //       if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
+  //         heightMap[new_x][new_y] = new_val
+  //   }
+  // }
 
 
 }
