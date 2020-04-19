@@ -36,11 +36,14 @@ input[type=text] {
 }
 #div-vertex {
   /* TODO: inline-block and auto scroll */
-  display: inline;
+  display: inline-block;
   overflow-y: auto;
-  height: 400px;
+  height: 300px;
 
 }
 #div-edge {
-  display: inline;
+  display: block;
+  overflow-y: auto;
+  height: 300px;
+
 }

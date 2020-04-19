@@ -13,6 +13,8 @@ let edgecolor = 0x512b58
 // let vertexcolor = 0xff2e63
 // let edgecolor = 0x010a43
 
+// TODO: Resige graph based on highest weight
+// TODO: Optimization move lines instead of redrawing?
 
 let T = THREE
 
@@ -23,8 +25,9 @@ let planeXMin = -5, planeXMax = 5
 let planeYMin = -5, planeYMax = 5
 let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
-let divisions = 10
+let divisions = 200
 let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
+let vertexHeight = 3
 
 
 var scene = new T.Scene()
@@ -32,6 +35,7 @@ var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeig
 
 var renderer = new THREE.WebGLRenderer()
 renderer.setSize( window.innerWidth, window.innerHeight )
+renderer.shadowMap.enabled = true;
 // renderer.setClearColor()
 document.body.appendChild( renderer.domElement )
 
@@ -41,8 +45,10 @@ var controls = new T.OrbitControls( camera, renderer.domElement );
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide } )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, specular: 0x000000, side: THREE.DoubleSide,  flatShading: true, shininess: 1, wireframe: false} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, specular: 0x000000, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false} )
 var plane = new T.Mesh( geometry, planeMat )
+plane.receiveShadow = true
+plane.castShadow = true
 plane.rotation.set(-1.57, 0, 0.)
 scene.add( plane )
 
@@ -51,13 +57,39 @@ camera.position.y = 5
 controls.update();
 
 
-let light = new T.PointLight( 0xffffff, 1, 100)
-light.position.set(0, 10, 10)
+let light = new T.PointLight( 0xffffff, 4)
+light.position.set(0, 2, -20)
 scene.add(light)
 
-let light2 = new T.PointLight( 0xffffff, 1, 100)
-light2.position.set(0, -10, 10)
-scene.add(light2)
+// const dlight = new THREE.DirectionalLight(0xffffff, 1);
+// dlight.castShadow = true;
+// dlight.position.set(5, 10, 5);
+// dlight.target.position.set(0, 0, 0);
+// scene.add(dlight);
+// scene.add(dlight.target);
+
+// var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+// directionalLight.castShadow = true
+// directionalLight.position.set(0, 2,3)
+// scene.add( directionalLight );
+
+
+// let light2 = new T.PointLight( 0xffffff, 1)
+// light2.position.set(20, -2, 20)
+// scene.add(light2)
+
+
+// let light3 = new T.PointLight( 0xffffff, 1, 100)
+// light3.position.set(0, 10, -10)
+// scene.add(light3)
+//
+// let light4 = new T.PointLight( 0xffffff, 1, 100)
+// light4.position.set(-10, 10, 10)
+// scene.add(light4)
+//
+// let light2 = new T.PointLight( 0xffffff, 1, 100)
+// light2.position.set(0, -10, 10)
+// scene.add(light2)
 
 
 let vertices = {}
@@ -92,7 +124,7 @@ window.onload = function() {
       scene.remove(line)
     }
 
-    let heightMap = Array(divisions+1).fill().map(() => Array(divisions+1).fill(0));
+    heightMap = Array(divisions+1).fill().map(() => Array(divisions+1).fill(0));
 
     for (let id in edges) {
       edge = edges[id]
@@ -100,10 +132,14 @@ window.onload = function() {
       startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
       midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
-      midPt[0] -= planeXMin // Change from (min,max) to (0, newmax)
-      midPt[1] -= planeYMin // Change from (min,max) to (0, newmax)
-      console.log(Math.floor(midPt[0]) + " " + Math.floor(midPt[1]))
-      heightMap[Math.floor(midPt[1])][ Math.floor(midPt[0])] = edge.weight
+      midPt[0] = (midPt[0] - planeXMin)// Change from (min,max) to (0, newmax)
+      midPt[1] = (midPt[1] - planeYMin)// Change from (min,max) to (0, newmax)
+
+      midPt[0] = Math.round((midPt[0] / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
+      midPt[1] = Math.round((midPt[1] / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
+
+      // console.log(Math.round(midPt[0]) + " " + Math.round(midPt[1]))
+      setHeights(midPt[1], midPt[0], edge.weight)
 
     }
     ex = 0.3
@@ -118,6 +154,31 @@ window.onload = function() {
   };
 
   animate();
+}
+
+
+// TODO: Make the percent dropoff more quadratic
+// TODO: Deal with clashing heights - Add heights of multiple edges together -> Deal with huge towers
+
+function setHeights(x, y, weight) {
+  heightMap[x][y] = weight
+  levels = (divisions/10) * Math.abs(weight)  // Make levels dependant on height (* weight)
+  percent = 1/levels
+  // percent =
+  for (levels -= 0 ; levels >= 0 ; levels--) {
+    for (let angle = 0 ; angle < 360 ; angle++) {
+      new_x = Math.round(x + (levels+1)*Math.cos(angle))
+      new_y = Math.round(y + (levels+1)*Math.sin(angle))
+      new_val = weight * (1 - levels * percent)
+      if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0)
+        if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
+          heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
+        if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
+          heightMap[new_x][new_y] = new_val // 3rd level -> 25%, 2nd level -> 50% ... etc
+    }
+  }
+
+
 }
 
 function vertexNameChange() {
@@ -185,7 +246,7 @@ function addVertex() {
 
 
   let newPt = new T.Mesh(ptGeom, ptMat)
-  newPt.position.y = 2
+  newPt.position.y = vertexHeight
   newPt.position.x = xPos.value
   newPt.position.z = yPos.value
   scene.add(newPt)
@@ -197,8 +258,8 @@ function addVertex() {
 function drawEdge(edge) {
   // console.log(edge)
   points = []
-  points.push(new T.Vector3(edge.start.mesh.position.x, 2, edge.start.mesh.position.z))
-  points.push(new T.Vector3(edge.end.mesh.position.x, 2, edge.end.mesh.position.z))
+  points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight, edge.start.mesh.position.z))
+  points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight, edge.end.mesh.position.z))
 
   let geom = new T.BufferGeometry().setFromPoints(points)
   let line = new T.Line(geom, lineMat)
