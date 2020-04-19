@@ -1,3 +1,19 @@
+let bgcolor = 0xf3f3f3
+let graphcolor = 0xebe6e6
+let vertexcolor = 0xff2e63
+let edgecolor = 0x512b58
+
+// let bgcolor = 0x512b58
+// let graphcolor = 0x2c003e
+// let vertexcolor = 0xfe346e
+// let edgecolor = 0xd2fafb
+
+// let bgcolor = 0xffc2c2
+// let graphcolor = 0xff9d9d
+// let vertexcolor = 0xff2e63
+// let edgecolor = 0x010a43
+
+
 let T = THREE
 
 let vertexCount = 0
@@ -15,12 +31,12 @@ renderer.setSize( window.innerWidth, window.innerHeight )
 // renderer.setClearColor()
 document.body.appendChild( renderer.domElement )
 
-scene.background = new THREE.Color(0xf3f3f3)
+scene.background = new THREE.Color(bgcolor)
 var controls = new T.OrbitControls( camera, renderer.domElement );
 
 
 var geometry = new T.PlaneGeometry(planeW*2, planeH*2, 50, 50)
-var material = new T.MeshBasicMaterial( { color: 0xebe6e6, side: T.DoubleSide } )
+var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide } )
 var plane = new T.Mesh( geometry, material )
 plane.rotation.set(-1.57, 0, 0.)
 scene.add( plane )
@@ -32,9 +48,13 @@ controls.update();
 
 let vertices = {}
 let ptGeom = new T.SphereGeometry(0.15, 32, 32)
-let ptMat = new T.MeshBasicMaterial({color: 0xff896b})
+let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
-var lineMat = new T.LineBasicMaterial({color: 0xe8d4b4})
+var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 3.5})
+
+
+
+
 
 window.onload = function() {
 
@@ -56,18 +76,16 @@ window.onload = function() {
 }
 
 function vertexNameChange() {
-  alert("Name Change")
+  //TODO: Name change
 }
 
 function vertexPositionChange() {
   if (this.value == '' || isNaN(this.value))
     return
   console.log("Postion Change")
-  console.log(vertices)
   parentDiv = this.parentElement
   name = parentDiv.childNodes[1].defaultValue
   pt = vertices[name]
-  console.log(pt)
   if (this.className == "xPos")
     pt.mesh.position.x = this.value
   else
@@ -131,15 +149,41 @@ function addVertex() {
   vertexCount++
 }
 
+
+//TODO: Store lines and weights data struct
+//TODO: Struct for drawn lines
+//TODO: Redraw lines in each animate
+//TODO: delete all previous lines
+
 function addEdge() {
   size = Object.keys(vertices).length
-  console.log(size)
-  startPt = vertices[Math.random()*(size-1)]
-  endPt = vertices[Math.random()*(size-1)]
+  console.log("size: " + size)
+
+  s = parseInt(Math.random()*(size))
+  e = parseInt(Math.random()*(size))
+  console.log("s: " + s + " e: " + e)
+
+  startPt = vertices[s]
+  endPt = vertices[e]
   if (startPt == endPt) {
     // TODO: Deal with this
   }
-  let start = T.Vector3()
+  console.log(startPt)
+  console.log(endPt)
+  points = []
+  points.push(new T.Vector3(startPt.mesh.position.x, 2, startPt.mesh.position.z))
+  // points.push(new T.Vector3(startPt.mesh.x + endPt.mesh.x, 2, startPt.mesh.z + endPt.mesh.z))
+  points.push(new T.Vector3(endPt.mesh.position.x, 2, endPt.mesh.position.z))
+  console.log(points)
+
+  let geom = new T.BufferGeometry().setFromPoints(points)
+  let line = new T.Line(geom, lineMat)
+
+
+  line = new THREE.Line( geom, lineMat );
+  scene.add( line );
+
+  scene.add(line)
 }
 
 let VertexObj = class {
