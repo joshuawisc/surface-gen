@@ -1,7 +1,7 @@
 let bgcolor = 0xf3f3f3
 let graphcolor = 0xebe6e6
-let vertexcolor = 0xff2e63
-let edgecolor = 0x512b58
+let vertexcolor = 0x4CAF50
+let edgecolor = 0x21bf73
 
 // let bgcolor = 0x512b58
 // let graphcolor = 0x2c003e
@@ -26,7 +26,7 @@ let planeXMin = -5, planeXMax = 5
 let planeYMin = -5, planeYMax = 5
 let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
-let divisions = 100
+let divisions = 150
 let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
 let colorMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
 let vertexHeight = 3
@@ -44,13 +44,21 @@ document.body.appendChild( renderer.domElement )
 scene.background = new THREE.Color(bgcolor)
 var controls = new T.OrbitControls( camera, renderer.domElement );
 
+const ctx = document.createElement('canvas').getContext('2d');
+ctx.canvas.width = 2000;
+ctx.canvas.height = 2000;
+ctx.fillStyle = "#ffff00";
+ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+const texture = new T.CanvasTexture(ctx.canvas);
+texture.minFilter = THREE.LinearFilter;
+
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
-var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide } )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, specular: 0x000000, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false} )
+var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false, map: texture} )
 var plane = new T.Mesh( geometry, planeMat )
-plane.receiveShadow = true
-plane.castShadow = true
+// plane.receiveShadow = true
+// plane.castShadow = true
 plane.rotation.set(-1.57, 0, 0.)
 scene.add( plane )
 
@@ -59,8 +67,8 @@ camera.position.y = 5
 controls.update();
 
 
-let light = new T.PointLight( 0xffffff, 4)
-light.position.set(0, 2, -20)
+let light = new T.PointLight( 0xffffff, 3.5)
+light.position.set(0, 5, -20)
 scene.add(light)
 
 // const dlight = new THREE.DirectionalLight(0xffffff, 1);
@@ -76,7 +84,7 @@ scene.add(light)
 // scene.add( directionalLight );
 
 
-let light2 = new T.PointLight( 0xffffff, 4)
+let light2 = new T.PointLight( 0xffffff, )
 light2.position.set(0, -2, 20)
 scene.add(light2)
 
@@ -128,6 +136,10 @@ window.onload = function() {
 
     heightMap = Array(divisions+1).fill().map(() => Array(divisions+1).fill(0));
 
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+
     for (let id in edges) {
       edge = edges[id]
       drawEdge(edge)
@@ -142,13 +154,48 @@ window.onload = function() {
 
       // console.log(Math.round(midPt[0]) + " " + Math.round(midPt[1]))
       setHeights(midPt[1], midPt[0], edge.weight)
+      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.beginPath();
+      ctx.moveTo(startPt[0], startPt[1])
+      ctx.lineTo(endPt[0], endPt[1])
+      ctx.strokeStyle = "#142850"
+      ctx.lineWidth = 12
+      ctx.stroke()
+    }
+
+
+    for (let id in vertices) {
+      let vertex = vertices[id]
+      let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
+      point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
+
+      ctx.fillStyle = "#30475e";
+
+      ctx.beginPath();
+      ctx.arc(point[0], point[1], 35, 0, 2 * Math.PI);
+      ctx.fill();
+
 
     }
+
+    texture.needsUpdate = true
+
     ex = 0.3
+    let raycaster, origin, intersects
+    let direction = new T.Vector3(0, 1, 0)
     for (let i=0; i<divisions ; i++) {
       for (let j=0; j < divisions ; j++) {
         plane.geometry.vertices[i*divisions+j].z =  heightMap[i][j]
         plane.geometry.verticesNeedUpdate = true
+        // origin = new T.Vector3(i - planeXMin, 0, j - planeYMin)
+        // raycaster = new T.Raycaster(origin, direction)
+        // intersects = raycaster.intersectObjects( scene.children, true )
+        // console.log(intersects.length)
+        // for ( let k = 0; k < intersects.length; k++ ) {
+        //     console.log("Intersect")
+		    //     intersects[ k ].object.material.color.set( 0xffff00 );
+        // }
       }
     }
     // console.log(heightMap)
@@ -207,7 +254,7 @@ function vertexNameChange() {
 function vertexPositionChange() {
   if (this.value == '' || isNaN(this.value))
     return
-  console.log("Postion Change")
+  // console.log("Postion Change")
   parentDiv = this.parentElement
   name = parentDiv.childNodes[0].textContent
   pt = vertices[name]
@@ -340,7 +387,7 @@ function addEdge() {
 
   s = parseInt(startText.value)
   e = parseInt(endText.value)
-  console.log("s: " + s + " e: " + e)
+  // console.log("s: " + s + " e: " + e)
 
   weight = weightText.value
 
@@ -365,7 +412,7 @@ function edgeChange() {
   endId = parentDiv.childNodes[4].value
   weight = parentDiv.childNodes[6].value
   id = parentDiv.childNodes[0].textContent
-  console.log(startId + " " + endId + " " + weight)
+  // console.log(startId + " " + endId + " " + weight)
   edge = edges[id]
   edge.start = vertices[startId]
   edge.end = vertices[endId]

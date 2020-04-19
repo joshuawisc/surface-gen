@@ -1,6 +1,11 @@
 :root {
   --main-bg-color: #f3f3f3;
+  font-family: 'Roboto Mono', monospace;
 }
+/* ::selection { */
+  /* background: #4CAF50;
+  color: white; */
+/* } */
 body {
   margin: 0;
 }
@@ -12,17 +17,37 @@ canvas {
   z-index: -1;
 }
 button {
+  font-family: 'Roboto Mono', monospace;
+  background-color: white;
+  color: #4CAF50;
+  border: 2px solid #4CAF50; /* Green */
+  width: 120px;
+  height: 40px;
+  margin: 5px;
+  font-size: 15px;
+  transition-duration: 0.2s;
+  margin-bottom: 15px;
+}
+button:hover {
+  background-color: #4CAF50; /* Green */
+  color: white;
 }
 input[type=text] {
   width: 30px;
   /* background-color: var(--main-bg-color) */
+  margin-left: 0px;
+  border: none;
+}
+label {
+  margin-right: 0px;
 }
 #gui {
-
+  font-size: 15px;
   position: absolute;
   z-index:1;
   margin: 10px;
   height: 600px;
+  margin-left: 50px;
   /* overflow-y: auto; */
 
 }
@@ -38,12 +63,20 @@ input[type=text] {
   /* TODO: inline-block and auto scroll */
   display: inline-block;
   overflow-y: auto;
-  height: 300px;
+  height: 400px;
 
 }
 #div-edge {
   display: block;
   overflow-y: auto;
-  height: 300px;
+  height: 400px;
 
+}
+label[for=name] {
+  color: #4CAF50;
+  /* background: white; */
+  margin: 0px;
+}
+canvas {
+  /* z-index: 1000 */
 }
