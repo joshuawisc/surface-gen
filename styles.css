@@ -22,16 +22,24 @@ input[type=text] {
   position: absolute;
   z-index:1;
   margin: 10px;
+  height: 600px;
+  /* overflow-y: auto; */
+
 }
 .gui-box {
   margin: 5px;
+
 }
 .form-box *{
   padding: 5px;
   margin: 5px;
 }
 #div-vertex {
+  /* TODO: inline-block and auto scroll */
   display: inline;
+  overflow-y: auto;
+  height: 400px;
+
 }
 #div-edge {
   display: inline;

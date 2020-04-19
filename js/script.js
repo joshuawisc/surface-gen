@@ -47,6 +47,8 @@ controls.update();
 
 
 let vertices = {}
+let edges = []
+let linesDrawn = []
 let ptGeom = new T.SphereGeometry(0.15, 32, 32)
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
@@ -68,6 +70,14 @@ window.onload = function() {
   	requestAnimationFrame( animate )
 
     controls.update()
+
+    for (line of linesDrawn) {
+      scene.remove(line)
+    }
+
+    for (edge of edges) {
+      drawEdge(edge)
+    }
 
   	renderer.render( scene, camera )
   };
@@ -149,41 +159,46 @@ function addVertex() {
   vertexCount++
 }
 
+function drawEdge(edge) {
+  // console.log(edge)
+  points = []
+  points.push(new T.Vector3(edge.start.mesh.position.x, 2, edge.start.mesh.position.z))
+  points.push(new T.Vector3(edge.end.mesh.position.x, 2, edge.end.mesh.position.z))
 
-//TODO: Store lines and weights data struct
-//TODO: Struct for drawn lines
-//TODO: Redraw lines in each animate
-//TODO: delete all previous lines
+  let geom = new T.BufferGeometry().setFromPoints(points)
+  let line = new T.Line(geom, lineMat)
+
+  scene.add( line );
+  linesDrawn.push(line)
+}
 
 function addEdge() {
   size = Object.keys(vertices).length
-  console.log("size: " + size)
+  // console.log("size: " + size)
 
   s = parseInt(Math.random()*(size))
   e = parseInt(Math.random()*(size))
   console.log("s: " + s + " e: " + e)
+
+  weight = getRandomIntInclusive(-10, 10)
 
   startPt = vertices[s]
   endPt = vertices[e]
   if (startPt == endPt) {
     // TODO: Deal with this
   }
-  console.log(startPt)
-  console.log(endPt)
   points = []
   points.push(new T.Vector3(startPt.mesh.position.x, 2, startPt.mesh.position.z))
-  // points.push(new T.Vector3(startPt.mesh.x + endPt.mesh.x, 2, startPt.mesh.z + endPt.mesh.z))
   points.push(new T.Vector3(endPt.mesh.position.x, 2, endPt.mesh.position.z))
-  console.log(points)
+  // console.log(points)
 
   let geom = new T.BufferGeometry().setFromPoints(points)
   let line = new T.Line(geom, lineMat)
 
-
-  line = new THREE.Line( geom, lineMat );
   scene.add( line );
-
-  scene.add(line)
+  linesDrawn.push(line)
+  edges.push(new EdgeObj(edgeCount, startPt, endPt, weight))
+  edgeCount++
 }
 
 let VertexObj = class {
@@ -196,6 +211,15 @@ let VertexObj = class {
     this.mesh = mesh
     this.start = start
     this.end = end
+  }
+}
+
+let EdgeObj = class {
+  constructor(id, start, end, weight) {
+    this.id = id
+    this.start = start
+    this.end = end
+    this.weight = weight
   }
 }
 
