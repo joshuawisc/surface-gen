@@ -300,12 +300,18 @@ function addVertex() {
   yPos.defaultValue = getRandomArbitrary(planeYMin+1, planeYMax-1).toFixed(2)
   yPos.oninput = vertexPositionChange
 
+  let del = document.createElement("button")
+  del.className = "btn-delete"
+  del.innerHTML = "X";
+  del.onclick = removeVertex
+
   vDiv.appendChild(nameLbl)
   // vDiv.appendChild(name)
   vDiv.appendChild(xPosLbl)
   vDiv.appendChild(xPos)
   vDiv.appendChild(yPosLbl)
   vDiv.appendChild(yPos)
+  vDiv.appendChild(del)
   document.getElementById("div-vertex").appendChild(vDiv)
 
   xPos.select()
@@ -319,6 +325,14 @@ function addVertex() {
   vertices[String(vertexCount)] = new VertexObj(vertexCount, vertexCount, newPt)
 
   vertexCount++
+}
+
+function removeVertex() {
+  parentDiv = this.parentElement
+  name = parentDiv.childNodes[0].textContent
+  scene.remove(vertices[name].mesh)
+  delete vertices[name]
+  parentDiv.remove()
 }
 
 function drawEdge(edge) {
@@ -373,6 +387,13 @@ function addEdge() {
   weightText.defaultValue = 1
   weightText.oninput = edgeChange
 
+  let del = document.createElement("button")
+  del.className = "btn-delete"
+  del.innerHTML = "X";
+  del.onclick = removeEdge
+
+
+
   vDiv.appendChild(nameLbl)
   vDiv.appendChild(startLbl)
   vDiv.appendChild(startText)
@@ -380,6 +401,7 @@ function addEdge() {
   vDiv.appendChild(endText)
   vDiv.appendChild(weightLbl)
   vDiv.appendChild(weightText)
+  vDiv.appendChild(del)
   document.getElementById("div-edge").appendChild(vDiv)
 
 
@@ -417,6 +439,15 @@ function edgeChange() {
   edge.start = vertices[startId]
   edge.end = vertices[endId]
   edge.weight = weight
+}
+
+function removeEdge() {
+  //TODO: Remove edge
+  console.log("Remove edge")
+  parentDiv = this.parentElement
+  id = parentDiv.childNodes[0].textContent
+  delete edges[id]
+  parentDiv.remove()
 }
 
 let VertexObj = class {

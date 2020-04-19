@@ -32,6 +32,24 @@ button:hover {
   background-color: #4CAF50; /* Green */
   color: white;
 }
+button.btn-delete {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 0px;
+  position: relative;
+  top: 2.5px;
+  background-color: red;
+  color: white;
+  border-color: red;
+  font-weight: bold;
+}
+button.btn-delete:hover {
+  background-color: white;
+  color: red;
+  border-color: red;
+
+}
+
 input[type=text] {
   width: 30px;
   /* background-color: var(--main-bg-color) */
