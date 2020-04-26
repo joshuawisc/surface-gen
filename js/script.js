@@ -89,7 +89,7 @@ scene.add(light)
 // scene.add( directionalLight );
 
 
-let light2 = new T.PointLight( 0xffffff, )
+let light2 = new T.PointLight( 0xffffff, 3.5)
 light2.position.set(0, -2, 20)
 scene.add(light2)
 
@@ -140,7 +140,7 @@ window.onload = function() {
   addEdge(null, 0, 1, .8)
   addEdge(null, 0, 2, .7)
   addEdge(null, 1, 2, .9)
-  addEdge(null, 2, 3, 0)
+  addEdge(null, 2, 3, -.5)
   addEdge(null, 3, 4, .6)
   addEdge(null, 3, 5, .5)
   addEdge(null, 4, 5, .4)
@@ -223,7 +223,7 @@ window.onload = function() {
       let z1 = plane.geometry.vertices[face['a']].z
       let z2 = plane.geometry.vertices[face['b']].z
       let z3 = plane.geometry.vertices[face['c']].z
-      if (hideSurface.checked && Math.abs(z1) < 0.1 && Math.abs(z2) < 0.1 && Math.abs(z3) < 0.1) {
+      if (hideSurface.checked && Math.abs(z1) < 0.0005 && Math.abs(z2) < 0.0005 && Math.abs(z3) < 0.0005) {
         face.materialIndex = 1
       } else {
         face.materialIndex = 0
@@ -247,7 +247,7 @@ window.onload = function() {
 function setHeights(x, y, weight) {
 
   // --- Gaussian heights ---
-  amp = 10.0
+  amp = 20
   weight = 2.5*weight
   for (let i = 0 ; i < heightMap.length ; i++) {
     for (let j = 0 ; j < heightMap[0].length ; j++) { // Use divisions variable instead of hard coding spread
@@ -550,6 +550,7 @@ function removeEdge() {
 }
 
 function getNameSprite(name) {
+  name = String.fromCharCode(65 + name)
   let canvas = document.createElement('canvas')
   let ctx = canvas.getContext('2d')
 
