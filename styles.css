@@ -21,7 +21,7 @@ button {
   background-color: white;
   color: #4CAF50;
   border: 2px solid #4CAF50; /* Green */
-  width: 120px;
+  min-width: 120px;
   height: 40px;
   margin: 5px;
   font-size: 15px;
@@ -33,7 +33,7 @@ button:hover {
   color: white;
 }
 button.btn-delete {
-  width: 30px;
+  min-width: 30px;
   height: 30px;
   margin-bottom: 0px;
   position: relative;
@@ -71,23 +71,28 @@ label {
 }
 .gui-box {
   margin: 5px;
-
+}
+.gui-box>*{
+  display: block;
 }
 .form-box *{
   padding: 5px;
   margin: 5px;
 }
+#div-extra {
+  margin-top: 40px;
+}
 #div-vertex {
   /* TODO: inline-block and auto scroll */
   display: inline-block;
   overflow-y: auto;
-  height: 400px;
+  height: 300px;
 
 }
 #div-edge {
   display: block;
   overflow-y: auto;
-  height: 400px;
+  height: 300px;
 
 }
 label[for=name] {

@@ -23,8 +23,8 @@ let T = THREE
 let vertexCount = 0
 let edgeCount = 0
 
-let planeXMin = -5, planeXMax = 5
-let planeYMin = -5, planeYMax = 5
+let planeXMin = -10, planeXMax = 10
+let planeYMin = -10, planeYMax = 10
 let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
 let divisions = 150
@@ -128,7 +128,24 @@ window.onload = function() {
   let btnAddEdge  = document.getElementById("btn-add-edge")
   btnAddEdge.onclick = addEdge
 
-  noise.seed(Math.random());
+  let hideSurface = document.getElementById("hide-surface")
+
+  addVertex(null, -5, 0)
+  addVertex(null, -4, -1.73)
+  addVertex(null, -3, 0)
+  addVertex(null, 3, 0)
+  addVertex(null, 4, 1.73)
+  addVertex(null, 5, 0)
+
+  addEdge(null, 0, 1, .8)
+  addEdge(null, 0, 2, .7)
+  addEdge(null, 1, 2, .9)
+  addEdge(null, 2, 3, 0)
+  addEdge(null, 3, 4, .6)
+  addEdge(null, 3, 5, .5)
+  addEdge(null, 4, 5, .4)
+
+
 
 
   var animate = function () {
@@ -167,7 +184,7 @@ window.onload = function() {
       ctx.beginPath();
       ctx.moveTo(startPt[0], startPt[1])
       ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#142850"
+      ctx.strokeStyle = "#40bad5"
       ctx.lineWidth = 12
       ctx.stroke()
     }
@@ -178,10 +195,10 @@ window.onload = function() {
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
 
-      ctx.fillStyle = "#30475e";
+      ctx.fillStyle = "#035aa6";
 
       ctx.beginPath();
-      ctx.arc(point[0], point[1], 35, 0, 2 * Math.PI);
+      ctx.arc(point[0], point[1], 15, 0, 2 * Math.PI);
       ctx.fill();
 
 
@@ -201,28 +218,18 @@ window.onload = function() {
         }
       }
     }
-    let a = false, b = false
-
     for (face of plane.geometry.faces) {
       // console.log(face.materialIndex)
       let z1 = plane.geometry.vertices[face['a']].z
       let z2 = plane.geometry.vertices[face['b']].z
       let z3 = plane.geometry.vertices[face['c']].z
-      if (z1 < 0.01 && z2 < 0.01 && z3 < 0.01) {
-        a = true
+      if (hideSurface.checked && Math.abs(z1) < 0.1 && Math.abs(z2) < 0.1 && Math.abs(z3) < 0.1) {
         face.materialIndex = 1
       } else {
-        b = true
         face.materialIndex = 0
       }
 
-      // for (let index in face) {
-      //   // vertexIndex = face[index]
-      //   // face.vertexColors[index]
-      //   // face.vertexColors[index] = opacityMap[vertexIndex/divisions][vertexIndex%divisions]
-      // }
     }
-    console.log(a + " " + b)
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
 
@@ -240,17 +247,31 @@ window.onload = function() {
 function setHeights(x, y, weight) {
 
   // --- Gaussian heights ---
-  amp = 3.0
+  amp = 10.0
   weight = 2.5*weight
   for (let i = 0 ; i < heightMap.length ; i++) {
     for (let j = 0 ; j < heightMap[0].length ; j++) { // Use divisions variable instead of hard coding spread
-      xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(divisions/10, 2))
-      yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(divisions/10, 2))
+      xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(divisions/20, 2))
+      yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(divisions/20, 2))
       if (Date.now() - time > 2) {
         // console.log(Math.pow(weight, -1.0*(xTerm + yTerm)))
         time = Date.now()
       }
-      heightMap[i][j] = Math.max(heightMap[i][j], weight*Math.pow(amp, -1.0*(xTerm + yTerm)))
+      newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
+      // if (Math.abs(newHeight) <= 0.01) {
+      //   continue
+      // }
+      if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
+        if (newHeight >= 0) {
+          heightMap[i][j] = Math.max(heightMap[i][j], newHeight)
+        } else {
+          heightMap[i][j] = Math.min(heightMap[i][j], newHeight)
+        }
+      } else { // Else average
+        if (Math.abs(heightMap[i][j]) < Math.abs(newHeight)) {
+          heightMap[i][j] = newHeight
+        }
+      }
     }
   }
 
@@ -317,7 +338,14 @@ function vertexPositionChange() {
 
 }
 
-function addVertex() {
+function addVertex(obj, x, y) {
+  if (typeof x == 'undefined') {
+    x = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
+  }
+  if (typeof y == 'undefined') {
+    y = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
+  }
+
   let vDiv = document.createElement("div")
   vDiv.id = "vertex" + vertexCount
   vDiv.className = "form-box"
@@ -339,7 +367,7 @@ function addVertex() {
   let xPos = document.createElement("input")
   xPos.className = "xPos"
   xPos.setAttribute("type", "text")
-  xPos.defaultValue = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
+  xPos.defaultValue = x
   xPos.oninput = vertexPositionChange
 
   let yPosLbl = document.createElement("label")
@@ -350,7 +378,7 @@ function addVertex() {
   let yPos = document.createElement("input")
   yPos.className = "yPos"
   yPos.setAttribute("type", "text")
-  yPos.defaultValue = getRandomArbitrary(planeYMin+1, planeYMax-1).toFixed(2)
+  yPos.defaultValue = y
   yPos.oninput = vertexPositionChange
 
   let del = document.createElement("button")
@@ -389,6 +417,7 @@ function removeVertex() {
   parentDiv = this.parentElement
   name = parentDiv.childNodes[0].textContent
   scene.remove(vertices[name].mesh)
+  scene.remove(vertices[name].label)
   delete vertices[name]
   parentDiv.remove()
 }
@@ -406,7 +435,19 @@ function drawEdge(edge) {
   linesDrawn.push(line)
 }
 
-function addEdge() {
+function addEdge(obj, start, end, weight) {
+  if (typeof start == 'undefined') {
+    start = 0
+  }
+
+  if (typeof end == 'undefined') {
+    end = 0
+  }
+
+  if (typeof weight == 'undefined') {
+    weight = 1
+  }
+
   let vDiv = document.createElement("div")
   vDiv.id = "edge" + edgeCount
   vDiv.className = "form-box"
@@ -422,7 +463,7 @@ function addEdge() {
   let startText = document.createElement("input")
   startText.className = "start"
   startText.setAttribute("type", "text")
-  startText.defaultValue = 0
+  startText.defaultValue = start
   startText.oninput = edgeChange
 
   let endLbl = document.createElement("label")
@@ -432,7 +473,7 @@ function addEdge() {
   let endText = document.createElement("input")
   endText.className = "end"
   endText.setAttribute("type", "text")
-  endText.defaultValue = 1
+  endText.defaultValue = end
   endText.oninput = edgeChange
 
   let weightLbl = document.createElement("label")
@@ -442,7 +483,7 @@ function addEdge() {
   let weightText = document.createElement("input")
   weightText.className = "weight"
   weightText.setAttribute("type", "text")
-  weightText.defaultValue = 1
+  weightText.defaultValue = weight
   weightText.oninput = edgeChange
 
   let del = document.createElement("button")
