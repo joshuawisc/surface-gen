@@ -16,6 +16,7 @@ let edgecolor = 0x21bf73
 // TODO: Resize graph based on highest weight
 // TODO: Optimization move lines instead of redrawing?
 // TODO: Smoothen graph, check vertices very far from numbers, take average if so
+// TODO: Discard opacityMap, redundant?
 
 let T = THREE
 
@@ -27,9 +28,11 @@ let planeYMin = -5, planeYMax = 5
 let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
 let divisions = 150
-let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
-let colorMap = Array(divisions).fill().map(() => Array(divisions).fill(0));
+let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+let opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0));
 let vertexHeight = 3
+
+let time = Date.now()
 
 
 var scene = new T.Scene()
@@ -56,7 +59,9 @@ texture.minFilter = THREE.LinearFilter;
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false, map: texture} )
-var plane = new T.Mesh( geometry, planeMat )
+let transparentMat = new T.MeshLambertMaterial({transparent: true, opacity: 0.0})
+let mMat = [planeMat, transparentMat]
+var plane = new T.Mesh( geometry, mMat )
 // plane.receiveShadow = true
 // plane.castShadow = true
 plane.rotation.set(-1.57, 0, 0.)
@@ -110,6 +115,7 @@ let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
 var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 3.5})
 
+plane.geometry.dynamic = true
 
 
 
@@ -134,10 +140,12 @@ window.onload = function() {
       scene.remove(line)
     }
 
-    heightMap = Array(divisions+1).fill().map(() => Array(divisions+1).fill(0));
+    heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
+    opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0))
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    ctx.fillStyle = "#ffffff"
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
 
     for (let id in edges) {
@@ -187,17 +195,37 @@ window.onload = function() {
     for (let i=0; i<divisions ; i++) {
       for (let j=0; j < divisions ; j++) {
         plane.geometry.vertices[i*divisions+j].z =  heightMap[i][j]
-        plane.geometry.verticesNeedUpdate = true
-        // origin = new T.Vector3(i - planeXMin, 0, j - planeYMin)
-        // raycaster = new T.Raycaster(origin, direction)
-        // intersects = raycaster.intersectObjects( scene.children, true )
-        // console.log(intersects.length)
-        // for ( let k = 0; k < intersects.length; k++ ) {
-        //     console.log("Intersect")
-		    //     intersects[ k ].object.material.color.set( 0xffff00 );
-        // }
+
+        if (heightMap[i][j] == 0) {
+          opacityMap[i][j] == 0
+        }
       }
     }
+    let a = false, b = false
+
+    for (face of plane.geometry.faces) {
+      // console.log(face.materialIndex)
+      let z1 = plane.geometry.vertices[face['a']].z
+      let z2 = plane.geometry.vertices[face['b']].z
+      let z3 = plane.geometry.vertices[face['c']].z
+      if (z1 < 0.01 && z2 < 0.01 && z3 < 0.01) {
+        a = true
+        face.materialIndex = 1
+      } else {
+        b = true
+        face.materialIndex = 0
+      }
+
+      // for (let index in face) {
+      //   // vertexIndex = face[index]
+      //   // face.vertexColors[index]
+      //   // face.vertexColors[index] = opacityMap[vertexIndex/divisions][vertexIndex%divisions]
+      // }
+    }
+    console.log(a + " " + b)
+    plane.geometry.groupsNeedUpdate = true
+    plane.geometry.verticesNeedUpdate = true
+
     // console.log(heightMap)
   	renderer.render( scene, camera )
   };
@@ -210,27 +238,47 @@ window.onload = function() {
 // TODO: Deal with clashing heights - Add heights of multiple edges together -> Deal with huge towers
 
 function setHeights(x, y, weight) {
-  heightMap[x][y] = weight
-  levels = (divisions/10) * Math.abs(weight)  // Make levels dependant on height (* weight)
-  percent = 1/levels
-  for (let i = 0, j = levels+2 ; j >= 0 ; i += 2/levels, j--) {
-    for (let angle = 0 ; angle < 360 ; angle++) {
-      new_x = Math.round(x + (j)*Math.cos(angle))
-      new_y = Math.round(y + (j)*Math.sin(angle))
-      percent = ((0.5 * Math.sin(1.4*(i - 1.1))) + 0.5)
-      if (percent <= 0 && i > 1)
-        percent = 1;
-      new_val = weight * percent  // 3rd level -> 25%, 2nd level -> 50% ... etc
-      if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0) {
-        if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
-          heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
-        else if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
-          heightMap[new_x][new_y] = new_val
-      }
-    }
 
+  // --- Gaussian heights ---
+  amp = 3.0
+  weight = 2.5*weight
+  for (let i = 0 ; i < heightMap.length ; i++) {
+    for (let j = 0 ; j < heightMap[0].length ; j++) { // Use divisions variable instead of hard coding spread
+      xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(divisions/10, 2))
+      yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(divisions/10, 2))
+      if (Date.now() - time > 2) {
+        // console.log(Math.pow(weight, -1.0*(xTerm + yTerm)))
+        time = Date.now()
+      }
+      heightMap[i][j] = Math.max(heightMap[i][j], weight*Math.pow(amp, -1.0*(xTerm + yTerm)))
+    }
   }
 
+  // heightMap[x][y] = weight
+
+
+  // --- Sine heights ---
+  // levels = (divisions/10) * Math.abs(weight)  // Make levels dependant on height (* weight)
+  // percent = 1/levels
+  // for (let i = 0, j = levels+2 ; j >= 0 ; i += 2/levels, j--) {
+  //   for (let angle = 0 ; angle < 360 ; angle++) {
+  //     new_x = Math.round(x + (j)*Math.cos(angle))
+  //     new_y = Math.round(y + (j)*Math.sin(angle))
+  //     percent = ((0.5 * Math.sin(1.4*(i - 1.1))) + 0.5)
+  //     if (percent <= 0 && i > 1)
+  //       percent = 1;
+  //     new_val = weight * percent  // 3rd level -> 25%, 2nd level -> 50% ... etc
+  //     if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0) {
+  //       if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
+  //         heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
+  //       else if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
+  //         heightMap[new_x][new_y] = new_val
+  //     }
+  //   }
+  //
+  // }
+
+  // --- Radial heights ---
   // for (levels -= 0 ; levels >= 0 ; levels--) {
   //   for (let angle = 0 ; angle < 360 ; angle++) {
   //     new_x = Math.round(x + (levels+1)*Math.cos(angle))
@@ -258,10 +306,15 @@ function vertexPositionChange() {
   parentDiv = this.parentElement
   name = parentDiv.childNodes[0].textContent
   pt = vertices[name]
-  if (this.className == "xPos")
+  if (this.className == "xPos") {
     pt.mesh.position.x = this.value
-  else
+    pt.label.position.x = this.value
+
+  } else {
     pt.mesh.position.z = this.value
+    pt.label.position.z = this.value
+  }
+
 }
 
 function addVertex() {
@@ -322,7 +375,12 @@ function addVertex() {
   newPt.position.x = xPos.value
   newPt.position.z = yPos.value
   scene.add(newPt)
-  vertices[String(vertexCount)] = new VertexObj(vertexCount, vertexCount, newPt)
+
+  sprite = getNameSprite(vertexCount)
+  sprite.position.set(xPos.value, vertexHeight + 0.5, yPos.value)
+  scene.add(sprite)
+
+  vertices[String(vertexCount)] = new VertexObj(vertexCount, vertexCount, newPt, sprite)
 
   vertexCount++
 }
@@ -411,7 +469,7 @@ function addEdge() {
   e = parseInt(endText.value)
   // console.log("s: " + s + " e: " + e)
 
-  weight = weightText.value
+  weight = parseFloat(weightText.value)
 
   startPt = vertices[s]
   endPt = vertices[e]
@@ -432,7 +490,7 @@ function edgeChange() {
   parentDiv = this.parentElement
   startId = parentDiv.childNodes[2].value
   endId = parentDiv.childNodes[4].value
-  weight = parentDiv.childNodes[6].value
+  weight = parseFloat(parentDiv.childNodes[6].value)
   id = parentDiv.childNodes[0].textContent
   // console.log(startId + " " + endId + " " + weight)
   edge = edges[id]
@@ -450,14 +508,42 @@ function removeEdge() {
   parentDiv.remove()
 }
 
+function getNameSprite(name) {
+  let canvas = document.createElement('canvas')
+  let ctx = canvas.getContext('2d')
+
+  ctx.canvas.width = 200;
+  ctx.canvas.height = 200;
+  // ctx.fillStyle = "#ffff00";
+  // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  ctx.font="120px Roboto Mono"
+  ctx.fillStyle = "#000000"
+
+  let metrics = ctx.measureText( name );
+  let textWidth = metrics.width;
+
+
+  ctx.fillText(name, ctx.canvas.width/2 - textWidth/2, ctx.canvas.height/2)
+
+  let texture = new T.CanvasTexture(ctx.canvas)
+  texture.needsUpdate = true
+
+  let spriteMat = new T.SpriteMaterial({map: texture, })
+  sprite = new T.Sprite(spriteMat)
+  sprite.scale.set(0.5, 0.5, 0.5)
+  return sprite
+}
+
 let VertexObj = class {
   start = [] // Edges starting at this vertex
   end = [] // Edges ending at this vertex
 
-  constructor(id, name, mesh, start, end) {
+  constructor(id, name, mesh, label, start, end) {
     this.id = id
     this.name = name
     this.mesh = mesh
+    this.label = label
     this.start = start
     this.end = end
   }
