@@ -72,7 +72,7 @@ camera.position.y = 5
 controls.update();
 
 
-let light = new T.PointLight( 0xffffff, 3.5)
+let light = new T.PointLight( 0xffffff, 3)
 light.position.set(0, 5, -20)
 scene.add(light)
 
@@ -189,6 +189,9 @@ window.onload = function() {
       ctx.stroke()
     }
 
+    smoothHeightMap()
+    // smoothHeightMap()
+
     // Draw point on surface texture
     for (let id in vertices) {
       let vertex = vertices[id]
@@ -242,37 +245,84 @@ window.onload = function() {
 }
 
 
+function smoothHeightMap() {
+  for (let i = 2 ; i < heightMap.length-2 ; i++) {
+    for (let j = 2 ; j < heightMap[0].length-2; j++) {
+      neighbours = [heightMap[i+1][j], heightMap[i-1][j],
+        heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
+        heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
+        heightMap[i+2][j], heightMap[i-2][j],
+        heightMap[i][j+2], heightMap[i][j-2], heightMap[i+2][j+2],
+        heightMap[i+2][j-2], heightMap[i-2][j-2], heightMap[i-2][j+2]]
+
+      // if (Math.min(neighbours) < 0 && Math.max(neighbours) > 0)
+      //   continue
+
+      sum = neighbours.reduce((a, b) => a + b, 0)
+
+      heightMap[i][j] += sum
+      heightMap[i][j] /= 17
+    }
+  }
+}
+
 // TODO: Make the percent dropoff more quadratic
 // TODO: Deal with clashing heights - Add heights of multiple edges together -> Deal with huge towers
 
 function setHeights(x, y, weight) {
 
-  // --- Gaussian heights ---
-  amp = 5
-  weight = 2.5*weight
-  xSpread = (divisions/10)*(0.5*weight)
-  ySpread = (divisions/10)*(0.5*weight)
-  for (let i = 0 ; i < heightMap.length ; i++) {
-    for (let j = 0 ; j < heightMap[0].length ; j++) { // Use divisions variable instead of hard coding spread
-      xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
-      yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
-      if (Date.now() - time > 2) {
-        // console.log(Math.pow(weight, -1.0*(xTerm + yTerm)))
-        time = Date.now()
-      }
-      newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
-      // if (Math.abs(newHeight) <= 0.01) {
-      //   continue
-      // }
-      if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
-        if (newHeight >= 0) {
-          heightMap[i][j] = Math.max(heightMap[i][j], newHeight)
-        } else {
-          heightMap[i][j] = Math.min(heightMap[i][j], newHeight)
+  if (weight >= 0) {
+    // --- Gaussian heights ---
+    amp = 20
+    weight = 2.5*weight
+    xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
+    ySpread = (divisions/10)*(0.4*weight)
+    for (let i = 0 ; i < heightMap.length ; i++) {
+      for (let j = 0 ; j < heightMap[0].length ; j++) {
+        xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
+        yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
+        newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
+        if (Math.abs(newHeight) <= 0.01) {
+          newHeight = 0
         }
-      } else { // Else average
-        if (Math.abs(heightMap[i][j]) < Math.abs(newHeight)) {
-          heightMap[i][j] = newHeight
+        if (heightMap[i][j] * newHeight > 0) { // Both in same direction, then choose highest magnitude
+          if (newHeight >= 0) {
+            heightMap[i][j] = Math.max(heightMap[i][j], newHeight)
+          } else {
+            heightMap[i][j] = Math.min(heightMap[i][j], newHeight)
+          }
+        } else { // Else average
+          if (Math.abs(heightMap[i][j]) < Math.abs(newHeight)) {
+            heightMap[i][j] = newHeight
+          }
+        }
+      }
+    }
+  } else {
+    // TODO: I,prove scaling -> -0.1 doesnt do much
+    // --- Saddle Heights ---
+    xSpread = 10
+    ySpread = 20// TODO: Multiply with edge length
+    xLimit = 0.1/xSpread
+    yLimit = (1/ySpread)*Math.abs(weight*2)
+    maxHeight = (xSpread*xLimit)**2 - (-ySpread*yLimit)**2
+
+    for (let i = x - xSpread ; i <= x + xSpread ; i++) {
+      for (let j = y - ySpread ; j <= y + ySpread ; j++) {
+        newHeight = ((i-x)*xLimit)**2 - ((j-y)*yLimit)**2
+        newHeight *= -1
+        newHeight += maxHeight
+
+        if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
+          if (newHeight >= 0) {
+            heightMap[i][j] = Math.max(heightMap[i][j], newHeight)
+          } else {
+            heightMap[i][j] = Math.min(heightMap[i][j], newHeight)
+          }
+        } else { // Else average
+          if (Math.abs(heightMap[i][j]) < Math.abs(newHeight)) {
+            heightMap[i][j] = newHeight
+          }
         }
       }
     }
