@@ -164,7 +164,7 @@ window.onload = function() {
     ctx.fillStyle = "#ffffff"
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-
+    // Draw graph edge, texture edge and generate height map
     for (let id in edges) {
       edge = edges[id]
       drawEdge(edge)
@@ -189,7 +189,7 @@ window.onload = function() {
       ctx.stroke()
     }
 
-
+    // Draw point on surface texture
     for (let id in vertices) {
       let vertex = vertices[id]
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
@@ -230,6 +230,7 @@ window.onload = function() {
       }
 
     }
+
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
 
@@ -247,12 +248,14 @@ window.onload = function() {
 function setHeights(x, y, weight) {
 
   // --- Gaussian heights ---
-  amp = 20
+  amp = 5
   weight = 2.5*weight
+  xSpread = (divisions/10)*(0.5*weight)
+  ySpread = (divisions/10)*(0.5*weight)
   for (let i = 0 ; i < heightMap.length ; i++) {
     for (let j = 0 ; j < heightMap[0].length ; j++) { // Use divisions variable instead of hard coding spread
-      xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(divisions/20, 2))
-      yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(divisions/20, 2))
+      xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
+      yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
       if (Date.now() - time > 2) {
         // console.log(Math.pow(weight, -1.0*(xTerm + yTerm)))
         time = Date.now()
@@ -277,41 +280,42 @@ function setHeights(x, y, weight) {
 
   // heightMap[x][y] = weight
 
+  /* --- Sine heights ---
+  levels = (divisions/10) * Math.abs(weight)  // Make levels dependant on height (* weight)
+  percent = 1/levels
+  for (let i = 0, j = levels+2 ; j >= 0 ; i += 2/levels, j--) {
+    for (let angle = 0 ; angle < 360 ; angle++) {
+      new_x = Math.round(x + (j)*Math.cos(angle))
+      new_y = Math.round(y + (j)*Math.sin(angle))
+      percent = ((0.5 * Math.sin(1.4*(i - 1.1))) + 0.5)
+      if (percent <= 0 && i > 1)
+        percent = 1;
+      new_val = weight * percent  // 3rd level -> 25%, 2nd level -> 50% ... etc
+      if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0) {
+        if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
+          heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
+        else if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
+          heightMap[new_x][new_y] = new_val
+      }
+    }
 
-  // --- Sine heights ---
-  // levels = (divisions/10) * Math.abs(weight)  // Make levels dependant on height (* weight)
-  // percent = 1/levels
-  // for (let i = 0, j = levels+2 ; j >= 0 ; i += 2/levels, j--) {
-  //   for (let angle = 0 ; angle < 360 ; angle++) {
-  //     new_x = Math.round(x + (j)*Math.cos(angle))
-  //     new_y = Math.round(y + (j)*Math.sin(angle))
-  //     percent = ((0.5 * Math.sin(1.4*(i - 1.1))) + 0.5)
-  //     if (percent <= 0 && i > 1)
-  //       percent = 1;
-  //     new_val = weight * percent  // 3rd level -> 25%, 2nd level -> 50% ... etc
-  //     if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0) {
-  //       if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
-  //         heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
-  //       else if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
-  //         heightMap[new_x][new_y] = new_val
-  //     }
-  //   }
-  //
-  // }
+  }
+  */
 
-  // --- Radial heights ---
-  // for (levels -= 0 ; levels >= 0 ; levels--) {
-  //   for (let angle = 0 ; angle < 360 ; angle++) {
-  //     new_x = Math.round(x + (levels+1)*Math.cos(angle))
-  //     new_y = Math.round(y + (levels+1)*Math.sin(angle))
-  //     new_val = weight * (1 - levels * percent)  // 3rd level -> 25%, 2nd level -> 50% ... etc
-  //     if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0)
-  //       if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
-  //         heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
-  //       if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
-  //         heightMap[new_x][new_y] = new_val
-  //   }
-  // }
+  /* --- Radial heights ---
+  for (levels -= 0 ; levels >= 0 ; levels--) {
+    for (let angle = 0 ; angle < 360 ; angle++) {
+      new_x = Math.round(x + (levels+1)*Math.cos(angle))
+      new_y = Math.round(y + (levels+1)*Math.sin(angle))
+      new_val = weight * (1 - levels * percent)  // 3rd level -> 25%, 2nd level -> 50% ... etc
+      if (new_x < divisions && new_y < divisions && new_x >= 0 && new_y >= 0)
+        if (new_val * heightMap[new_x][new_y] < 0) // They have opposite sign
+          heightMap[new_x][new_y] = (heightMap[new_x][new_y] + new_val) / 2 // Take average
+        if (Math.abs(new_val) > 0 && Math.abs(new_val) > Math.abs(heightMap[new_x][new_y])) // Else one is bigger than the other
+          heightMap[new_x][new_y] = new_val
+    }
+  }
+  */
 
 
 }
