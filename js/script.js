@@ -76,9 +76,12 @@ let light = new T.PointLight( 0xffffff, 3)
 light.position.set(0, 5, -20)
 scene.add(light)
 
+// var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
+// scene.add( alight );
+
 // const dlight = new THREE.DirectionalLight(0xffffff, 1);
 // dlight.castShadow = true;
-// dlight.position.set(5, 10, 5);
+// dlight.position.set(0, 5, -20);
 // dlight.target.position.set(0, 0, 0);
 // scene.add(dlight);
 // scene.add(dlight.target);
@@ -137,13 +140,13 @@ window.onload = function() {
   addVertex(null, 4, 1.73)
   addVertex(null, 5, 0)
 
-  addEdge(null, 0, 1, .8)
-  addEdge(null, 0, 2, .7)
-  addEdge(null, 1, 2, .9)
+  // addEdge(null, 0, 1, .8)
+  // addEdge(null, 0, 2, .7)
+  // addEdge(null, 1, 2, .9)
   addEdge(null, 2, 3, -.5)
-  addEdge(null, 3, 4, .6)
-  addEdge(null, 3, 5, .5)
-  addEdge(null, 4, 5, .4)
+  // addEdge(null, 3, 4, .6)
+  // addEdge(null, 3, 5, .5)
+  // addEdge(null, 4, 5, .4)
 
 
 
@@ -274,7 +277,7 @@ function setHeights(x, y, weight) {
   if (weight >= 0) {
     // --- Gaussian heights ---
     amp = 20
-    weight = 2.5*weight
+    weight = 1.5*weight
     xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
     ySpread = (divisions/10)*(0.4*weight)
     for (let i = 0 ; i < heightMap.length ; i++) {
@@ -299,19 +302,19 @@ function setHeights(x, y, weight) {
       }
     }
   } else {
-    // TODO: I,prove scaling -> -0.1 doesnt do much
+    // TODO: I,prove scaling [add 0.2?] -> -0.1 doesnt do much
     // --- Saddle Heights ---
-    xSpread = 10
+    xSpread = 5
     ySpread = 20// TODO: Multiply with edge length
-    xLimit = 0.1/xSpread
-    yLimit = (1/ySpread)*Math.abs(weight*2)
-    maxHeight = (xSpread*xLimit)**2 - (-ySpread*yLimit)**2
+    xLimit = 0.2
+    yLimit = 0.03
+    maxHeight = (ySpread*yLimit)**2
 
     for (let i = x - xSpread ; i <= x + xSpread ; i++) {
       for (let j = y - ySpread ; j <= y + ySpread ; j++) {
-        newHeight = ((i-x)*xLimit)**2 - ((j-y)*yLimit)**2
-        newHeight *= -1
-        newHeight += maxHeight
+        newHeight = ((j-y)*yLimit)**2 - ((i-x)*xLimit)**2
+        // newHeight *= -1
+        newHeight -= maxHeight
 
         if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
           if (newHeight >= 0) {
