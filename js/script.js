@@ -170,9 +170,12 @@ window.onload = function() {
     // Draw graph edge, texture edge and generate height map
     for (let id in edges) {
       edge = edges[id]
+      if (edge.weight < 0)
+        continue
       drawEdge(edge)
       startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
+
       midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
       midPt[0] = (midPt[0] - planeXMin)// Change from (min,max) to (0, newmax)
       midPt[1] = (midPt[1] - planeYMin)// Change from (min,max) to (0, newmax)
@@ -180,8 +183,81 @@ window.onload = function() {
       midPt[0] = Math.round((midPt[0] / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
       midPt[1] = Math.round((midPt[1] / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
 
+      let newMidPt = {x: 0, y: 0}
+      newMidPt.x = midPt[0]
+      newMidPt.y = midPt[1]
+
+      let newEndPt = {x: 0, y: 0}
+      newEndPt.x = endPt[0]
+      newEndPt.y = endPt[1]
+      newEndPt.x = (newEndPt.x - planeXMin)// Change from (min,max) to (0, newmax)
+      newEndPt.y = (newEndPt.y - planeYMin)// Change from (min,max) to (0, newmax)
+
+      newEndPt.x = Math.round((newEndPt.x / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
+      newEndPt.y = Math.round((newEndPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
+
+      let newStartPt = {x: 0, y: 0}
+      newStartPt.x = startPt[0]
+      newStartPt.y = startPt[1]
+      newStartPt.x = (newStartPt.x - planeXMin)// Change from (min,max) to (0, newmax)
+      newStartPt.y = (newStartPt.y - planeYMin)// Change from (min,max) to (0, newmax)
+
+      newStartPt.x = Math.round((newStartPt.x / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
+      newStartPt.y = Math.round((newStartPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
+
+
       // console.log(Math.round(midPt[0]) + " " + Math.round(midPt[1]))
-      setHeights(midPt[1], midPt[0], edge.weight)
+      setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.beginPath();
+      ctx.moveTo(startPt[0], startPt[1])
+      ctx.lineTo(endPt[0], endPt[1])
+      ctx.strokeStyle = "#40bad5"
+      ctx.lineWidth = 12
+      ctx.stroke()
+    }
+
+    for (let id in edges) {
+      edge = edges[id]
+      if (edge.weight >= 0)
+        continue
+      drawEdge(edge)
+      startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
+      endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
+
+      midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
+      midPt[0] = (midPt[0] - planeXMin)// Change from (min,max) to (0, newmax)
+      midPt[1] = (midPt[1] - planeYMin)// Change from (min,max) to (0, newmax)
+
+      midPt[0] = Math.round((midPt[0] / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
+      midPt[1] = Math.round((midPt[1] / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
+
+      let newMidPt = {x: 0, y: 0}
+      newMidPt.x = midPt[0]
+      newMidPt.y = midPt[1]
+
+      let newEndPt = {x: 0, y: 0}
+      newEndPt.x = endPt[0]
+      newEndPt.y = endPt[1]
+      newEndPt.x = (newEndPt.x - planeXMin)// Change from (min,max) to (0, newmax)
+      newEndPt.y = (newEndPt.y - planeYMin)// Change from (min,max) to (0, newmax)
+
+      newEndPt.x = Math.round((newEndPt.x / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
+      newEndPt.y = Math.round((newEndPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
+
+      let newStartPt = {x: 0, y: 0}
+      newStartPt.x = startPt[0]
+      newStartPt.y = startPt[1]
+      newStartPt.x = (newStartPt.x - planeXMin)// Change from (min,max) to (0, newmax)
+      newStartPt.y = (newStartPt.y - planeYMin)// Change from (min,max) to (0, newmax)
+
+      newStartPt.x = Math.round((newStartPt.x / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
+      newStartPt.y = Math.round((newStartPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
+
+
+      // console.log(Math.round(midPt[0]) + " " + Math.round(midPt[1]))
+      setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
       startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
       endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
       ctx.beginPath();
@@ -272,10 +348,12 @@ function smoothHeightMap() {
 // TODO: Make the percent dropoff more quadratic
 // TODO: Deal with clashing heights - Add heights of multiple edges together -> Deal with huge towers
 
-function setHeights(x, y, weight) {
+function setHeights(start, mid, end, weight) {
 
   if (weight >= 0) {
     // --- Gaussian heights ---
+    x = mid.y
+    y = mid.x
     amp = 20
     weight = 2.5*weight
     xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
@@ -303,18 +381,27 @@ function setHeights(x, y, weight) {
     }
   } else {
     // TODO: I,prove scaling [add 0.2?] -> -0.1 doesnt do much
+    // TODO: Rotate
+    // TODO: Rotate checking max heights
     // --- Saddle Heights ---
-    xSpread = 5
+    xSpread = 10
     ySpread = 26// TODO: Multiply with edge length
-    xLimit = 0.1
+    xLimit = 0.09
     yLimit = 0.04
     addHeight = 0.6
+    // console.log("start")
+    // console.log( heightMap[start.y][start.x])
+    // console.log("end")
+    // console.log( heightMap[end.y][end.x])
 
-    for (let i = x - xSpread ; i <= x + xSpread ; i++) {
-      for (let j = y - ySpread ; j <= y + ySpread ; j++) {
-        newHeight = ((j-y)*yLimit)**2 - ((i-x)*xLimit)**2
+    for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
+      for (let j = mid.y - ySpread ; j <= mid.y + ySpread ; j++) {
+        newHeight = ((j-mid.y)*yLimit)**2 - ((i-mid.x)*xLimit)**2
         // newHeight *= -1
         newHeight += addHeight
+
+        // Check closest to which pt
+
 
         if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
           if (newHeight >= 0) {
@@ -327,8 +414,25 @@ function setHeights(x, y, weight) {
             heightMap[i][j] = newHeight
           }
         }
+
+        // distStart = calcDist(start, {x: i, y: j})
+        // distEnd = calcDist(end, {x: i, y: j})
+        // if (distStart < distEnd) {
+        //   if (newHeight > heightMap[start.y][start.x])
+        //     console.log("true1")
+        //   heightMap[i][j] = Math.min(newHeight, heightMap[start.y][start.x])
+        // } else {
+        //   if (newHeight > heightMap[end.y][end.x])
+        //     console.log("true2")
+        //   heightMap[i][j] = Math.min(newHeight, heightMap[end.y][end.x])
+        //
+        // }
       }
     }
+
+    // heightMap[start.y][start.x] = 10
+    // heightMap[end.y][end.x] = 20
+
   }
 
   // heightMap[x][y] = weight
@@ -371,6 +475,10 @@ function setHeights(x, y, weight) {
   */
 
 
+}
+
+function calcDist(pt1, pt2) {
+  return Math.sqrt((pt1.x - pt2.x)**2 + (pt1.y - pt2.y)**2)
 }
 
 function vertexNameChange() {
