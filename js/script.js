@@ -140,13 +140,13 @@ window.onload = function() {
   addVertex(null, 4, 1.73)
   addVertex(null, 5, 0)
 
-  // addEdge(null, 0, 1, .8)
-  // addEdge(null, 0, 2, .7)
-  // addEdge(null, 1, 2, .9)
+  addEdge(null, 0, 1, .8)
+  addEdge(null, 0, 2, .7)
+  addEdge(null, 1, 2, .9)
   addEdge(null, 2, 3, -.5)
-  // addEdge(null, 3, 4, .6)
-  // addEdge(null, 3, 5, .5)
-  // addEdge(null, 4, 5, .4)
+  addEdge(null, 3, 4, .6)
+  addEdge(null, 3, 5, .5)
+  addEdge(null, 4, 5, .4)
 
 
 
@@ -277,7 +277,7 @@ function setHeights(x, y, weight) {
   if (weight >= 0) {
     // --- Gaussian heights ---
     amp = 20
-    weight = 1.5*weight
+    weight = 2.5*weight
     xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
     ySpread = (divisions/10)*(0.4*weight)
     for (let i = 0 ; i < heightMap.length ; i++) {
@@ -305,16 +305,16 @@ function setHeights(x, y, weight) {
     // TODO: I,prove scaling [add 0.2?] -> -0.1 doesnt do much
     // --- Saddle Heights ---
     xSpread = 5
-    ySpread = 20// TODO: Multiply with edge length
-    xLimit = 0.2
-    yLimit = 0.03
-    maxHeight = (ySpread*yLimit)**2
+    ySpread = 26// TODO: Multiply with edge length
+    xLimit = 0.1
+    yLimit = 0.04
+    addHeight = 0.6
 
     for (let i = x - xSpread ; i <= x + xSpread ; i++) {
       for (let j = y - ySpread ; j <= y + ySpread ; j++) {
         newHeight = ((j-y)*yLimit)**2 - ((i-x)*xLimit)**2
         // newHeight *= -1
-        newHeight -= maxHeight
+        newHeight += addHeight
 
         if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
           if (newHeight >= 0) {
