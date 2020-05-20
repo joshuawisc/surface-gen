@@ -140,10 +140,10 @@ window.onload = function() {
   addVertex(null, 4, 1.73)
   addVertex(null, 5, 0)
 
+  addEdge(null, 2, 3, -.5)
   addEdge(null, 0, 1, .8)
   addEdge(null, 0, 2, .7)
   addEdge(null, 1, 2, .9)
-  addEdge(null, 2, 3, -.5)
   addEdge(null, 3, 4, .6)
   addEdge(null, 3, 5, .5)
   addEdge(null, 4, 5, .4)
@@ -218,10 +218,18 @@ window.onload = function() {
       ctx.stroke()
     }
 
+    smoothHeightMap()
+    smoothHeightMap()
+    smoothHeightMap()
+    smoothHeightMap()
+
+
+
     for (let id in edges) {
       edge = edges[id]
       if (edge.weight >= 0)
         continue
+
       drawEdge(edge)
       startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
@@ -267,9 +275,12 @@ window.onload = function() {
       ctx.lineWidth = 12
       ctx.stroke()
     }
-
+    //
+    smoothHeightMap()
     smoothHeightMap()
     // smoothHeightMap()
+    // smoothHeightMap()
+
 
     // Draw point on surface texture
     for (let id in vertices) {
@@ -305,7 +316,11 @@ window.onload = function() {
       let z1 = plane.geometry.vertices[face['a']].z
       let z2 = plane.geometry.vertices[face['b']].z
       let z3 = plane.geometry.vertices[face['c']].z
-      if (hideSurface.checked && Math.abs(z1) < 0.0005 && Math.abs(z2) < 0.0005 && Math.abs(z3) < 0.0005) {
+      if (hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
+        face.materialIndex = 1 // Transparent
+      } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
+        face.materialIndex = 1
+      } else if (hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests
         face.materialIndex = 1
       } else {
         face.materialIndex = 0
@@ -327,6 +342,8 @@ window.onload = function() {
 function smoothHeightMap() {
   for (let i = 2 ; i < heightMap.length-2 ; i++) {
     for (let j = 2 ; j < heightMap[0].length-2; j++) {
+      if (heightMap[i][j] == 0)
+        continue
       neighbours = [heightMap[i+1][j], heightMap[i-1][j],
         heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
         heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
@@ -338,9 +355,26 @@ function smoothHeightMap() {
       //   continue
 
       sum = neighbours.reduce((a, b) => a + b, 0)
+      count = neighbours.length
+      sum = 0
+      count = 0
+      useZero = true
+      if (heightMap[i][j] < -0.1)
+        useZero = false
+      for(let i = 0 ; i < neighbours.length ; i++) {
+        if (neighbours[i] == 0 && !useZero) { // If neighbour is 0 and don't use zero flag is set
+          continue
+        }
+        sum += neighbours[i]
+        count++
+      }
 
       heightMap[i][j] += sum
-      heightMap[i][j] /= 17
+      heightMap[i][j] /= count + 1
+      // if (Math.abs(heightMap[i][j]) <= 0.0003) {
+      //   heightMap[i][j] = 0
+      // }
+
     }
   }
 }
@@ -352,6 +386,7 @@ function setHeights(start, mid, end, weight) {
 
   if (weight >= 0) {
     // --- Gaussian heights ---
+    // TODO: Only iterate through local points for speedup instead of whole 2d array
     x = mid.y
     y = mid.x
     amp = 20
@@ -380,27 +415,40 @@ function setHeights(start, mid, end, weight) {
       }
     }
   } else {
-    // TODO: I,prove scaling [add 0.2?] -> -0.1 doesnt do much
+    // TODO: Improve scaling [add 0.2?] -> -0.1 doesnt do much
     // TODO: Rotate
     // TODO: Rotate checking max heights
+    // TODO: Point the ends of the saddle curve
+    // TODO: Change ySpread and yLimit based on edge distance and heights
+    // TODO: Left and right sides of curve have different yLimits to line up with heights
     // --- Saddle Heights ---
     xSpread = 10
     ySpread = 26// TODO: Multiply with edge length
-    xLimit = 0.09
-    yLimit = 0.04
-    addHeight = 0.6
+    xLimit = 0.1
+    yLimit = 0.05 //TODO: Change based on edge length
+    addHeight = -0.5
     // console.log("start")
     // console.log( heightMap[start.y][start.x])
     // console.log("end")
     // console.log( heightMap[end.y][end.x])
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
-      for (let j = mid.y - ySpread ; j <= mid.y + ySpread ; j++) {
+      for (let j = mid.y - ySpread; j <= mid.y + ySpread ; j++) {
         newHeight = ((j-mid.y)*yLimit)**2 - ((i-mid.x)*xLimit)**2
         // newHeight *= -1
         newHeight += addHeight
 
         // Check closest to which pt
+        if (newHeight > heightMap[i][j]) {
+          if (heightMap[i][j] != 0)
+            continue
+          newHeight = 0.1
+        }
+
+        if (newHeight < heightMap[i][j] && heightMap[i][j] > 0.1) {
+          continue
+        }
+
 
 
         if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
@@ -409,7 +457,7 @@ function setHeights(start, mid, end, weight) {
           } else {
             heightMap[i][j] = Math.min(heightMap[i][j], newHeight)
           }
-        } else { // Else average
+        } else { // Else highest magnitude
           if (Math.abs(heightMap[i][j]) < Math.abs(newHeight)) {
             heightMap[i][j] = newHeight
           }
