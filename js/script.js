@@ -58,7 +58,7 @@ texture.minFilter = THREE.LinearFilter;
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: true, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({transparent: true, opacity: 0.0})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -320,6 +320,8 @@ window.onload = function() {
         face.materialIndex = 1 // Transparent
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
         face.materialIndex = 1
+      } else if (false && hideSurface.checked && (Math.abs(z2-z1) + Math.abs(z3-z1) + Math.abs(z3-z2) > 0.8)) { // Extra condition for tests
+        face.materialIndex = 1
       } else if (true && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests
         face.materialIndex = 1
       } else {
@@ -431,14 +433,17 @@ function setHeights(start, mid, end, weight) {
     // TODO: Change ySpread and yLimit based on edge distance and heights
     // TODO: Left and right sides of curve have different yLimits to line up with heights
     // --- Saddle Heights ---
-    xSpread = 26
-    ySpread = 10// TODO: Multiply with edge length
-    xLimit = 0.05
-    yLimit = 0.1 //TODO: Change based on edge length
-    addHeight = -0.5 + weight
-
     slope = (start.y - end.y) / (start.x - end.x)
     angle = Math.atan(slope)
+    dist = calcDist(start, end)
+    console.log(dist)
+
+    xSpread = Math.max(20, dist*0.56) // length // Def 26
+    ySpread = 10 // width TODO: Multiply with edge length
+    xLimit = (1.25*weight*2)/xSpread // height along length Def 0.05
+    yLimit = 0.1 // depth along width TODO: Change based on edge length
+    addHeight = -0.5 + weight
+
     // console.log(angle)
 
     // console.log("start")
