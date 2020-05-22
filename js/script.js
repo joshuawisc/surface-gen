@@ -58,7 +58,7 @@ texture.minFilter = THREE.LinearFilter;
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: true, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({transparent: true, opacity: 0.0})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -320,7 +320,7 @@ window.onload = function() {
         face.materialIndex = 1 // Transparent
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
         face.materialIndex = 1
-      } else if (hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests
+      } else if (true && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests
         face.materialIndex = 1
       } else {
         face.materialIndex = 0
@@ -342,8 +342,15 @@ window.onload = function() {
 function smoothHeightMap() {
   for (let i = 2 ; i < heightMap.length-2 ; i++) {
     for (let j = 2 ; j < heightMap[0].length-2; j++) {
-      if (heightMap[i][j] == 0)
-        continue
+      if (heightMap[i][j] == 0) {
+        if (heightMap[i+1][j] * heightMap[i-1][j] *
+          heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
+          heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
+            heightMap[i][j+1] + heightMap[i][j-1]) / 4
+        } else {
+          continue
+        }
+      }
       neighbours = [heightMap[i+1][j], heightMap[i-1][j],
         heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
         heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
@@ -424,15 +431,15 @@ function setHeights(start, mid, end, weight) {
     // TODO: Change ySpread and yLimit based on edge distance and heights
     // TODO: Left and right sides of curve have different yLimits to line up with heights
     // --- Saddle Heights ---
-    xSpread = 10
-    ySpread = 26// TODO: Multiply with edge length
-    xLimit = 0.1
-    yLimit = 0.05 //TODO: Change based on edge length
+    xSpread = 26
+    ySpread = 10// TODO: Multiply with edge length
+    xLimit = 0.05
+    yLimit = 0.1 //TODO: Change based on edge length
     addHeight = -0.5 + weight
 
     slope = (start.y - end.y) / (start.x - end.x)
     angle = Math.atan(slope)
-    console.log(angle)
+    // console.log(angle)
 
     // console.log("start")
     // console.log( heightMap[start.y][start.x])
@@ -441,34 +448,38 @@ function setHeights(start, mid, end, weight) {
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
       for (let j = mid.y - ySpread; j <= mid.y + ySpread ; j++) {
-        newHeight = ((j-mid.y)*yLimit)**2 - ((i-mid.x)*xLimit)**2
+        newHeight = ((i-mid.x)*xLimit)**2 - ((j-mid.y)*yLimit)**2
         // newHeight *= -1
         newHeight += addHeight
-        x_pos = i*Math.cos(angle) + j*Math.sin(angle)
-        y_pos = -i*Math.sin(angle) + j*Math.cos(angle)
+        x_pos = j
+        y_pos = i
+
+        // X and Y coordinate calculations are switched
+        x_pos = Math.round((i-mid.x)*Math.sin(angle) + (j-mid.y)*Math.cos(angle)) + mid.y
+        y_pos = Math.round((i-mid.x)*Math.cos(angle) - (j-mid.y)*Math.sin(angle)) + mid.x
 
         // Check closest to which pt
-        if (newHeight > heightMap[i][j]) {
-          if (heightMap[i][j] != 0)
+        if (newHeight > heightMap[x_pos][y_pos]) {
+          if (heightMap[x_pos][y_pos] != 0)
             continue
           newHeight = 0.1
         }
 
-        if (newHeight < heightMap[i][j] && heightMap[i][j] > 0.1) {
+        if (newHeight < heightMap[x_pos][y_pos] && heightMap[x_pos][y_pos] > 0.1) {
           continue
         }
 
 
 
-        if (heightMap[i][j] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
+        if (heightMap[x_pos][y_pos] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
           if (newHeight >= 0) {
-            heightMap[i][j] = Math.max(heightMap[i][j], newHeight)
+            heightMap[x_pos][y_pos] = Math.max(heightMap[x_pos][y_pos], newHeight)
           } else {
-            heightMap[i][j] = Math.min(heightMap[i][j], newHeight)
+            heightMap[x_pos][y_pos] = Math.min(heightMap[x_pos][y_pos], newHeight)
           }
         } else { // Else highest magnitude
-          if (Math.abs(heightMap[i][j]) < Math.abs(newHeight)) {
-            heightMap[i][j] = newHeight
+          if (Math.abs(heightMap[x_pos][y_pos]) < Math.abs(newHeight)) {
+            heightMap[x_pos][y_pos] = newHeight
           }
         }
 
