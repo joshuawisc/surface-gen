@@ -164,7 +164,7 @@ window.onload = function() {
     opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0))
 
 
-    ctx.fillStyle = "#ffffff"
+    ctx.fillStyle = "#c7c7c7"
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
     // Draw graph edge, texture edge and generate height map
@@ -389,12 +389,14 @@ function setHeights(start, mid, end, weight) {
     // TODO: Only iterate through local points for speedup instead of whole 2d array
     x = mid.y
     y = mid.x
-    amp = 20
+    amp = 10
     weight = 2.5*weight
     xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
     ySpread = (divisions/10)*(0.4*weight)
     for (let i = 0 ; i < heightMap.length ; i++) {
       for (let j = 0 ; j < heightMap[0].length ; j++) {
+        if ((i-x)**2 + (j-y)**2 > 250*(0.4*weight))
+          continue
         xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
         yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
         newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
@@ -426,7 +428,12 @@ function setHeights(start, mid, end, weight) {
     ySpread = 26// TODO: Multiply with edge length
     xLimit = 0.1
     yLimit = 0.05 //TODO: Change based on edge length
-    addHeight = -0.5
+    addHeight = -0.5 + weight
+
+    slope = (start.y - end.y) / (start.x - end.x)
+    angle = Math.atan(slope)
+    console.log(angle)
+
     // console.log("start")
     // console.log( heightMap[start.y][start.x])
     // console.log("end")
@@ -437,6 +444,8 @@ function setHeights(start, mid, end, weight) {
         newHeight = ((j-mid.y)*yLimit)**2 - ((i-mid.x)*xLimit)**2
         // newHeight *= -1
         newHeight += addHeight
+        x_pos = i*Math.cos(angle) + j*Math.sin(angle)
+        y_pos = -i*Math.sin(angle) + j*Math.cos(angle)
 
         // Check closest to which pt
         if (newHeight > heightMap[i][j]) {
