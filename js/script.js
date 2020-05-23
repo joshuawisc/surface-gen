@@ -3,6 +3,11 @@ import { RenderPass } from './scripts/RenderPass.js';
 import { ShaderPass } from './scripts/ShaderPass.js';
 import { CopyShader } from './scripts/CopyShader.js';
 import { FXAAShader } from './scripts/FXAAShader.js';
+import { LineGeometry } from './scripts/LineGeometry.js';
+import { Line2 } from './scripts/Line2.js';
+import { LineMaterial } from './scripts/LineMaterial.js';
+
+
 
 let bgcolor = 0xf3f3f3
 let graphcolor = 0xffffff
@@ -56,9 +61,13 @@ let time = Date.now()
 var scene = new T.Scene()
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 )
 
+var clock = new T.Clock()
+
 var renderer = new THREE.WebGLRenderer()
 renderer.setSize( window.innerWidth, window.innerHeight )
-renderer.shadowMap.enabled = true;
+renderer.autoClear = false;
+renderer.setPixelRatio( window.devicePixelRatio )
+// renderer.shadowMap.enabled = true;
 // renderer.setClearColor()
 document.body.appendChild( renderer.domElement )
 
@@ -141,13 +150,42 @@ let linesDrawn = []
 let ptGeom = new T.SphereGeometry(0.15, 32, 32)
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
-edgecolor_sec = 0x6decaf
-var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 5 })
-// var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
-var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
+// edgecolor_sec = 0x6decaf
+edgecolor_sec = 0x2cc57c
+edgecolor = 0x178e51
+
+var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 6 })
+var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
+// var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
+var matLine
 
 plane.geometry.dynamic = true
 
+var renderPass = new RenderPass( scene, camera );
+
+//
+
+var composer1, composer2, fxaaPass;
+
+fxaaPass = new ShaderPass( FXAAShader );
+fxaaPass.renderToScreen = false
+
+var pixelRatio = renderer.getPixelRatio();
+
+fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( window.innerWidth * pixelRatio );
+fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( window.innerHeight * pixelRatio );
+
+composer1 = new EffectComposer( renderer );
+composer1.addPass( renderPass );
+composer1.addPass( fxaaPass );
+
+//
+
+var copyPass = new ShaderPass( CopyShader );
+
+composer2 = new EffectComposer( renderer );
+composer2.addPass( renderPass );
+composer2.addPass( copyPass );
 
 
 
@@ -410,8 +448,18 @@ window.onload = function() {
     plane.geometry.verticesNeedUpdate = true
     plane.geometry.computeVertexNormals()
 
+
+    // matLine.resolution.set( window.innerWidth, window.innerHeight );
+
     // console.log(heightMap)
-  	renderer.render( scene, camera )
+  	// renderer.render( scene, camera )
+    // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
+
+    composer1.render()
+    // renderer.setViewport( window.innerWidth/2, 0, window.innerWidth/2, window.innerHeight );
+
+    // composer2.render()
+
   };
 
   animate();
@@ -769,9 +817,35 @@ function drawEdge(edge, lineMat) {
     points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight, edge.start.mesh.position.z))
     points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight, edge.end.mesh.position.z))
   }
+  points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight+0.0001, edge.start.mesh.position.z))
 
   let geom = new T.BufferGeometry().setFromPoints(points)
+
+  // New Line //
+  // geom = new LineGeometry()
+  // geom.setPositions(points)
+  //
+  // var colors = []
+  // var color = new THREE.Color();
+  // color.setHSL( 1, 1.0, 0.5 );
+  // colors.push( color.r, color.g, color.b );
+  //
+  // geom.setColors( colors );
+  //
+  // matLine = new LineMaterial( {
+  //
+	// 				color: 0xff0000,
+	// 				linewidth: 5, // in pixels
+	// 				vertexColors: false,
+	// 				//resolution:  // to be set by renderer, eventually
+	// 				dashed: false
+  //
+	// 			} );
+  //
+  // let line = new Line2(geom, matLine)
+
   let line = new T.Line(geom, lineMat)
+
 
   scene.add( line );
   linesDrawn.push(line)
