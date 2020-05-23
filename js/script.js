@@ -1,3 +1,9 @@
+import { EffectComposer } from './scripts/EffectComposer.js';
+import { RenderPass } from './scripts/RenderPass.js';
+import { ShaderPass } from './scripts/ShaderPass.js';
+import { CopyShader } from './scripts/CopyShader.js';
+import { FXAAShader } from './scripts/FXAAShader.js';
+
 let bgcolor = 0xf3f3f3
 let graphcolor = 0xffffff
 let vertexcolor = 0x4CAF50
@@ -178,7 +184,7 @@ window.onload = function() {
 
     controls.update()
 
-    for (line of linesDrawn) {
+    for (let line of linesDrawn) {
       scene.remove(line)
     }
 
@@ -195,8 +201,8 @@ window.onload = function() {
         if (id < id2) {
           continue
         }
-        startPt = [parseFloat(vertices[id].mesh.position.x), parseFloat(vertices[id].mesh.position.z)]
-        endPt = [parseFloat(vertices[id2].mesh.position.x), parseFloat(vertices[id2].mesh.position.z)]
+        let startPt = [parseFloat(vertices[id].mesh.position.x), parseFloat(vertices[id].mesh.position.z)]
+        let endPt = [parseFloat(vertices[id2].mesh.position.x), parseFloat(vertices[id2].mesh.position.z)]
 
         startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
         endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
@@ -216,14 +222,14 @@ window.onload = function() {
 
     // Draw graph edge, texture edge and generate height map
     for (let id in edges) {
-      edge = edges[id]
+      let edge = edges[id]
       if (edge.weight < 0)
         continue
       drawEdge(edge, lineMat)
-      startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
-      endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
+      let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
+      let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
-      midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
+      let midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
       midPt[0] = (midPt[0] - planeXMin)// Change from (min,max) to (0, newmax)
       midPt[1] = (midPt[1] - planeYMin)// Change from (min,max) to (0, newmax)
 
@@ -273,15 +279,15 @@ window.onload = function() {
 
 
     for (let id in edges) {
-      edge = edges[id]
+      let edge = edges[id]
       if (edge.weight >= 0)
         continue
 
       drawEdge(edge, lineMat)
-      startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
-      endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
+      let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
+      let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
-      midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
+      let midPt = [(startPt[0] + endPt[0]) / 2, (startPt[1] + endPt[1]) / 2]
       midPt[0] = (midPt[0] - planeXMin)// Change from (min,max) to (0, newmax)
       midPt[1] = (midPt[1] - planeYMin)// Change from (min,max) to (0, newmax)
 
@@ -348,7 +354,7 @@ window.onload = function() {
 
     texture.needsUpdate = true
 
-    ex = 0.3
+    let ex = 0.3
     let raycaster, origin, intersects
     let direction = new T.Vector3(0, 1, 0)
     for (let i=0; i<divisions ; i++) {
@@ -360,18 +366,18 @@ window.onload = function() {
         }
       }
     }
-    xlimit = 50
-    ylimit = 35
-    for (face of plane.geometry.faces) {
+    let xlimit = 50
+    let ylimit = 35
+    for (let face of plane.geometry.faces) {
       // console.log(face.materialIndex)
       let z1 = plane.geometry.vertices[face['a']].z
       let z2 = plane.geometry.vertices[face['b']].z
       let z3 = plane.geometry.vertices[face['c']].z
       // console.log(face['a'])
-      hide = false
-      v = face['a']
-      i = v/divisions
-      j = v%divisions
+      let hide = false
+      let v = face['a']
+      let i = v/divisions
+      let j = v%divisions
       if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
         hide = true
       v = face['b']
@@ -447,7 +453,7 @@ function smoothHeightMap() {
       //     continue
       //   }
       // }
-      neighbours = [heightMap[i+1][j], heightMap[i-1][j],
+      let neighbours = [heightMap[i+1][j], heightMap[i-1][j],
         heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
         heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
         heightMap[i+2][j], heightMap[i-2][j],
@@ -457,11 +463,11 @@ function smoothHeightMap() {
       // if (Math.min(neighbours) < 0 && Math.max(neighbours) > 0)
       //   continue
 
-      sum = neighbours.reduce((a, b) => a + b, 0)
-      count = neighbours.length
+      let sum = neighbours.reduce((a, b) => a + b, 0)
+      let count = neighbours.length
       sum = 0
       count = 0
-      useZero = true
+      let useZero = true
       if (heightMap[i][j] < -0.1)
         useZero = false
       for(let i = 0 ; i < neighbours.length ; i++) {
@@ -490,19 +496,19 @@ function setHeights(start, mid, end, weight) {
   if (weight >= 0) {
     // --- Gaussian heights ---
     // TODO: Only iterate through local points for speedup instead of whole 2d array
-    x = mid.y
-    y = mid.x
-    amp = 1000
+    let x = mid.y
+    let y = mid.x
+    let amp = 1000
     weight = 2.5*weight
-    xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
-    ySpread = (divisions/10)*(0.4*weight)
+    let xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
+    let ySpread = (divisions/10)*(0.4*weight)
     for (let i = 0 ; i < heightMap.length ; i++) {
       for (let j = 0 ; j < heightMap[0].length ; j++) {
         if ((i-x)**2 + (j-y)**2 > 250*(0.4*weight))
           continue
-        xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
-        yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
-        newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
+        let xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
+        let yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
+        let newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
         // if (Math.abs(newHeight) <= 0.01) {
         //   newHeight = 0
         // }
@@ -527,15 +533,15 @@ function setHeights(start, mid, end, weight) {
     // TODO: Change ySpread and yLimit based on edge distance and heights
     // TODO: Left and right sides of curve have different yLimits to line up with heights
     // --- Saddle Heights ---
-    slope = (start.y - end.y) / (start.x - end.x)
-    angle = Math.atan(slope)
-    dist = calcDist(start, end)
+    let slope = (start.y - end.y) / (start.x - end.x)
+    let angle = Math.atan(slope)
+    let dist = calcDist(start, end)
 
-    xSpread = Math.max(20, dist*0.56) // length // Def 26
-    ySpread = 10*1.5*2.5 // width TODO: Multiply with edge length
-    xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
-    yLimit = 0.1*0.55 // depth along width TODO: Change based on edge length
-    addHeight = -0.5 + weight
+    let xSpread = Math.max(20, dist*0.56) // length // Def 26
+    let ySpread = 10*1.5*2.5 // width TODO: Multiply with edge length
+    let xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
+    let yLimit = 0.1*0.55 // depth along width TODO: Change based on edge length
+    let addHeight = -0.5 + weight
 
     // console.log(angle)
 
@@ -546,11 +552,11 @@ function setHeights(start, mid, end, weight) {
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
       for (let j = mid.y - ySpread; j <= mid.y + ySpread ; j++) {
-        newHeight = ((i-mid.x)*xLimit)**2 - ((j-mid.y)*yLimit)**2
+        let newHeight = ((i-mid.x)*xLimit)**2 - ((j-mid.y)*yLimit)**2
         // newHeight *= -1
         newHeight += addHeight
-        x_pos = j
-        y_pos = i
+        let x_pos = j
+        let y_pos = i
 
         // X and Y coordinate calculations are switched
         x_pos = Math.round((i-mid.x)*Math.sin(angle) + (j-mid.y)*Math.cos(angle)) + mid.y
@@ -735,7 +741,7 @@ function addVertex(obj, x, y) {
   newPt.position.z = yPos.value
   scene.add(newPt)
 
-  sprite = getNameSprite(vertexCount)
+  let sprite = getNameSprite(vertexCount)
   sprite.position.set(xPos.value, vertexHeight + 0.5, yPos.value)
   scene.add(sprite)
 
@@ -755,7 +761,7 @@ function removeVertex() {
 
 function drawEdge(edge, lineMat) {
   // console.log(edge)
-  points = []
+  let points = []
   if (lineMat != lineMatSec) {
     points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight+0.0001, edge.start.mesh.position.z))
     points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight+0.0001, edge.end.mesh.position.z))
@@ -840,16 +846,16 @@ function addEdge(obj, start, end, weight) {
   document.getElementById("div-edge").appendChild(vDiv)
 
 
-  size = Object.keys(vertices).length
+  let size = Object.keys(vertices).length
 
-  s = parseInt(startText.value)
-  e = parseInt(endText.value)
+  let s = parseInt(startText.value)
+  let e = parseInt(endText.value)
   // console.log("s: " + s + " e: " + e)
 
   weight = parseFloat(weightText.value)
 
-  startPt = vertices[s]
-  endPt = vertices[e]
+  let startPt = vertices[s]
+  let endPt = vertices[e]
   if (startPt == endPt) {
     // TODO: Deal with this
   }
@@ -908,7 +914,7 @@ function getNameSprite(name) {
   texture.needsUpdate = true
 
   let spriteMat = new T.SpriteMaterial({map: texture, })
-  sprite = new T.Sprite(spriteMat)
+  let sprite = new T.Sprite(spriteMat)
   sprite.scale.set(0.5, 0.5, 0.5)
   return sprite
 }
