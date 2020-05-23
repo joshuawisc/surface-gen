@@ -2,6 +2,7 @@ let bgcolor = 0xf3f3f3
 let graphcolor = 0xffffff
 let vertexcolor = 0x4CAF50
 let edgecolor = 0x21bf73
+let edgecolor_sec = 0x4cd995
 let canvascolor = "#c7c7c7"
 
 // let bgcolor = 0xf3f3f3
@@ -134,7 +135,10 @@ let linesDrawn = []
 let ptGeom = new T.SphereGeometry(0.15, 32, 32)
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
-var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 3.5})
+edgecolor_sec = 0x6decaf
+var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 5 })
+// var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
+var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
 
 plane.geometry.dynamic = true
 
@@ -199,9 +203,11 @@ window.onload = function() {
         ctx.beginPath();
         ctx.moveTo(startPt[0], startPt[1])
         ctx.lineTo(endPt[0], endPt[1])
-        ctx.strokeStyle = "#5ecfe2" // 5ecfe2  // 9f9f9f
+        ctx.strokeStyle = "#9f9f9f" // 5ecfe2  // 9f9f9f
         ctx.lineWidth = 6
         ctx.stroke()
+
+        drawEdge(new EdgeObj(null, vertices[id], vertices[id2], null), lineMatSec)
       }
     }
 
@@ -213,7 +219,7 @@ window.onload = function() {
       edge = edges[id]
       if (edge.weight < 0)
         continue
-      drawEdge(edge)
+      drawEdge(edge, lineMat)
       startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
@@ -271,7 +277,7 @@ window.onload = function() {
       if (edge.weight >= 0)
         continue
 
-      drawEdge(edge)
+      drawEdge(edge, lineMat)
       startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
@@ -747,11 +753,16 @@ function removeVertex() {
   parentDiv.remove()
 }
 
-function drawEdge(edge) {
+function drawEdge(edge, lineMat) {
   // console.log(edge)
   points = []
-  points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight, edge.start.mesh.position.z))
-  points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight, edge.end.mesh.position.z))
+  if (lineMat != lineMatSec) {
+    points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight+0.0001, edge.start.mesh.position.z))
+    points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight+0.0001, edge.end.mesh.position.z))
+  } else {
+    points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight, edge.start.mesh.position.z))
+    points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight, edge.end.mesh.position.z))
+  }
 
   let geom = new T.BufferGeometry().setFromPoints(points)
   let line = new T.Line(geom, lineMat)
@@ -846,7 +857,7 @@ function addEdge(obj, start, end, weight) {
   let edge = new EdgeObj(edgeCount, startPt, endPt, weight)
   edges[edgeCount] = edge
   edgeCount++
-  drawEdge(edge)
+  drawEdge(edge, lineMat)
 }
 
 function edgeChange() {
