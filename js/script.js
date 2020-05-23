@@ -184,6 +184,29 @@ window.onload = function() {
 
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.setLineDash([25, 10])
+
+    for (let id in vertices) {
+      for (let id2 in vertices) {
+        if (id < id2) {
+          continue
+        }
+        startPt = [parseFloat(vertices[id].mesh.position.x), parseFloat(vertices[id].mesh.position.z)]
+        endPt = [parseFloat(vertices[id2].mesh.position.x), parseFloat(vertices[id2].mesh.position.z)]
+
+        startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.beginPath();
+        ctx.moveTo(startPt[0], startPt[1])
+        ctx.lineTo(endPt[0], endPt[1])
+        ctx.strokeStyle = "#5ecfe2" // 5ecfe2  // 9f9f9f
+        ctx.lineWidth = 6
+        ctx.stroke()
+      }
+    }
+
+    ctx.setLineDash([])
+
 
     // Draw graph edge, texture edge and generate height map
     for (let id in edges) {
