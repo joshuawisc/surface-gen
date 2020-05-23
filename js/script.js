@@ -299,7 +299,7 @@ window.onload = function() {
     smoothHeightMap()
     smoothHeightMap()
 
-    raiseHeightMap() // Raise 0 heights to 0.001 to be visible
+    // raiseHeightMap() // Raise 0 heights to 0.001 to be visible
 
 
     // Draw point on surface texture
@@ -331,11 +331,30 @@ window.onload = function() {
         }
       }
     }
+    xlimit = 50
+    ylimit = 35
     for (face of plane.geometry.faces) {
       // console.log(face.materialIndex)
       let z1 = plane.geometry.vertices[face['a']].z
       let z2 = plane.geometry.vertices[face['b']].z
       let z3 = plane.geometry.vertices[face['c']].z
+      // console.log(face['a'])
+      hide = false
+      v = face['a']
+      i = v/divisions
+      j = v%divisions
+      if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+        hide = true
+      v = face['b']
+      i = v/divisions
+      j = v%divisions
+      if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+        hide = true
+      v = face['c']
+      i = v/divisions
+      j = v%divisions
+      if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+        hide = true
       if (hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
         face.materialIndex = 1 // Transparent
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
@@ -343,6 +362,8 @@ window.onload = function() {
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) + Math.abs(z3-z1) + Math.abs(z3-z2) > 0.8)) { // Extra condition for tests
         face.materialIndex = 1
       } else if (true && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests
+        face.materialIndex = 1
+      } else if (hide && hideSurface.checked) {
         face.materialIndex = 1
       } else {
         face.materialIndex = 0
@@ -363,22 +384,40 @@ window.onload = function() {
 
 
 function raiseHeightMap() {
+  xLimit = 55
+  yLimit = 35
+  for (let i = 0 ; i < xLimit ; i++) {
+    for (let j = 0 ; j < (heightMap[0].length-1)/2; j++) {
+      heightMap[i][j] = 0
+      heightMap[i][heightMap[0].length-1-j] = 0
+      heightMap[heightMap.length-1-i][j] = 0
+      heightMap[heightMap.length-1-i][heightMap[0].length-1-j] = 0
+    }
+  }
+  for (let i = xLimit ; i < heightMap.length - xLimit ; i++) {
+    for (let j = 0 ; j < yLimit; j++) {
+      heightMap[i][j] = 0
+      heightMap[i][heightMap[0].length-1-j] = 0
+      heightMap[heightMap.length-1-i][j] = 0
+      heightMap[heightMap.length-1-i][heightMap[0].length-1-j] = 0
+    }
+  }
   return 0
 }
 
 function smoothHeightMap() {
   for (let i = 45 ; i < heightMap.length-47 ; i++) {
     for (let j = 25 ; j < heightMap[0].length-27; j++) {
-      if (heightMap[i][j] == 0) {
-        // if (heightMap[i+1][j] * heightMap[i-1][j] *
-        //   heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
-        //   heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
-        //     heightMap[i][j+1] + heightMap[i][j-1]) / 4
-        // }
-        // } else {
-        //   continue
-        // }
-      }
+      // if (heightMap[i][j] == 0) {
+      //   if (heightMap[i+1][j] * heightMap[i-1][j] *
+      //     heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
+      //     heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
+      //       heightMap[i][j+1] + heightMap[i][j-1]) / 4
+      //
+      //   } else {
+      //     continue
+      //   }
+      // }
       neighbours = [heightMap[i+1][j], heightMap[i-1][j],
         heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
         heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
@@ -464,9 +503,9 @@ function setHeights(start, mid, end, weight) {
     dist = calcDist(start, end)
 
     xSpread = Math.max(20, dist*0.56) // length // Def 26
-    ySpread = 10*1.5 // width TODO: Multiply with edge length
+    ySpread = 10*1.5*2.5 // width TODO: Multiply with edge length
     xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
-    yLimit = 0.1*1 // depth along width TODO: Change based on edge length
+    yLimit = 0.1*0.55 // depth along width TODO: Change based on edge length
     addHeight = -0.5 + weight
 
     // console.log(angle)
