@@ -72,8 +72,8 @@ camera.position.y = 5
 controls.update();
 
 
-let light = new T.PointLight( 0xffffff, 3)
-light.position.set(0, 5, -20)
+let light = new T.PointLight( 0xffffff, 1)
+light.position.set(0, 10, 0)
 scene.add(light)
 
 // var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
@@ -92,9 +92,9 @@ scene.add(light)
 // scene.add( directionalLight );
 
 
-let light2 = new T.PointLight( 0xffffff, 3.5)
-light2.position.set(0, -2, 20)
-scene.add(light2)
+// let light2 = new T.PointLight( 0xffffff, 3.5)
+// light2.position.set(0, -2, 20)
+// scene.add(light2)
 
 
 // let light3 = new T.PointLight( 0xffffff, 1, 100)
@@ -278,8 +278,10 @@ window.onload = function() {
     //
     smoothHeightMap()
     smoothHeightMap()
-    // smoothHeightMap()
-    // smoothHeightMap()
+    smoothHeightMap()
+    smoothHeightMap()
+
+    raiseHeightMap() // Raise 0 heights to 0.001 to be visible
 
 
     // Draw point on surface texture
@@ -332,6 +334,7 @@ window.onload = function() {
 
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
+    plane.geometry.computeVertexNormals()
 
     // console.log(heightMap)
   	renderer.render( scene, camera )
@@ -341,18 +344,22 @@ window.onload = function() {
 }
 
 
+function raiseHeightMap() {
+  return 0
+}
+
 function smoothHeightMap() {
-  for (let i = 2 ; i < heightMap.length-2 ; i++) {
-    for (let j = 2 ; j < heightMap[0].length-2; j++) {
-      if (heightMap[i][j] == 0) {
-        if (heightMap[i+1][j] * heightMap[i-1][j] *
-          heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
-          heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
-            heightMap[i][j+1] + heightMap[i][j-1]) / 4
-        } else {
-          continue
-        }
-      }
+  for (let i = 45 ; i < heightMap.length-47 ; i++) {
+    for (let j = 25 ; j < heightMap[0].length-27; j++) {
+      // if (heightMap[i][j] == 0) {
+      //   if (heightMap[i+1][j] * heightMap[i-1][j] *
+      //     heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
+      //     heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
+      //       heightMap[i][j+1] + heightMap[i][j-1]) / 4
+      //   } else {
+      //     continue
+      //   }
+      // }
       neighbours = [heightMap[i+1][j], heightMap[i-1][j],
         heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
         heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
@@ -398,7 +405,7 @@ function setHeights(start, mid, end, weight) {
     // TODO: Only iterate through local points for speedup instead of whole 2d array
     x = mid.y
     y = mid.x
-    amp = 10
+    amp = 1000
     weight = 2.5*weight
     xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
     ySpread = (divisions/10)*(0.4*weight)
@@ -409,9 +416,9 @@ function setHeights(start, mid, end, weight) {
         xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
         yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
         newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
-        if (Math.abs(newHeight) <= 0.01) {
-          newHeight = 0
-        }
+        // if (Math.abs(newHeight) <= 0.01) {
+        //   newHeight = 0
+        // }
         if (heightMap[i][j] * newHeight > 0) { // Both in same direction, then choose highest magnitude
           if (newHeight >= 0) {
             heightMap[i][j] = Math.max(heightMap[i][j], newHeight)
@@ -436,12 +443,11 @@ function setHeights(start, mid, end, weight) {
     slope = (start.y - end.y) / (start.x - end.x)
     angle = Math.atan(slope)
     dist = calcDist(start, end)
-    console.log(dist)
 
     xSpread = Math.max(20, dist*0.56) // length // Def 26
-    ySpread = 10 // width TODO: Multiply with edge length
-    xLimit = (1.25*weight*2)/xSpread // height along length Def 0.05
-    yLimit = 0.1 // depth along width TODO: Change based on edge length
+    ySpread = 10*1.5 // width TODO: Multiply with edge length
+    xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
+    yLimit = 0.1*1 // depth along width TODO: Change based on edge length
     addHeight = -0.5 + weight
 
     // console.log(angle)
