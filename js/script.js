@@ -1,17 +1,28 @@
 let bgcolor = 0xf3f3f3
-let graphcolor = 0xebe6e6
+let graphcolor = 0xffffff
 let vertexcolor = 0x4CAF50
 let edgecolor = 0x21bf73
+let canvascolor = "#c7c7c7"
+
+// let bgcolor = 0xf3f3f3
+// let graphcolor = 0xebe6e6
+// let vertexcolor = 0x4CAF50
+// let edgecolor = 0x21bf73
+// let canvascolor = "#c7c7c7"
 
 // let bgcolor = 0x512b58
 // let graphcolor = 0x2c003e
 // let vertexcolor = 0xfe346e
 // let edgecolor = 0xd2fafb
+// let canvascolor = "#2c003e"
+
 
 // let bgcolor = 0xffc2c2
 // let graphcolor = 0xff9d9d
 // let vertexcolor = 0xff2e63
 // let edgecolor = 0x010a43
+// let canvascolor = "#ff9d9d"
+
 
 // TODO: Resize graph based on highest weight
 // TODO: Optimization move lines instead of redrawing?
@@ -50,7 +61,7 @@ var controls = new T.OrbitControls( camera, renderer.domElement );
 const ctx = document.createElement('canvas').getContext('2d');
 ctx.canvas.width = 2000;
 ctx.canvas.height = 2000;
-ctx.fillStyle = "#ffff00";
+ctx.fillStyle = canvascolor;
 ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 const texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
@@ -58,7 +69,7 @@ texture.minFilter = THREE.LinearFilter;
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 1, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({transparent: true, opacity: 0.0})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -73,8 +84,15 @@ controls.update();
 
 
 let light = new T.PointLight( 0xffffff, 1)
-light.position.set(0, 10, 0)
+light.position.set(-7, 10, 0)
 scene.add(light)
+
+// s1 - (0, 10, 0)  | intensity 1   | 0xebe6e6
+// s4 - (0, 10, 0)  | intensity 1   | white
+// s5 - (0, 10, 0)  | intensity 1.1 | white
+// s6 - (-7, 10, 0) | intensity 1.1 | white
+// s7 - (0, 10, 5)  | intensity 1.1 | white
+// s8 - (-7, 10, 0) | intensity 1   | white
 
 // var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
 // scene.add( alight );
@@ -164,7 +182,7 @@ window.onload = function() {
     opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0))
 
 
-    ctx.fillStyle = "#c7c7c7"
+    ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
     // Draw graph edge, texture edge and generate height map
@@ -351,15 +369,16 @@ function raiseHeightMap() {
 function smoothHeightMap() {
   for (let i = 45 ; i < heightMap.length-47 ; i++) {
     for (let j = 25 ; j < heightMap[0].length-27; j++) {
-      // if (heightMap[i][j] == 0) {
-      //   if (heightMap[i+1][j] * heightMap[i-1][j] *
-      //     heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
-      //     heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
-      //       heightMap[i][j+1] + heightMap[i][j-1]) / 4
-      //   } else {
-      //     continue
-      //   }
-      // }
+      if (heightMap[i][j] == 0) {
+        // if (heightMap[i+1][j] * heightMap[i-1][j] *
+        //   heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
+        //   heightMap[i][j] = (heightMap[i+1][j] + heightMap[i-1][j] +
+        //     heightMap[i][j+1] + heightMap[i][j-1]) / 4
+        // }
+        // } else {
+        //   continue
+        // }
+      }
       neighbours = [heightMap[i+1][j], heightMap[i-1][j],
         heightMap[i][j+1], heightMap[i][j-1], heightMap[i+1][j+1],
         heightMap[i+1][j-1], heightMap[i-1][j-1], heightMap[i-1][j+1],
