@@ -155,8 +155,8 @@ edgecolor_sec = 0x2cc57c
 edgecolor = 0x178e51
 
 var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 6 })
-var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
-// var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
+// var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
+var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
 var matLine
 
 plane.geometry.dynamic = true
@@ -226,31 +226,36 @@ window.onload = function() {
   // 6-H - 2.4, -0.5
   // 7-I - 3.5, 0.8
   // 8-J - 4, 3
-  // addVertex(null, -5, 0) // A
-  // addVertex(null, -4.5, -1) //B
-  // addVertex(null, -3.5, 0.5) //C
-  // addVertex(null, -3, 0) //E
-  // addVertex(null, -1.5, 0) //F
-  // addVertex(null, 2.4, 0.5) //G
-  // addVertex(null, 2.4, -0.5) //H
-  // addVertex(null, 3.5, 0.8) //I
-  // addVertex(null, 4, 3) //J
+  var vertices2 = {}
+  var edges2 = {}
+  addVertexSec(null, -5.5, -0.5, vertices2) // A
+  addVertexSec(null, -4.7, -1.2, vertices2) //B
+  addVertexSec(null, -4.3, 0, vertices2) //C
+  addVertexSec(null, -4, -0.5, vertices2) //E
+  addVertexSec(null, -2.5, -0.5, vertices2) //F
+  addVertexSec(null, 3.4, 1.5, vertices2) //G
+  addVertexSec(null, 3.4, 0.5, vertices2) //H
+  addVertexSec(null, 4.5, 1.8, vertices2) //I
+  addVertexSec(null, 5, 3, vertices2) //J
   //
   //
-  // addEdge(null, 4, 6, -.5)
-  //
-  // addEdge(null, 0, 1, .8) // A - B
-  // addEdge(null, 0, 2, .7) // A - C
-  // addEdge(null, 0, 3, .7) // A - E
-  // addEdge(null, 1, 4, .8) // B - F
-  // addEdge(null, 2, 4, .7) // C - F
-  // addEdge(null, 3, 4, .7) // E - F
-  //
-  // addEdge(null, 6, 5, .7) // H - G
-  // addEdge(null, 6, 7, .7) // H - I
-  // addEdge(null, 5, 7, .8) // G - I
-  // addEdge(null, 5, 8, .7) // G - J
-  // addEdge(null, 7, 8, .7) // I - J
+
+  addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
+
+  addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
+  addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
+  addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
+  addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
+  addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
+  addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
+  addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
+  addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
+
+  addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
+  addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
+  addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
+  addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
+  addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
 
 
 
@@ -265,47 +270,72 @@ window.onload = function() {
     for (let line of linesDrawn) {
       scene.remove(line)
     }
+    linesDrawn = []
 
     heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
     opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0))
 
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    ctx.setLineDash([25, 10])
 
+    let viewSeperate = true
+    let vertices_visual = vertices, edges_visual = edges
+    if (viewSeperate) {
+      vertices_visual = vertices2
+      edges_visual = edges2
+    }
 
     // Draw logical edges into graph, Draw logical edges into texture
-    for (let id in vertices) {
-      for (let id2 in vertices) {
+    for (let id in vertices_visual) {
+      for (let id2 in vertices_visual) {
         if (id < id2) {
           continue
         }
-        let startPt = [parseFloat(vertices[id].mesh.position.x), parseFloat(vertices[id].mesh.position.z)]
-        let endPt = [parseFloat(vertices[id2].mesh.position.x), parseFloat(vertices[id2].mesh.position.z)]
+        let startPt = [parseFloat(vertices_visual[id].mesh.position.x), parseFloat(vertices_visual[id].mesh.position.z)]
+        let endPt = [parseFloat(vertices_visual[id2].mesh.position.x), parseFloat(vertices_visual[id2].mesh.position.z)]
 
         startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
         endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.setLineDash([])
         ctx.beginPath();
         ctx.moveTo(startPt[0], startPt[1])
         ctx.lineTo(endPt[0], endPt[1])
         ctx.strokeStyle = "#9f9f9f" // 5ecfe2  // 9f9f9f
-        ctx.lineWidth = 6
+        ctx.lineWidth = 4
         ctx.stroke()
 
-        drawEdge(new EdgeObj(null, vertices[id], vertices[id2], null), lineMatSec)
+        drawEdge(new EdgeObj(null, vertices_visual[id], vertices_visual[id2], null), lineMatSec)
       }
     }
 
     ctx.setLineDash([])
 
-    // Draw physical graph edge, texture edge and generate height map for +ve edges
+    // Draw physical graph edge, texture edge
+    for (let id in edges_visual) {
+      let edge = edges_visual[id]
+
+      // Draw graph edge
+      drawEdge(edge, lineMat)
+
+      let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
+      let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
+
+      // Draw texture edge
+      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.beginPath();
+      ctx.moveTo(startPt[0], startPt[1])
+      ctx.lineTo(endPt[0], endPt[1])
+      ctx.strokeStyle = "#40bad5"
+      ctx.lineWidth = 12
+      ctx.stroke()
+    }
+
+    // Set height map for +ve edges
     for (let id in edges) {
       let edge = edges[id]
       if (edge.weight < 0)
         continue
-
-      // Draw graph edge
-      drawEdge(edge, lineMat)
 
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
@@ -342,16 +372,6 @@ window.onload = function() {
 
       // Set heightmap
       setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
-
-      // Draw texture edge
-      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      ctx.beginPath();
-      ctx.moveTo(startPt[0], startPt[1])
-      ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#40bad5"
-      ctx.lineWidth = 12
-      ctx.stroke()
     }
 
 
@@ -361,14 +381,11 @@ window.onload = function() {
     smoothHeightMap()
 
 
-    // Draw physical graph edge, texture edge and generate height map for -ve edges
+    // Set height map for -ve edges
     for (let id in edges) {
       let edge = edges[id]
       if (edge.weight >= 0)
         continue
-
-      drawEdge(edge, lineMat)
-
 
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
@@ -402,18 +419,10 @@ window.onload = function() {
       newStartPt.x = Math.round((newStartPt.x / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
       newStartPt.y = Math.round((newStartPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
 
-
-      // console.log(Math.round(midPt[0]) + " " + Math.round(midPt[1]))
       setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
-      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      ctx.beginPath();
-      ctx.moveTo(startPt[0], startPt[1])
-      ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#40bad5"
-      ctx.lineWidth = 12
-      ctx.stroke()
     }
+
+
     //
     smoothHeightMap()
     smoothHeightMap()
@@ -424,8 +433,8 @@ window.onload = function() {
 
 
     // Draw point on surface texture
-    for (let id in vertices) {
-      let vertex = vertices[id]
+    for (let id in vertices_visual) {
+      let vertex = vertices_visual[id]
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
 
@@ -434,8 +443,6 @@ window.onload = function() {
       ctx.beginPath();
       ctx.arc(point[0], point[1], 15, 0, 2 * Math.PI);
       ctx.fill();
-
-
     }
 
     texture.needsUpdate = true
@@ -455,7 +462,7 @@ window.onload = function() {
 
     // Set materials for plane faces, to hide unwanted
     let xlimit = 50
-    let ylimit = 35
+    let ylimit = 30
     for (let face of plane.geometry.faces) {
       // console.log(face.materialIndex)
       let z1 = plane.geometry.vertices[face['a']].z
@@ -773,7 +780,10 @@ function vertexPositionChange() {
 
 }
 
-function addVertex(obj, x, y) {
+function addVertex(obj, x, y, drawPoint) {
+  if (typeof drawPoint == 'undefined')
+    drawPoint = false
+
   if (typeof x == 'undefined') {
     x = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
   }
@@ -837,15 +847,38 @@ function addVertex(obj, x, y) {
   newPt.position.y = vertexHeight
   newPt.position.x = xPos.value
   newPt.position.z = yPos.value
-  scene.add(newPt)
 
   let sprite = getNameSprite(vertexCount)
   sprite.position.set(xPos.value, vertexHeight + 0.5, yPos.value)
-  scene.add(sprite)
+
+  if (drawPoint) {
+    scene.add(sprite)
+    scene.add(newPt)
+  }
 
   vertices[String(vertexCount)] = new VertexObj(vertexCount, vertexCount, newPt, sprite)
 
   vertexCount++
+}
+
+function addVertexSec(obj, x, y, vertices, drawPoint=true) {
+  let newPt = new T.Mesh(ptGeom, ptMat)
+  newPt.position.y = vertexHeight
+  newPt.position.x = x
+  newPt.position.z = y
+
+  length = Object.keys(vertices).length
+
+  let sprite = getNameSprite(length)
+  sprite.position.set(x, vertexHeight + 0.5, y)
+
+  if (drawPoint) {
+    scene.add(sprite)
+    scene.add(newPt)
+    console.log(length)
+  }
+
+  vertices[String(length)] = new VertexObj(length, length, newPt, sprite)
 }
 
 function removeVertex() {
@@ -987,7 +1020,26 @@ function addEdge(obj, start, end, weight) {
   let edge = new EdgeObj(edgeCount, startPt, endPt, weight)
   edges[edgeCount] = edge
   edgeCount++
-  drawEdge(edge, lineMat)
+}
+
+function addEdgeSec(obj, start, end, weight, vertices, edges) {
+  let vSize = Object.keys(vertices).length
+  let eSize = Object.keys(edges).length
+
+  let s = parseInt(start)
+  let e = parseInt(end)
+  // console.log("s: " + s + " e: " + e)
+
+  weight = parseFloat(weight)
+
+  let startPt = vertices[s]
+  let endPt = vertices[e]
+  if (startPt == endPt) {
+    // TODO: Deal with this
+  }
+
+  let edge = new EdgeObj(eSize, startPt, endPt, weight)
+  edges[eSize] = edge
 }
 
 function edgeChange() {
