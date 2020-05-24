@@ -199,6 +199,8 @@ window.onload = function() {
 
   let hideSurface = document.getElementById("hide-surface")
 
+
+  // Graph 1
   addVertex(null, -5, 0)
   addVertex(null, -4, -1.73)
   addVertex(null, -3, 0)
@@ -214,6 +216,42 @@ window.onload = function() {
   addEdge(null, 3, 5, .5)
   addEdge(null, 4, 5, .4)
 
+  // Graph 2
+  // 0-A - -5, 0
+  // 1-B - -4.5, -1
+  // 2-C - -3.5, 0.5
+  // 3-E - -3, 0 // Skip D
+  // 4-F - -1.5, 0
+  // 5-G - 2.4, 0.5
+  // 6-H - 2.4, -0.5
+  // 7-I - 3.5, 0.8
+  // 8-J - 4, 3
+  // addVertex(null, -5, 0) // A
+  // addVertex(null, -4.5, -1) //B
+  // addVertex(null, -3.5, 0.5) //C
+  // addVertex(null, -3, 0) //E
+  // addVertex(null, -1.5, 0) //F
+  // addVertex(null, 2.4, 0.5) //G
+  // addVertex(null, 2.4, -0.5) //H
+  // addVertex(null, 3.5, 0.8) //I
+  // addVertex(null, 4, 3) //J
+  //
+  //
+  // addEdge(null, 4, 6, -.5)
+  //
+  // addEdge(null, 0, 1, .8) // A - B
+  // addEdge(null, 0, 2, .7) // A - C
+  // addEdge(null, 0, 3, .7) // A - E
+  // addEdge(null, 1, 4, .8) // B - F
+  // addEdge(null, 2, 4, .7) // C - F
+  // addEdge(null, 3, 4, .7) // E - F
+  //
+  // addEdge(null, 6, 5, .7) // H - G
+  // addEdge(null, 6, 7, .7) // H - I
+  // addEdge(null, 5, 7, .8) // G - I
+  // addEdge(null, 5, 8, .7) // G - J
+  // addEdge(null, 7, 8, .7) // I - J
+
 
 
 
@@ -222,6 +260,8 @@ window.onload = function() {
 
     controls.update()
 
+
+    // Clear lines, heights, reset textures
     for (let line of linesDrawn) {
       scene.remove(line)
     }
@@ -229,11 +269,12 @@ window.onload = function() {
     heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
     opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0))
 
-
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     ctx.setLineDash([25, 10])
 
+
+    // Draw logical edges into graph, Draw logical edges into texture
     for (let id in vertices) {
       for (let id2 in vertices) {
         if (id < id2) {
@@ -257,13 +298,15 @@ window.onload = function() {
 
     ctx.setLineDash([])
 
-
-    // Draw graph edge, texture edge and generate height map
+    // Draw physical graph edge, texture edge and generate height map for +ve edges
     for (let id in edges) {
       let edge = edges[id]
       if (edge.weight < 0)
         continue
+
+      // Draw graph edge
       drawEdge(edge, lineMat)
+
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
@@ -297,8 +340,10 @@ window.onload = function() {
       newStartPt.y = Math.round((newStartPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
 
 
-      // console.log(Math.round(midPt[0]) + " " + Math.round(midPt[1]))
+      // Set heightmap
       setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+
+      // Draw texture edge
       startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
       endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
       ctx.beginPath();
@@ -309,19 +354,22 @@ window.onload = function() {
       ctx.stroke()
     }
 
+
     smoothHeightMap()
     smoothHeightMap()
     smoothHeightMap()
     smoothHeightMap()
 
 
-
+    // Draw physical graph edge, texture edge and generate height map for -ve edges
     for (let id in edges) {
       let edge = edges[id]
       if (edge.weight >= 0)
         continue
 
       drawEdge(edge, lineMat)
+
+
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
@@ -392,8 +440,8 @@ window.onload = function() {
 
     texture.needsUpdate = true
 
+    // Set plane vertices' height
     let ex = 0.3
-    let raycaster, origin, intersects
     let direction = new T.Vector3(0, 1, 0)
     for (let i=0; i<divisions ; i++) {
       for (let j=0; j < divisions ; j++) {
@@ -404,6 +452,8 @@ window.onload = function() {
         }
       }
     }
+
+    // Set materials for plane faces, to hide unwanted
     let xlimit = 50
     let ylimit = 35
     for (let face of plane.geometry.faces) {
@@ -709,9 +759,9 @@ function vertexPositionChange() {
   if (this.value == '' || isNaN(this.value))
     return
   // console.log("Postion Change")
-  parentDiv = this.parentElement
-  name = parentDiv.childNodes[0].textContent
-  pt = vertices[name]
+  let parentDiv = this.parentElement
+  let name = parentDiv.childNodes[0].textContent
+  let pt = vertices[name]
   if (this.className == "xPos") {
     pt.mesh.position.x = this.value
     pt.label.position.x = this.value
@@ -944,13 +994,13 @@ function edgeChange() {
   // TODO: Deal with non existent vertices
   if (this.value == '' || isNaN(this.value))
     return
-  parentDiv = this.parentElement
-  startId = parentDiv.childNodes[2].value
-  endId = parentDiv.childNodes[4].value
-  weight = parseFloat(parentDiv.childNodes[6].value)
-  id = parentDiv.childNodes[0].textContent
+  let parentDiv = this.parentElement
+  let startId = parentDiv.childNodes[2].value
+  let endId = parentDiv.childNodes[4].value
+  let weight = parseFloat(parentDiv.childNodes[6].value)
+  let id = parentDiv.childNodes[0].textContent
   // console.log(startId + " " + endId + " " + weight)
-  edge = edges[id]
+  let edge = edges[id]
   edge.start = vertices[startId]
   edge.end = vertices[endId]
   edge.weight = weight
@@ -966,7 +1016,11 @@ function removeEdge() {
 }
 
 function getNameSprite(name) {
-  name = String.fromCharCode(65 + name)
+  if (name < 3)
+    name = String.fromCharCode(65 + name)
+  else
+    name = String.fromCharCode(65 + name + 1)
+
   let canvas = document.createElement('canvas')
   let ctx = canvas.getContext('2d')
 
