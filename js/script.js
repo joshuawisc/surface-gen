@@ -59,7 +59,8 @@ let time = Date.now()
 
 
 var scene = new T.Scene()
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 )
+// var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 )
+var camera = new THREE.OrthographicCamera( window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, 0.1, 1000 )
 
 var clock = new T.Clock()
 
@@ -233,10 +234,10 @@ window.onload = function() {
   addVertexSec(null, -4.3, 0, vertices2) //C
   addVertexSec(null, -4, -0.5, vertices2) //E
   addVertexSec(null, -2.5, -0.5, vertices2) //F
-  addVertexSec(null, 3.4, 1.5, vertices2) //G
-  addVertexSec(null, 3.4, 0.5, vertices2) //H
-  addVertexSec(null, 4.5, 1.8, vertices2) //I
-  addVertexSec(null, 5, 3, vertices2) //J
+  addVertexSec(null, 3.4, 1, vertices2) //G
+  addVertexSec(null, 3.4, 0, vertices2) //H
+  addVertexSec(null, 4.5, 1.1, vertices2) //I
+  addVertexSec(null, 5.7, 2.7, vertices2) //J
   //
   //
 
@@ -285,27 +286,32 @@ window.onload = function() {
       edges_visual = edges2
     }
 
+    let logical_edges = [[1, 6], [4, 7], [0, 8], [2, 8], [2, 5]]
+
     // Draw logical edges into graph, Draw logical edges into texture
-    for (let id in vertices_visual) {
-      for (let id2 in vertices_visual) {
-        if (id < id2) {
-          continue
-        }
-        let startPt = [parseFloat(vertices_visual[id].mesh.position.x), parseFloat(vertices_visual[id].mesh.position.z)]
-        let endPt = [parseFloat(vertices_visual[id2].mesh.position.x), parseFloat(vertices_visual[id2].mesh.position.z)]
+    for (let ids of logical_edges) {
+      // for (let id2 in vertices_visual) {
+      //   if (id < id2) {
+      //     continue
+      //   }
+      let id = ids[0]
+      let id2 = ids[1]
 
-        startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        ctx.setLineDash([])
-        ctx.beginPath();
-        ctx.moveTo(startPt[0], startPt[1])
-        ctx.lineTo(endPt[0], endPt[1])
-        ctx.strokeStyle = "#9f9f9f" // 5ecfe2  // 9f9f9f
-        ctx.lineWidth = 4
-        ctx.stroke()
+      let startPt = [parseFloat(vertices_visual[id].mesh.position.x), parseFloat(vertices_visual[id].mesh.position.z)]
+      let endPt = [parseFloat(vertices_visual[id2].mesh.position.x), parseFloat(vertices_visual[id2].mesh.position.z)]
 
-        drawEdge(new EdgeObj(null, vertices_visual[id], vertices_visual[id2], null), lineMatSec)
-      }
+      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.setLineDash([])
+      ctx.beginPath();
+      ctx.moveTo(startPt[0], startPt[1])
+      ctx.lineTo(endPt[0], endPt[1])
+      ctx.strokeStyle = "#9f9f9f" // 5ecfe2  // 9f9f9f
+      ctx.lineWidth = 4
+      ctx.stroke()
+
+      drawEdge(new EdgeObj(null, vertices_visual[id], vertices_visual[id2], null), lineMatSec)
+      // }
     }
 
     ctx.setLineDash([])
