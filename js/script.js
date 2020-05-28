@@ -53,7 +53,7 @@ let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
 let divisions = 150
 let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
-let opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0));
+let opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 let vertexHeight = 3
 
 let time = Date.now()
@@ -61,9 +61,9 @@ let time = Date.now()
 
 var scene = new T.Scene()
 // var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 )
-var camera = new THREE.PerspectiveCamera( 25, window.innerWidth/window.innerHeight, 0.1, 1000 )
+// var camera = new THREE.PerspectiveCamera( 25, window.innerWidth/window.innerHeight, 0.1, 1000 )
 let div = 128
-// var camera = new THREE.OrthographicCamera( window.innerWidth/-div, window.innerWidth/div, window.innerHeight/div, window.innerHeight/-div, 0.1, 1000 )
+var camera = new THREE.OrthographicCamera( window.innerWidth/-div, window.innerWidth/div, window.innerHeight/div, window.innerHeight/-div, 0.1, 1000 )
 camera.position.x = -15
 camera.position.z = 20
 camera.position.y = 15
@@ -95,7 +95,7 @@ var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
 var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
-let transparentMat = new T.MeshLambertMaterial({transparent: true, opacity: 0.0})
+let transparentMat = new T.MeshLambertMaterial({visible: false})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
 // for (let i = -1 ; i < 1 ; i+= 0.4) {
@@ -116,6 +116,8 @@ let light = new T.PointLight( 0xffffff, 1.0)
 light.position.set(-7, 10, 0)
 scene.add(light)
 
+// Extra lights
+/**
 // s1 - (0, 10, 0)  | intensity 1   | 0xebe6e6
 // s4 - (0, 10, 0)  | intensity 1   | white
 // s5 - (0, 10, 0)  | intensity 1.1 | white
@@ -155,6 +157,7 @@ scene.add(light)
 // let light2 = new T.PointLight( 0xffffff, 1, 100)
 // light2.position.set(0, -10, 10)
 // scene.add(light2)
+**/
 
 
 let vertices = {}
@@ -189,30 +192,30 @@ for (let i = 0 ; i < heightMap.length ; i++) {
   contY.push(i)
 }
 
-//
+// Composers and FXAA shader
+{
+  var composer1, composer2, fxaaPass;
 
-var composer1, composer2, fxaaPass;
+  fxaaPass = new ShaderPass( FXAAShader );
+  fxaaPass.renderToScreen = false
 
-fxaaPass = new ShaderPass( FXAAShader );
-fxaaPass.renderToScreen = false
+  var pixelRatio = renderer.getPixelRatio();
 
-var pixelRatio = renderer.getPixelRatio();
+  fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( window.innerWidth * pixelRatio );
+  fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( window.innerHeight * pixelRatio );
 
-fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( window.innerWidth * pixelRatio );
-fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( window.innerHeight * pixelRatio );
+  composer1 = new EffectComposer( renderer );
+  composer1.addPass( renderPass );
+  composer1.addPass( fxaaPass );
 
-composer1 = new EffectComposer( renderer );
-composer1.addPass( renderPass );
-composer1.addPass( fxaaPass );
+  //
 
-//
+  var copyPass = new ShaderPass( CopyShader );
 
-var copyPass = new ShaderPass( CopyShader );
-
-composer2 = new EffectComposer( renderer );
-composer2.addPass( renderPass );
-composer2.addPass( copyPass );
-
+  composer2 = new EffectComposer( renderer );
+  composer2.addPass( renderPass );
+  composer2.addPass( copyPass );
+}
 
 
 window.onload = function() {
@@ -225,66 +228,101 @@ window.onload = function() {
 
   let hideSurface = document.getElementById("hide-surface")
 
+  let vertexControlDiv = document.getElementById("div-vertex")
+  vertexControlDiv.style.display = "none"
 
-  // Graph 1
-  addVertex(null, -5, 0)
-  addVertex(null, -4, -1.73)
-  addVertex(null, -3, 0)
-  addVertex(null, 3, 0)
-  addVertex(null, 4, 1.73)
-  addVertex(null, 5, 0)
+  let edgeControlDiv = document.getElementById("div-edge")
+  edgeControlDiv.style.display = "none"
 
-  addEdge(null, 2, 3, -.5)
-  addEdge(null, 0, 1, .8)
-  addEdge(null, 0, 2, .7)
-  addEdge(null, 1, 2, .9)
-  addEdge(null, 3, 4, .6)
-  addEdge(null, 3, 5, .5)
-  addEdge(null, 4, 5, .4)
+  // Set up opacity map for hiding surface
+  let xlimit = 50
+  let ylimit = 30
+  for (let j = ylimit ; j < heightMap[0].length - ylimit ; j++) {
 
-  // Graph 2
-  // 0-A - -5, 0
-  // 1-B - -4.5, -1
-  // 2-C - -3.5, 0.5
-  // 3-E - -3, 0 // Skip D
-  // 4-F - -1.5, 0
-  // 5-G - 2.4, 0.5
-  // 6-H - 2.4, -0.5
-  // 7-I - 3.5, 0.8
-  // 8-J - 4, 3
-  var vertices2 = {}
-  var edges2 = {}
-  addVertexSec(null, -5.5, -0.5, vertices2) // A
-  addVertexSec(null, -4.7, -1.2, vertices2) //B
-  addVertexSec(null, -4.3, 0, vertices2) //C
-  addVertexSec(null, -4, -0.5, vertices2) //E
-  addVertexSec(null, -2.5, -0.5, vertices2) //F
-  addVertexSec(null, 3.4, 1, vertices2) //G
-  addVertexSec(null, 3.4, 0, vertices2) //H
-  addVertexSec(null, 4.5, 1.1, vertices2) //I
-  addVertexSec(null, 5.7, 2.7, vertices2) //J
-  //
-  //
-
-  addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
-
-  addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
-  addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
-  addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
-  addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
-  addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
-  addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
-  addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
-  addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
-
-  addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
-  addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
-  addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
-  addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
-  addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
+    let factor = 0
+    // factor = (Math.abs((heightMap[0].length/2) - j) / (heightMap[0].length/2-ylimit))**(1/10)
+    // // factor = (ylimit - j)**2
+    // factor = 1-factor
+    // // factor /= 3
+    // console.log(factor)
+    // if (factor > 0.3)
+    //   factor = 0.3
+    let limit = xlimit
+    // if (j > heightMap[0].length/2-25 && j < heightMap[0].length/2+25) {
+    //   limit = 50
+    //   // factor = Math.abs((heightMap[0].length/2) - j) / (heightMap[0].length/2)
+    //   // factor = 1-factor
+    //   // factor /= 4
+    // }
+    for (let i = limit + Math.floor(limit*factor) ; i <= heightMap.length - limit - (limit*factor) ; i++) {
+      opacityMap[i][j] = 1
+    }
+  }
 
 
 
+  // Graph 1 & 2
+  {
+    // Graph 1
+    addVertex(null, -5, 0)
+    addVertex(null, -4, -1.73)
+    addVertex(null, -3, -0.5)
+    addVertex(null, 3, -0.5)
+    addVertex(null, 4, 1.73)
+    addVertex(null, 5, 0)
+
+    addEdge(null, 2, 3, -.5)
+    addEdge(null, 0, 1, .8)
+    addEdge(null, 0, 2, .7)
+    addEdge(null, 1, 2, .9)
+    addEdge(null, 3, 4, .6)
+    addEdge(null, 3, 5, .5)
+    addEdge(null, 4, 5, .4)
+
+    // Graph 2
+    // 0-A - -5, 0
+    // 1-B - -4.5, -1
+    // 2-C - -3.5, 0.5
+    // 3-E - -3, 0 // Skip D
+    // 4-F - -1.5, 0
+    // 5-G - 2.4, 0.5
+    // 6-H - 2.4, -0.5
+    // 7-I - 3.5, 0.8
+    // 8-J - 4, 3
+    var vertices2 = {}
+    var edges2 = {}
+    addVertexSec(null, -5.5, -0.5, vertices2) // A
+    addVertexSec(null, -4.7, -1.2, vertices2) //B
+    addVertexSec(null, -4.3, 0, vertices2) //C
+    addVertexSec(null, -4, -0.5, vertices2) //E
+    addVertexSec(null, -2.5, -0.5, vertices2) //F
+    addVertexSec(null, 3.4, 1, vertices2) //G
+    addVertexSec(null, 3.4, 0, vertices2) //H
+    addVertexSec(null, 4.5, 1.1, vertices2) //I
+    addVertexSec(null, 5.7, 2.7, vertices2) //J
+    //
+    //
+
+    addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
+
+    addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
+    addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
+    addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
+    addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
+    addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
+    addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
+    addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
+    addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
+
+    addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
+    addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
+    addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
+    addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
+    addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
+  }
+
+
+  var contourCount = -1
 
   var animate = function () {
   	requestAnimationFrame( animate )
@@ -299,7 +337,6 @@ window.onload = function() {
     linesDrawn = []
 
     heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
-    opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(1.0))
 
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
@@ -482,16 +519,12 @@ window.onload = function() {
       for (let j=0; j < divisions ; j++) {
         plane.geometry.vertices[i*divisions+j].z =  heightMap[i][j]
 
-        if (heightMap[i][j] == 0) {
-          opacityMap[i][j] == 0
-        }
       }
     }
 
 
     // Set materials for plane faces, to hide unwanted
-    let xlimit = 50
-    let ylimit = 30
+
     for (let face of plane.geometry.faces) {
       // console.log(face.materialIndex)
       let z1 = plane.geometry.vertices[face.a].z
@@ -515,18 +548,25 @@ window.onload = function() {
 
       // face.vertexColors[0].setHSL(Math.random(), 0.5, 0.5)
       // face.vertexColors[0] = new T.Color( 0xff00ff )
-      if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+      // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+      //   hide = true
+      if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
         hide = true
       v = face.b
       i = v/divisions
       j = v%divisions
-      if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+      if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
         hide = true
+      // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+      //   hide = true
       v = face.c
       i = v/divisions
       j = v%divisions
-      if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+      // console.log(i + " " + j)
+      if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
         hide = true
+      // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+      //   hide = true
       if (hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
         face.materialIndex = 1 // Transparent
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
@@ -537,13 +577,17 @@ window.onload = function() {
         face.materialIndex = 1
       } else if (hide && hideSurface.checked) {
         face.materialIndex = 1
+      } else if (false && hideSurface.checked && (z1 < -2.4 || z2 < -2.4 || z3 < -2.4)) { // Inward edge
+        face.materialIndex = 1
       } else {
         face.materialIndex = 0
       }
 
     }
 
-    calcContours(xlimit, ylimit)
+    contourCount++
+    if (contourCount < 1)
+      calcContours(xlimit, ylimit)
 
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
@@ -566,9 +610,17 @@ window.onload = function() {
 }
 
 function calcContours(xlimit, ylimit) {
-  var lineMat = new T.LineBasicMaterial({color: 0x707070, linewidth: 1, depthFunc: T.LessEqualDepth})
+  contcolor = 0x000000 // ffffff // 707070
+  var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05})
   var conrec = new Conrec
-  let levels = [-2.4, -2.2, -2, -1.8, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4]
+  let nLevels = 30
+  let levels = []
+  let min = -4
+  let max = 1.6
+  for (let i = min; i < max ; i+=(max-min)/nLevels) {
+    levels.push(i)
+  }
+  // let levels = [-2.4, -2.2, -2, -1.8, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4]
   conrec.contour(heightMap, xlimit, heightMap.length - xlimit - 1, ylimit, heightMap[0].length - 1 - ylimit, contX, contY, levels.length, levels)
   let lines = conrec.contourList()
   for (let line of lines) {
@@ -730,15 +782,8 @@ function setHeights(start, mid, end, weight) {
     let xSpread = Math.max(20, dist*0.56) // length // Def 26
     let ySpread = 10*1.5*2.5 // width TODO: Multiply with edge length
     let xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
-    let yLimit = 0.1*0.55 // depth along width TODO: Change based on edge length
+    let yLimit = 0.1*0.7 // 0.55 // depth along width TODO: Change based on edge length
     let addHeight = -0.5 + weight
-
-    // console.log(angle)
-
-    // console.log("start")
-    // console.log( heightMap[start.y][start.x])
-    // console.log("end")
-    // console.log( heightMap[end.y][end.x])
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
       for (let j = mid.y - ySpread; j <= mid.y + ySpread ; j++) {
