@@ -15,6 +15,7 @@ let vertexcolor = 0x4CAF50
 let edgecolor = 0x21bf73
 let edgecolor_sec = 0x4cd995
 let canvascolor = "#c7c7c7"
+let contcolor = 0xff0000
 
 // let bgcolor = 0xf3f3f3
 // let graphcolor = 0xebe6e6
@@ -60,12 +61,16 @@ let time = Date.now()
 
 var scene = new T.Scene()
 // var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 )
-// var camera = new THREE.PerspectiveCamera( 25, window.innerWidth/window.innerHeight, 0.1, 1000 )
-var camera = new THREE.OrthographicCamera( window.innerWidth/-2, window.innerWidth/2, window.innerHeight/2, window.innerHeight/-2, 0.1, 1000 )
+var camera = new THREE.PerspectiveCamera( 25, window.innerWidth/window.innerHeight, 0.1, 1000 )
+let div = 128
+// var camera = new THREE.OrthographicCamera( window.innerWidth/-div, window.innerWidth/div, window.innerHeight/div, window.innerHeight/-div, 0.1, 1000 )
+camera.position.x = -15
+camera.position.z = 20
+camera.position.y = 15
 
 var clock = new T.Clock()
 
-var renderer = new THREE.WebGLRenderer()
+var renderer = new THREE.WebGLRenderer( { logarithmicDepthBuffer: true, antialias: false } )
 renderer.setSize( window.innerWidth, window.innerHeight )
 renderer.autoClear = false;
 renderer.setPixelRatio( window.devicePixelRatio )
@@ -86,22 +91,28 @@ texture.minFilter = THREE.LinearFilter;
 
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
+var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({transparent: true, opacity: 0.0})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
+// for (let i = -1 ; i < 1 ; i+= 0.4) {
+//   let contourPlane = new T.Mesh(contGeom, contMat)
+//   contourPlane.rotation.set(-1.57, 0, 0)
+//   contourPlane.position.set(0, i, 0)
+//   scene.add(contourPlane)
+// }
 // plane.receiveShadow = true
 // plane.castShadow = true
 plane.rotation.set(-1.57, 0, 0.)
 scene.add( plane )
 
-camera.position.z = 15
-camera.position.y = 5
 controls.update();
 
 
-let light = new T.PointLight( 0xffffff, 1)
+let light = new T.PointLight( 0xffffff, 1.0)
 light.position.set(-7, 10, 0)
 scene.add(light)
 
@@ -163,7 +174,20 @@ var matLine
 
 plane.geometry.dynamic = true
 
+for (let face of plane.geometry.faces) {
+  face.vertexColors[0] = new T.Color(0xffffff)
+  face.vertexColors[1] = new T.Color(0xffffff)
+  face.vertexColors[2] = new T.Color(0xffffff)
+}
+
 var renderPass = new RenderPass( scene, camera );
+
+var contX = []
+var contY = []
+for (let i = 0 ; i < heightMap.length ; i++) {
+  contX.push(i)
+  contY.push(i)
+}
 
 //
 
@@ -307,7 +331,7 @@ window.onload = function() {
       ctx.beginPath();
       ctx.moveTo(startPt[0], startPt[1])
       ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#9f9f9f" // 5ecfe2  // 9f9f9f
+      ctx.strokeStyle = "#68c8de" // 5ecfe2  // 9f9f9f
       ctx.lineWidth = 4
       ctx.stroke()
 
@@ -333,7 +357,7 @@ window.onload = function() {
       ctx.beginPath();
       ctx.moveTo(startPt[0], startPt[1])
       ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#40bad5"
+      ctx.strokeStyle = "#2cacc9" // 40bad5
       ctx.lineWidth = 12
       ctx.stroke()
     }
@@ -430,13 +454,10 @@ window.onload = function() {
     }
 
 
-    //
     smoothHeightMap()
     smoothHeightMap()
     smoothHeightMap()
     smoothHeightMap()
-
-    // raiseHeightMap() // Raise 0 heights to 0.001 to be visible
 
 
     // Draw point on surface texture
@@ -467,27 +488,41 @@ window.onload = function() {
       }
     }
 
+
     // Set materials for plane faces, to hide unwanted
     let xlimit = 50
     let ylimit = 30
     for (let face of plane.geometry.faces) {
       // console.log(face.materialIndex)
-      let z1 = plane.geometry.vertices[face['a']].z
-      let z2 = plane.geometry.vertices[face['b']].z
-      let z3 = plane.geometry.vertices[face['c']].z
+      let z1 = plane.geometry.vertices[face.a].z
+      let z2 = plane.geometry.vertices[face.b].z
+      let z3 = plane.geometry.vertices[face.c].z
       // console.log(face['a'])
       let hide = false
-      let v = face['a']
+      let v = face.a
       let i = v/divisions
       let j = v%divisions
+      // console.log(face)
+      // if (z1 > 1)
+      //   face.vertexColors[0].setHSL( 1, 0, 0.5);
+      // if (z2 > 1)
+      //   face.vertexColors[1].setHSL( 1, 0, 0.5);
+      // if (z3 > 1)
+      //   face.vertexColors[2].setHSL( 1, 0, 0.5);
+      // face.vertexColors[0].setHSL( 1, 0, Math.floor(z1*10)/10);
+      // face.vertexColors[1].setHSL( 1, 0, Math.floor(z2*10)/10);
+      // face.vertexColors[2].setHSL( 1, 0, Math.floor(z3*10)/10);
+
+      // face.vertexColors[0].setHSL(Math.random(), 0.5, 0.5)
+      // face.vertexColors[0] = new T.Color( 0xff00ff )
       if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
         hide = true
-      v = face['b']
+      v = face.b
       i = v/divisions
       j = v%divisions
       if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
         hide = true
-      v = face['c']
+      v = face.c
       i = v/divisions
       j = v%divisions
       if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
@@ -508,20 +543,21 @@ window.onload = function() {
 
     }
 
+    calcContours(xlimit, ylimit)
+
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
+    plane.geometry.colorsNeedUpdate = true;
     plane.geometry.computeVertexNormals()
 
 
+    // Render
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
-
     // console.log(heightMap)
-  	// renderer.render( scene, camera )
     // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
-
     composer1.render()
+    // renderer.render( scene, camera )
     // renderer.setViewport( window.innerWidth/2, 0, window.innerWidth/2, window.innerHeight );
-
     // composer2.render()
 
   };
@@ -529,6 +565,48 @@ window.onload = function() {
   animate();
 }
 
+function calcContours(xlimit, ylimit) {
+  var lineMat = new T.LineBasicMaterial({color: 0x707070, linewidth: 1, depthFunc: T.LessEqualDepth})
+  var conrec = new Conrec
+  let levels = [-2.4, -2.2, -2, -1.8, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4]
+  conrec.contour(heightMap, xlimit, heightMap.length - xlimit - 1, ylimit, heightMap[0].length - 1 - ylimit, contX, contY, levels.length, levels)
+  let lines = conrec.contourList()
+  for (let line of lines) {
+    let points = []
+    // console.log(line)
+    // console.log(line)
+    for (let pt of line) {
+      pt.x = (pt.x*(planeW/149)) - (planeW/2)// (0, 149) to (planeXMin, planeXMax)
+      pt.y = (pt.y*(planeH/149)) - (planeH/2)// (0, 149) to (planeYMin, planeYMax)
+      // console.log(pt.x)
+      let limits = 5
+      if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
+        points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
+    }
+    let geom = new T.BufferGeometry().setFromPoints(points)
+    let lineMesh = new T.Line(geom, lineMat)
+    scene.add(lineMesh)
+
+
+    // if (lineMat != lineMatSec) {
+    //   points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight+0.0001, edge.start.mesh.position.z))
+    //   points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight+0.0001, edge.end.mesh.position.z))
+    // } else {
+    //   points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight, edge.start.mesh.position.z))
+    //   points.push(new T.Vector3(edge.end.mesh.position.x, vertexHeight, edge.end.mesh.position.z))
+    // }
+    // points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight+0.0001, edge.start.mesh.position.z))
+    //
+    // let geom = new T.BufferGeometry().setFromPoints(points)
+    //
+    // let line = new T.Line(geom, lineMat)
+    //
+    //
+    // scene.add( line );
+    // linesDrawn.push(line)
+  }
+
+}
 
 function raiseHeightMap() {
   xLimit = 55
@@ -882,7 +960,7 @@ function addVertexSec(obj, x, y, vertices, drawPoint=true) {
   if (drawPoint) {
     scene.add(sprite)
     scene.add(newPt)
-    console.log(length)
+    // console.log(length)
   }
 
   vertices[String(length)] = new VertexObj(length, length, newPt, sprite)
