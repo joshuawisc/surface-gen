@@ -89,15 +89,17 @@ ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 const texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
 
+var clipPlane = new T.Plane(new T.Vector3(0, 2, 0), 1)
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
+
 // for (let i = -1 ; i < 1 ; i+= 0.4) {
 //   let contourPlane = new T.Mesh(contGeom, contMat)
 //   contourPlane.rotation.set(-1.57, 0, 0)
@@ -348,33 +350,19 @@ window.onload = function() {
       edges_visual = edges2
     }
 
-    let logical_edges = [[1, 6], [4, 7], [0, 8], [2, 8], [2, 5]]
+    // Graph 2
+    // 0-A - -5, 0
+    // 1-B - -4.5, -1
+    // 2-C - -3.5, 0.5
+    // 3-E - -3, 0 // Skip D
+    // 4-F - -1.5, 0
+    // 5-G - 2.4, 0.5
+    // 6-H - 2.4, -0.5
+    // 7-I - 3.5, 0.8
+    // 8-J - 4, 3
 
-    // Draw logical edges into graph, Draw logical edges into texture
-    for (let ids of logical_edges) {
-      // for (let id2 in vertices_visual) {
-      //   if (id < id2) {
-      //     continue
-      //   }
-      let id = ids[0]
-      let id2 = ids[1]
+    let logical_edges = [[1, 6, null, null], [4, 7, 2, -0.3], [0, 8, 2, -0.5], [2, 8, 2, 0], [2, 5, 2, -0.3]]
 
-      let startPt = [parseFloat(vertices_visual[id].mesh.position.x), parseFloat(vertices_visual[id].mesh.position.z)]
-      let endPt = [parseFloat(vertices_visual[id2].mesh.position.x), parseFloat(vertices_visual[id2].mesh.position.z)]
-
-      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      ctx.setLineDash([])
-      ctx.beginPath();
-      ctx.moveTo(startPt[0], startPt[1])
-      ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#68c8de" // 5ecfe2  // 9f9f9f
-      ctx.lineWidth = 4
-      ctx.stroke()
-
-      drawEdge(new EdgeObj(null, vertices_visual[id], vertices_visual[id2], null), lineMatSec)
-      // }
-    }
 
     ctx.setLineDash([])
 
@@ -394,10 +382,55 @@ window.onload = function() {
       ctx.beginPath();
       ctx.moveTo(startPt[0], startPt[1])
       ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#2cacc9" // 40bad5
+      ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
       ctx.lineWidth = 12
       ctx.stroke()
     }
+
+    // Draw logical edges into graph, Draw logical edges into texture
+    for (let ids of logical_edges) {
+      // for (let id2 in vertices_visual) {
+      //   if (id < id2) {
+      //     continue
+      //   }
+      let id = ids[0]
+      let id2 = ids[1]
+
+      let startPt = [parseFloat(vertices_visual[id].mesh.position.x), parseFloat(vertices_visual[id].mesh.position.z)]
+      let endPt = [parseFloat(vertices_visual[id2].mesh.position.x), parseFloat(vertices_visual[id2].mesh.position.z)]
+
+      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+
+      ctx.setLineDash([])
+      ctx.beginPath();
+      ctx.moveTo(startPt[0], startPt[1])
+      if (ids[2] == null) {
+        ctx.lineTo(endPt[0], endPt[1])
+        ctx.strokeStyle = "#2cacc9" //  #235789 // #68c8de // #5ecfe2  // #9f9f9f
+        ctx.lineWidth = 4
+        ctx.stroke()
+      } else {
+        let ctrlPt = [ids[2], ids[3]]
+        ctrlPt = [(ctrlPt[0] - planeXMin) * ctx.canvas.width / planeW, (ctrlPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.quadraticCurveTo(ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
+        ctx.strokeStyle = "#2cacc9" //  #235789 // #68c8de // #5ecfe2  // #9f9f9f
+        ctx.lineWidth = 4
+        ctx.stroke()
+        // ctx.fillStyle = "#ffffff";
+        // ctx.beginPath();
+        // ctx.arc(ctrlPt[0], ctrlPt[1], 15, 0, 2 * Math.PI);
+        // ctx.fill();
+      }
+
+
+
+
+
+      drawEdge(new EdgeObj(null, vertices_visual[id], vertices_visual[id2], null), lineMatSec)
+      // }
+    }
+
 
     // Set height map for +ve edges
     for (let id in edges) {
@@ -503,7 +536,7 @@ window.onload = function() {
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
 
-      ctx.fillStyle = "#035aa6";
+      ctx.fillStyle = "#035aa6" // #035aa6
 
       ctx.beginPath();
       ctx.arc(point[0], point[1], 15, 0, 2 * Math.PI);
@@ -596,6 +629,7 @@ window.onload = function() {
 
 
     // Render
+    renderer.localClippingEnabled = true
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
     // console.log(heightMap)
     // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
@@ -613,9 +647,9 @@ function calcContours(xlimit, ylimit) {
   contcolor = 0x000000 // ffffff // 707070
   var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05})
   var conrec = new Conrec
-  let nLevels = 30
+  let nLevels = 25
   let levels = []
-  let min = -4
+  let min = -2
   let max = 1.6
   for (let i = min; i < max ; i+=(max-min)/nLevels) {
     levels.push(i)
@@ -780,9 +814,9 @@ function setHeights(start, mid, end, weight) {
     let dist = calcDist(start, end)
 
     let xSpread = Math.max(20, dist*0.56) // length // Def 26
-    let ySpread = 10*1.5*2.5 // width TODO: Multiply with edge length
+    let ySpread = 10*1.5*2.5 // 2.5 // width TODO: Multiply with edge length
     let xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
-    let yLimit = 0.1*0.7 // 0.55 // depth along width TODO: Change based on edge length
+    let yLimit = 0.1*0.7 // 0.7 // 0.55 // depth along width TODO: Change based on edge length
     let addHeight = -0.5 + weight
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
