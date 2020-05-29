@@ -361,7 +361,8 @@ window.onload = function() {
     // 7-I - 3.5, 0.8
     // 8-J - 4, 3
 
-    let logical_edges = [[1, 6, null, null], [4, 7, 2, -0.3], [0, 8, 2, -0.5], [2, 8, 2, 0], [2, 5, 2, -0.3]]
+    let logical_edges = [[1, 6, null, null], [4, 7, 1, -0.5], [0, 8, 2, -0.8], [2, 8, 2, -0.7], [2, 5, 0.5, -0.8]]
+    // let logical_edges = [[1, 6, null, null], [4, 7, 0.2, -0.3], [0, 8, 0.6, -0.3], [2, 8, 0.6, -0.3], [2, 5, 0.2, -0.3]]
 
 
     ctx.setLineDash([])
@@ -414,9 +415,12 @@ window.onload = function() {
         let ctrlPt = [ids[2], ids[3]]
         ctrlPt = [(ctrlPt[0] - planeXMin) * ctx.canvas.width / planeW, (ctrlPt[1] - planeYMin) * ctx.canvas.height / planeH]
         ctx.quadraticCurveTo(ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
+        // ctx.bezierCurveTo(ctrlPt[0], ctrlPt[1], ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
+
         ctx.strokeStyle = "#2cacc9" //  #235789 // #68c8de // #5ecfe2  // #9f9f9f
         ctx.lineWidth = 4
         ctx.stroke()
+
         // ctx.fillStyle = "#ffffff";
         // ctx.beginPath();
         // ctx.arc(ctrlPt[0], ctrlPt[1], 15, 0, 2 * Math.PI);
