@@ -89,13 +89,72 @@ ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 const texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
 
+let ptGeom = new T.SphereGeometry(0.15, 32, 32)
+let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
+
+
 var clipPlane = new T.Plane(new T.Vector3(0, 2, 0), 1)
+let p1 = new T.Vector3(-1, 0, 3.5)
+let p2 = new T.Vector3(1, 0, 3.5)
+let p3 = new T.Vector3(0, -1, 2.4)
+
+// let p1 = new T.Vector3(-1, -1.2, 3)
+// let p2 = new T.Vector3(1, -1.2, 3)
+// let p3 = new T.Vector3(0, -1.8, 2.4)
+
+let newPt = new T.Mesh(ptGeom, ptMat)
+newPt.position.y = p1.y
+newPt.position.x = p1.x
+newPt.position.z = p1.z
+// scene.add(newPt)
+
+newPt = new T.Mesh(ptGeom, ptMat)
+newPt.position.y = p2.y
+newPt.position.x = p2.x
+newPt.position.z = p2.z
+// scene.add(newPt)
+
+newPt = new T.Mesh(ptGeom, ptMat)
+newPt.position.y = p3.y
+newPt.position.x = p3.x
+newPt.position.z = p3.z
+// scene.add(newPt)
+
+var clipPlane = new T.Plane().setFromCoplanarPoints(p1, p2, p3)
+
+let p4 = new T.Vector3(-1, 0, -3.5)
+let p5 = new T.Vector3(1, 0, -3.5)
+let p6 = new T.Vector3(0, -1, -3)
+
+// let p1 = new T.Vector3(-1, -1.5, 3)
+// let p2 = new T.Vector3(1, -1.5, 3)
+// let p3 = new T.Vector3(0, -2, 2.4)
+
+newPt = new T.Mesh(ptGeom, ptMat)
+newPt.position.y = p4.y
+newPt.position.x = p4.x
+newPt.position.z = p4.z
+// scene.add(newPt)
+
+newPt = new T.Mesh(ptGeom, ptMat)
+newPt.position.y = p5.y
+newPt.position.x = p5.x
+newPt.position.z = p5.z
+// scene.add(newPt)
+
+newPt = new T.Mesh(ptGeom, ptMat)
+newPt.position.y = p6.y
+newPt.position.x = p6.x
+newPt.position.z = p6.z
+// scene.add(newPt)
+
+var clipPlane2 = new T.Plane().setFromCoplanarPoints(p6, p5, p4)
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane, clipPlane2], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -165,14 +224,12 @@ scene.add(light)
 let vertices = {}
 let edges = {}
 let linesDrawn = []
-let ptGeom = new T.SphereGeometry(0.15, 32, 32)
-let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
 // edgecolor_sec = 0x6decaf
 edgecolor_sec = 0x2cc57c
 edgecolor = 0x178e51
 
-var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 6 })
+var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 6, clippingPlanes: [clipPlane] })
 // var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
 var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
 var matLine
@@ -361,7 +418,8 @@ window.onload = function() {
     // 7-I - 3.5, 0.8
     // 8-J - 4, 3
 
-    let logical_edges = [[1, 6, null, null], [4, 7, 1, -0.5], [0, 8, 2, -0.8], [2, 8, 2, -0.7], [2, 5, 0.5, -0.8]]
+    // let logical_edges = [[1, 6, null, null], [4, 7, 1, -0.5], [0, 8, 2, -0.8], [2, 8, 2, -0.7], [2, 5, 0.5, -0.8]]
+    let logical_edges = [[1, 6, null, null], [4, 7, 1.2, -0.3], [0, 8, 1.6, -0.3], [2, 8, 1.6, -0.3], [2, 5, 1.2, -0.3]]
     // let logical_edges = [[1, 6, null, null], [4, 7, 0.2, -0.3], [0, 8, 0.6, -0.3], [2, 8, 0.6, -0.3], [2, 5, 0.2, -0.3]]
 
 
@@ -414,17 +472,14 @@ window.onload = function() {
       } else {
         let ctrlPt = [ids[2], ids[3]]
         ctrlPt = [(ctrlPt[0] - planeXMin) * ctx.canvas.width / planeW, (ctrlPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        ctx.quadraticCurveTo(ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
-        // ctx.bezierCurveTo(ctrlPt[0], ctrlPt[1], ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
+        // ctx.quadraticCurveTo(ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
+        ctx.bezierCurveTo(ctrlPt[0], ctrlPt[1], ctrlPt[0], ctrlPt[1], endPt[0], endPt[1])
 
         ctx.strokeStyle = "#2cacc9" //  #235789 // #68c8de // #5ecfe2  // #9f9f9f
         ctx.lineWidth = 4
         ctx.stroke()
 
-        // ctx.fillStyle = "#ffffff";
-        // ctx.beginPath();
-        // ctx.arc(ctrlPt[0], ctrlPt[1], 15, 0, 2 * Math.PI);
-        // ctx.fill();
+        // ctjcmathews2 ;
       }
 
 
@@ -649,11 +704,11 @@ window.onload = function() {
 
 function calcContours(xlimit, ylimit) {
   contcolor = 0x000000 // ffffff // 707070
-  var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05})
+  var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
   var conrec = new Conrec
-  let nLevels = 25
+  let nLevels = 26
   let levels = []
-  let min = -2
+  let min = -2.2
   let max = 1.6
   for (let i = min; i < max ; i+=(max-min)/nLevels) {
     levels.push(i)
@@ -670,6 +725,8 @@ function calcContours(xlimit, ylimit) {
       pt.y = (pt.y*(planeH/149)) - (planeH/2)// (0, 149) to (planeYMin, planeYMax)
       // console.log(pt.x)
       let limits = 5
+      // if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
+      //   points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
       if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
         points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
     }
