@@ -50,6 +50,28 @@ button.btn-delete:hover {
 
 }
 
+.slider {
+  -webkit-appearance: none;
+  width: 50%;
+  height: 10px;
+  /* border-radius: 5px; */
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
 input[type=text] {
   width: 30px;
   /* background-color: var(--main-bg-color) */
@@ -80,20 +102,33 @@ label {
   margin: 5px;
 }
 #div-extra {
-  margin-top: 40px;
+  margin-top: 10px;
+  display: inline-block;
+  overflow-y: auto;
+  height: 300px;
+  width: 450px;
+  border-style: solid;
+  border-color: #E5E5E5;
+  border-width: 5px;
 }
 #div-vertex {
   /* TODO: inline-block and auto scroll */
   display: inline-block;
   overflow-y: auto;
   height: 300px;
-
+  width: 450px;
+  /* background-color: #E5E5E5; */
+  border-style: solid;
+  border-color: #E5E5E5;
+  border-width: 5px;
 }
 #div-edge {
   display: block;
   overflow-y: auto;
   height: 300px;
-
+  border-style: solid;
+  border-color: #E5E5E5;
+  border-width: 5px;
 }
 label[for=name] {
   color: #4CAF50;

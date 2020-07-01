@@ -39,8 +39,24 @@
       </div>
       <div id="div-extra" class="gui-box">
         <!-- <button type="button" id="btn-scrn">Take screenshot</button> -->
-        <!-- <button type="button" id="btn-small-threshold">Generate small threshold</button> -->
-        <input type="checkbox" id="hide-surface" name="hide-surface" checked="true">
+        <button type="button" id="btn-gen-graph">Generate graph</button>
+        <p>Positive Amplitude:</p>
+        <input type="range" min="1" max="3" value="3" class="slider" step="0.1" id="amp-slider">
+        <p>Negative X-Limit:</p>
+        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xlimit-slider">
+        <p>Negative Y-Limit:</p>
+        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="ylimit-slider">
+        <p>Negative Height:</p>
+        <input type="range" min="-2" max="2" value="0" class="slider" step="0.1" id="height-slider">
+        <!-- <p>Hide +X:</p>
+        <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide+x-slider">
+        <p>Hide -X:</p>
+        <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide-x-slider">
+        <p>Hide +Y:</p>
+        <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide+y-slider">
+        <p>Hide -Y:</p>
+        <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide-y-slider"> -->
+        <input type="checkbox" id="hide-surface" name="hide-surface">
         <label for="hide-surface"> Hide extra surface</label><br>
       </div>
     </div>

@@ -93,7 +93,6 @@ let ptGeom = new T.SphereGeometry(0.15, 32, 32)
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
 
-var clipPlane = new T.Plane(new T.Vector3(0, 2, 0), 1)
 let p1 = new T.Vector3(-1, 0, 3.5)
 let p2 = new T.Vector3(1, 0, 3.5)
 let p3 = new T.Vector3(0, -1, 2.4)
@@ -150,11 +149,20 @@ newPt.position.z = p6.z
 
 var clipPlane2 = new T.Plane().setFromCoplanarPoints(p6, p5, p4)
 
+var clipPlane = new T.Plane(new T.Vector3(0, 2, 0), 1)
+var clipPlane2 = new T.Plane(new T.Vector3(1, 0, 0), 5.5)
+var clipPlane3 = new T.Plane(new T.Vector3(-1, 0, 0), 6)
+var clipPlane4 = new T.Plane(new T.Vector3(0, 0, 1), 3.3)
+var clipPlane5 = new T.Plane(new T.Vector3(0, 0, -1), 3.3)
+
+
+
+
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane, clipPlane2], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -232,7 +240,12 @@ edgecolor = 0x178e51
 var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 6, clippingPlanes: [clipPlane] })
 // var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
 var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
-var matLine
+// var matLine
+
+var contourMeshLines = []
+var contourCount = -1
+
+
 
 plane.geometry.dynamic = true
 
@@ -288,10 +301,13 @@ window.onload = function() {
   let hideSurface = document.getElementById("hide-surface")
 
   let vertexControlDiv = document.getElementById("div-vertex")
-  vertexControlDiv.style.display = "none"
+  // vertexControlDiv.style.display = "none"
 
   let edgeControlDiv = document.getElementById("div-edge")
-  edgeControlDiv.style.display = "none"
+  // edgeControlDiv.style.display = "none"
+
+  let btnGenGraph = document.getElementById("btn-gen-graph")
+  btnGenGraph.onclick = generateGraph
 
   // Set up opacity map for hiding surface
   let xlimit = 50
@@ -319,74 +335,11 @@ window.onload = function() {
   }
 
 
-
-  // Graph 1 & 2
-  {
-    // Graph 1
-    addVertex(null, -5, 0)
-    addVertex(null, -4, -1.73)
-    addVertex(null, -3, -0.5)
-    addVertex(null, 3, -0.5)
-    addVertex(null, 4, 1.73)
-    addVertex(null, 5, 0)
-
-    addEdge(null, 2, 3, -.5)
-    addEdge(null, 0, 1, .8)
-    addEdge(null, 0, 2, .7)
-    addEdge(null, 1, 2, .9)
-    addEdge(null, 3, 4, .6)
-    addEdge(null, 3, 5, .5)
-    addEdge(null, 4, 5, .4)
-
-    // Graph 2
-    // 0-A - -5, 0
-    // 1-B - -4.5, -1
-    // 2-C - -3.5, 0.5
-    // 3-E - -3, 0 // Skip D
-    // 4-F - -1.5, 0
-    // 5-G - 2.4, 0.5
-    // 6-H - 2.4, -0.5
-    // 7-I - 3.5, 0.8
-    // 8-J - 4, 3
-    var vertices2 = {}
-    var edges2 = {}
-    addVertexSec(null, -5.5, -0.5, vertices2) // A
-    addVertexSec(null, -4.7, -1.2, vertices2) //B
-    addVertexSec(null, -4.3, 0, vertices2) //C
-    addVertexSec(null, -4, -0.5, vertices2) //E
-    addVertexSec(null, -2.5, -0.5, vertices2) //F
-    addVertexSec(null, 3.4, 1, vertices2) //G
-    addVertexSec(null, 3.4, 0, vertices2) //H
-    addVertexSec(null, 4.5, 1.1, vertices2) //I
-    addVertexSec(null, 5.7, 2.7, vertices2) //J
-    //
-    //
-
-    addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
-
-    addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
-    addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
-    addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
-    addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
-    addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
-    addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
-    addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
-    addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
-
-    addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
-    addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
-    addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
-    addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
-    addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
-  }
-
-
-  var contourCount = -1
-
   var animate = function () {
   	requestAnimationFrame( animate )
 
     controls.update()
+
 
 
     // Clear lines, heights, reset textures
@@ -397,10 +350,11 @@ window.onload = function() {
 
     heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
 
+
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-    let viewSeperate = true
+    let viewSeperate = false
     let vertices_visual = vertices, edges_visual = edges
     if (viewSeperate) {
       vertices_visual = vertices2
@@ -419,8 +373,9 @@ window.onload = function() {
     // 8-J - 4, 3
 
     // let logical_edges = [[1, 6, null, null], [4, 7, 1, -0.5], [0, 8, 2, -0.8], [2, 8, 2, -0.7], [2, 5, 0.5, -0.8]]
-    let logical_edges = [[1, 6, null, null], [4, 7, 1.2, -0.3], [0, 8, 1.6, -0.3], [2, 8, 1.6, -0.3], [2, 5, 1.2, -0.3]]
+    // let logical_edges = [[1, 6, null, null], [4, 7, 1.2, -0.3], [0, 8, 1.6, -0.3], [2, 8, 1.6, -0.3], [2, 5, 1.2, -0.3]]
     // let logical_edges = [[1, 6, null, null], [4, 7, 0.2, -0.3], [0, 8, 0.6, -0.3], [2, 8, 0.6, -0.3], [2, 5, 0.2, -0.3]]
+    let logical_edges = []
 
 
     ctx.setLineDash([])
@@ -677,13 +632,15 @@ window.onload = function() {
 
     }
 
+
     contourCount++
-    if (contourCount < 1)
-      calcContours(xlimit, ylimit)
+
+    calcContours(xlimit, ylimit)
+
 
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
-    plane.geometry.colorsNeedUpdate = true;
+    plane.geometry.colorsNeedUpdate = true
     plane.geometry.computeVertexNormals()
 
 
@@ -703,6 +660,12 @@ window.onload = function() {
 }
 
 function calcContours(xlimit, ylimit) {
+
+  if (contourMeshLines.length != 0) {
+    for (let line of contourMeshLines)
+      scene.remove(line)
+  }
+
   contcolor = 0x000000 // ffffff // 707070
   var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
   var conrec = new Conrec
@@ -713,9 +676,12 @@ function calcContours(xlimit, ylimit) {
   for (let i = min; i < max ; i+=(max-min)/nLevels) {
     levels.push(i)
   }
+
   // let levels = [-2.4, -2.2, -2, -1.8, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4]
   conrec.contour(heightMap, xlimit, heightMap.length - xlimit - 1, ylimit, heightMap[0].length - 1 - ylimit, contX, contY, levels.length, levels)
+
   let lines = conrec.contourList()
+
   for (let line of lines) {
     let points = []
     // console.log(line)
@@ -730,9 +696,14 @@ function calcContours(xlimit, ylimit) {
       if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
         points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
     }
+
     let geom = new T.BufferGeometry().setFromPoints(points)
     let lineMesh = new T.Line(geom, lineMat)
+    contourMeshLines.push(lineMesh)
     scene.add(lineMesh)
+  }
+
+
 
 
     // if (lineMat != lineMatSec) {
@@ -751,8 +722,6 @@ function calcContours(xlimit, ylimit) {
     //
     // scene.add( line );
     // linesDrawn.push(line)
-  }
-
 }
 
 function raiseHeightMap() {
@@ -835,7 +804,7 @@ function setHeights(start, mid, end, weight) {
     // TODO: Only iterate through local points for speedup instead of whole 2d array
     let x = mid.y
     let y = mid.x
-    let amp = 1000
+    let amp = document.getElementById("amp-slider").value // Def 1000
     weight = 2.5*weight
     let xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
     let ySpread = (divisions/10)*(0.4*weight)
@@ -876,9 +845,13 @@ function setHeights(start, mid, end, weight) {
 
     let xSpread = Math.max(20, dist*0.56) // length // Def 26
     let ySpread = 10*1.5*2.5 // 2.5 // width TODO: Multiply with edge length
-    let xLimit = (1.25*weight*2)/(xSpread) // height along length Def 0.05
-    let yLimit = 0.1*0.7 // 0.7 // 0.55 // depth along width TODO: Change based on edge length
-    let addHeight = -0.5 + weight
+    let xLimit = ((1.25*weight*2)/(xSpread)) * parseFloat(document.getElementById("xlimit-slider").value) // Def 1000// height along length Def 0.05
+    let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) // 0.7 // 0.55 // depth along width TODO: Change based on edge length
+    let addHeight = (-0.5 + weight) + parseFloat(document.getElementById("height-slider").value)
+    // console.log(addHeight)
+    // console.log(document.getElementById("height-slider").value)
+    // addHeight += document.getElementById("height-slider").value
+    // console.log(addHeight)
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
       for (let j = mid.y - ySpread; j <= mid.y + ySpread ; j++) {
@@ -1007,7 +980,7 @@ function vertexPositionChange() {
 
 function addVertex(obj, x, y, drawPoint) {
   if (typeof drawPoint == 'undefined')
-    drawPoint = false
+    drawPoint = true
 
   if (typeof x == 'undefined') {
     x = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
@@ -1086,7 +1059,7 @@ function addVertex(obj, x, y, drawPoint) {
   vertexCount++
 }
 
-function addVertexSec(obj, x, y, vertices, drawPoint=true) {
+function addVertexSec(obj, x, y, vertices, drawPoint=false) {
   let newPt = new T.Mesh(ptGeom, ptMat)
   newPt.position.y = vertexHeight
   newPt.position.x = x
@@ -1107,12 +1080,74 @@ function addVertexSec(obj, x, y, vertices, drawPoint=true) {
 }
 
 function removeVertex() {
-  parentDiv = this.parentElement
-  name = parentDiv.childNodes[0].textContent
+  let parentDiv = this.parentElement
+  let name = parentDiv.childNodes[0].textContent
   scene.remove(vertices[name].mesh)
   scene.remove(vertices[name].label)
   delete vertices[name]
   parentDiv.remove()
+}
+
+function generateGraph() {
+  // Graph 1 & 2
+  {
+    // Graph 1
+    addVertex(null, -5, 0)
+    addVertex(null, -4, -1.73)
+    addVertex(null, -3, -0.5)
+    addVertex(null, 3, -0.5)
+    addVertex(null, 4, 1.73)
+    addVertex(null, 5, 0)
+
+    addEdge(null, 2, 3, -.5)
+    addEdge(null, 0, 1, .8)
+    addEdge(null, 0, 2, .7)
+    addEdge(null, 1, 2, .9)
+    addEdge(null, 3, 4, .6)
+    addEdge(null, 3, 5, .5)
+    addEdge(null, 4, 5, .4)
+
+    // Graph 2
+    // 0-A - -5, 0
+    // 1-B - -4.5, -1
+    // 2-C - -3.5, 0.5
+    // 3-E - -3, 0 // Skip D
+    // 4-F - -1.5, 0
+    // 5-G - 2.4, 0.5
+    // 6-H - 2.4, -0.5
+    // 7-I - 3.5, 0.8
+    // 8-J - 4, 3
+    var vertices2 = {}
+    var edges2 = {}
+    addVertexSec(null, -5.5, -0.5, vertices2) // A
+    addVertexSec(null, -4.7, -1.2, vertices2) //B
+    addVertexSec(null, -4.3, 0, vertices2) //C
+    addVertexSec(null, -4, -0.5, vertices2) //E
+    addVertexSec(null, -2.5, -0.5, vertices2) //F
+    addVertexSec(null, 3.4, 1, vertices2) //G
+    addVertexSec(null, 3.4, 0, vertices2) //H
+    addVertexSec(null, 4.5, 1.1, vertices2) //I
+    addVertexSec(null, 5.7, 2.7, vertices2) //J
+    //
+    //
+
+    addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
+
+    addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
+    addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
+    addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
+    addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
+    addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
+    addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
+    addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
+    addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
+
+    addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
+    addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
+    addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
+    addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
+    addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
+  }
 }
 
 function drawEdge(edge, lineMat) {
@@ -1286,8 +1321,8 @@ function edgeChange() {
 function removeEdge() {
   //TODO: Remove edge
   console.log("Remove edge")
-  parentDiv = this.parentElement
-  id = parentDiv.childNodes[0].textContent
+  let parentDiv = this.parentElement
+  let id = parentDiv.childNodes[0].textContent
   delete edges[id]
   parentDiv.remove()
 }
