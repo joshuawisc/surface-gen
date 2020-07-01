@@ -614,13 +614,13 @@ window.onload = function() {
         hide = true
       // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
       //   hide = true
-      if (hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
+      if (false && hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
         face.materialIndex = 1 // Transparent
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
         face.materialIndex = 1
       } else if (false && hideSurface.checked && (Math.abs(z2-z1) + Math.abs(z3-z1) + Math.abs(z3-z2) > 0.8)) { // Extra condition for tests
         face.materialIndex = 1
-      } else if (true && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests
+      } else if (false && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests // Was true
         face.materialIndex = 1
       } else if (hide && hideSurface.checked) {
         face.materialIndex = 1
@@ -645,7 +645,8 @@ window.onload = function() {
 
 
     // Render
-    renderer.localClippingEnabled = true
+    renderer.localClippingEnabled = hideSurface.checked
+
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
     // console.log(heightMap)
     // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
