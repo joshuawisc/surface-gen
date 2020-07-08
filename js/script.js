@@ -7,8 +7,6 @@ import { LineGeometry } from './scripts/LineGeometry.js';
 import { Line2 } from './scripts/Line2.js';
 import { LineMaterial } from './scripts/LineMaterial.js';
 
-
-
 let bgcolor = 0xf3f3f3
 let graphcolor = 0xffffff
 let vertexcolor = 0x4CAF50
@@ -17,6 +15,8 @@ let edgecolor_sec = 0x4cd995
 let canvascolor = "#c7c7c7"
 let contcolor = 0xff0000
 
+// Extra colors
+/*
 // let bgcolor = 0xf3f3f3
 // let graphcolor = 0xebe6e6
 // let vertexcolor = 0x4CAF50
@@ -35,7 +35,7 @@ let contcolor = 0xff0000
 // let vertexcolor = 0xff2e63
 // let edgecolor = 0x010a43
 // let canvascolor = "#ff9d9d"
-
+*/
 
 // TODO: Resize graph based on highest weight
 // TODO: Optimization move lines instead of redrawing?
@@ -58,6 +58,7 @@ let vertexHeight = 3
 
 let time = Date.now()
 
+// ThreeJS Scene Setup
 
 var scene = new T.Scene()
 // var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 )
@@ -88,6 +89,13 @@ ctx.fillStyle = canvascolor;
 ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 const texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
+
+let background = new Image()
+background.src = "./images/grayworld2.jpg"
+background.onload = function() {
+  ctx.drawImage(background,0,0)
+
+}
 
 let ptGeom = new T.SphereGeometry(0.15, 32, 32)
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
@@ -150,19 +158,17 @@ newPt.position.z = p6.z
 var clipPlane2 = new T.Plane().setFromCoplanarPoints(p6, p5, p4)
 
 var clipPlane = new T.Plane(new T.Vector3(0, 2, 0), 2)
-var clipPlane2 = new T.Plane(new T.Vector3(1, 0, 0), 5.5)
-var clipPlane3 = new T.Plane(new T.Vector3(-1, 0, 0), 6)
-var clipPlane4 = new T.Plane(new T.Vector3(0, 0, 1), 3.3)
-var clipPlane5 = new T.Plane(new T.Vector3(0, 0, -1), 3.3)
-
-
+var clipPlane2 = new T.Plane(new T.Vector3(1, 0, 0), 7) // 5.5
+var clipPlane3 = new T.Plane(new T.Vector3(-1, 0, 0), 7) // 6
+var clipPlane4 = new T.Plane(new T.Vector3(0, 0, 1), 10) // 3.3
+var clipPlane5 = new T.Plane(new T.Vector3(0, 0, -1), 10) // 3.3
 
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -178,12 +184,16 @@ var plane = new T.Mesh( geometry, mMat )
 plane.rotation.set(-1.57, 0, 0.)
 scene.add( plane )
 
+
 controls.update();
 
 
-let light = new T.PointLight( 0xffffff, 1.0)
+let light = new T.PointLight( 0xffffff, 0.5)
 light.position.set(-7, 10, 0)
 scene.add(light)
+
+var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
+scene.add( alight );
 
 // Extra lights
 /**
@@ -228,9 +238,9 @@ scene.add(light)
 // scene.add(light2)
 **/
 
-
 let vertices = {}
 let edges = {}
+let names = {}
 let linesDrawn = []
 
 // edgecolor_sec = 0x6decaf
@@ -291,6 +301,14 @@ for (let i = 0 ; i < heightMap.length ; i++) {
 
 
 window.onload = function() {
+
+  var dropNodes = document.getElementById('drop-nodes');
+  dropNodes.addEventListener('dragover', dragOver, false);
+  dropNodes.addEventListener('drop', fileSelectNodes, false);
+
+  var dropEdges = document.getElementById('drop-edges');
+  dropEdges.addEventListener('dragover', dragOver, false);
+  dropEdges.addEventListener('drop', fileSelectEdges, false);
 
   let btnAddVertex = document.getElementById("btn-add-vertex")
   btnAddVertex.onclick = addVertex
@@ -353,6 +371,10 @@ window.onload = function() {
 
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.drawImage(background,0,0,697,998,250,-10,1650,2080) // 696x995
+
+
+
 
     let viewSeperate = false
     let vertices_visual = vertices, edges_visual = edges
@@ -553,7 +575,7 @@ window.onload = function() {
       ctx.fillStyle = "#035aa6" // #035aa6
 
       ctx.beginPath();
-      ctx.arc(point[0], point[1], 15, 0, 2 * Math.PI);
+      ctx.arc(point[0], point[1], 10, 0, 2 * Math.PI);
       ctx.fill();
     }
 
@@ -622,7 +644,7 @@ window.onload = function() {
         face.materialIndex = 1
       } else if (false && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests // Was true
         face.materialIndex = 1
-      } else if (hide && hideSurface.checked) {
+      } else if (false && hide && hideSurface.checked) {
         face.materialIndex = 1
       } else if (false && hideSurface.checked && (z1 < -2.4 || z2 < -2.4 || z3 < -2.4)) { // Inward edge
         face.materialIndex = 1
@@ -661,7 +683,8 @@ window.onload = function() {
 }
 
 function calcContours(xlimit, ylimit) {
-
+  xlimit = 0
+  ylimit = 0
   if (contourMeshLines.length != 0) {
     for (let line of contourMeshLines)
       scene.remove(line)
@@ -694,7 +717,9 @@ function calcContours(xlimit, ylimit) {
       let limits = 5
       // if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
       //   points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
-      if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
+      // if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
+      //   points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
+      if (pt.x >= -10 && pt.x <= 10 && pt.y >= -7 && pt.y <= 7)
         points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
     }
 
@@ -748,8 +773,8 @@ function raiseHeightMap() {
 }
 
 function smoothHeightMap() {
-  for (let i = 45 ; i < heightMap.length-47 ; i++) {
-    for (let j = 25 ; j < heightMap[0].length-27; j++) {
+  for (let i = 2 ; i < heightMap.length-2 ; i++) {
+    for (let j = 2 ; j < heightMap[0].length-2; j++) {
       // if (heightMap[i][j] == 0) {
       //   if (heightMap[i+1][j] * heightMap[i-1][j] *
       //     heightMap[i][j+1] * heightMap[i][j-1] != 0 ) {// If all neighbours are non zero
@@ -958,7 +983,21 @@ function calcDist(pt1, pt2) {
 }
 
 function vertexNameChange() {
-  //TODO: Name change
+  // TODO: Deal with duplicate names
+  if (this.value == '')
+    return
+  let parentDiv = this.parentElement
+  let id = parentDiv.childNodes[0].textContent
+  let pt = vertices[id]
+  let oldName = pt.name
+  pt.name = this.value
+  scene.remove(pt.label)
+  pt.label = getNameSprite(this.value)
+  pt.label.position.set(pt.mesh.position.x, vertexHeight + 0.5, pt.mesh.position.z)
+  scene.add(pt.label)
+  delete names[oldName]
+  names[pt.name] = parseInt(id)
+
 }
 
 function vertexPositionChange() {
@@ -966,8 +1005,8 @@ function vertexPositionChange() {
     return
   // console.log("Postion Change")
   let parentDiv = this.parentElement
-  let name = parentDiv.childNodes[0].textContent
-  let pt = vertices[name]
+  let id = parentDiv.childNodes[0].textContent
+  let pt = vertices[id]
   if (this.className == "xPos") {
     pt.mesh.position.x = this.value
     pt.label.position.x = this.value
@@ -979,7 +1018,7 @@ function vertexPositionChange() {
 
 }
 
-function addVertex(obj, x, y, drawPoint) {
+function addVertex(obj, x, y, drawPoint, name) {
   if (typeof drawPoint == 'undefined')
     drawPoint = true
 
@@ -994,15 +1033,22 @@ function addVertex(obj, x, y, drawPoint) {
   vDiv.id = "vertex" + vertexCount
   vDiv.className = "form-box"
 
+  let idLbl = document.createElement("label")
+  idLbl.setAttribute("for", "id")
+  idLbl.textContent = vertexCount
+
+  if (typeof name == 'undefined')
+    name = vertexCount
+
   let nameLbl = document.createElement("label")
   nameLbl.setAttribute("for", "name")
-  nameLbl.textContent = vertexCount
+  nameLbl.textContent = "Name:"
 
-  // let name = document.createElement("input")
-  // name.className = "name"
-  // name.setAttribute("type", "text")
-  // name.defaultValue = vertexCount
-  // name.onchange = vertexNameChange
+  let nameInput = document.createElement("input")
+  nameInput.className = "name"
+  nameInput.setAttribute("type", "text")
+  nameInput.defaultValue = name
+  nameInput.onchange = vertexNameChange
 
   let xPosLbl = document.createElement("label")
   xPosLbl.setAttribute("for", "xPos")
@@ -1030,8 +1076,9 @@ function addVertex(obj, x, y, drawPoint) {
   del.innerHTML = "X";
   del.onclick = removeVertex
 
+  vDiv.appendChild(idLbl)
   vDiv.appendChild(nameLbl)
-  // vDiv.appendChild(name)
+  vDiv.appendChild(nameInput)
   vDiv.appendChild(xPosLbl)
   vDiv.appendChild(xPos)
   vDiv.appendChild(yPosLbl)
@@ -1047,16 +1094,16 @@ function addVertex(obj, x, y, drawPoint) {
   newPt.position.x = xPos.value
   newPt.position.z = yPos.value
 
-  let sprite = getNameSprite(vertexCount)
-  sprite.position.set(xPos.value, vertexHeight + 0.5, yPos.value)
+  let sprite = getNameSprite(name)
+  sprite.position.set(xPos.value, vertexHeight + 0.5 + Math.random()*0.2, yPos.value)
 
   if (drawPoint) {
     scene.add(sprite)
     scene.add(newPt)
   }
 
-  vertices[String(vertexCount)] = new VertexObj(vertexCount, vertexCount, newPt, sprite)
-
+  vertices[String(vertexCount)] = new VertexObj(vertexCount, name, newPt, sprite)
+  names[name] = vertexCount
   vertexCount++
 }
 
@@ -1187,10 +1234,17 @@ function drawEdge(edge, lineMat) {
 	// 			} );
   //
   // let line = new Line2(geom, matLine)
-
-  let line = new T.Line(geom, lineMat)
-
-
+  // 0x2cc57c
+  let mat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
+  mat = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, clippingPlanes: [clipPlane] })
+  let line = new T.Line(geom, mat)
+  let color = new T.Color()
+  if (edge.weight >= 0)
+    var endColor = new T.Color("hsl(145, 98%, 40%)")
+  else
+    var endColor = new T.Color("hsl(0, 76%, 43%)")
+  color.lerpHSL(endColor, Math.abs(edge.weight))
+  line.material.color.set(color)
   scene.add( line );
   linesDrawn.push(line)
 }
@@ -1329,24 +1383,31 @@ function removeEdge() {
 }
 
 function getNameSprite(name) {
-  if (name < 3)
-    name = String.fromCharCode(65 + name)
-  else
-    name = String.fromCharCode(65 + name + 1)
+  // if (name < 3)
+  //   name = String.fromCharCode(65 + name)
+  // else
+  //   name = String.fromCharCode(65 + name + 1)
 
   let canvas = document.createElement('canvas')
   let ctx = canvas.getContext('2d')
 
-  ctx.canvas.width = 200;
-  ctx.canvas.height = 200;
+
   // ctx.fillStyle = "#ffff00";
   // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  let metrics = ctx.measureText( name );
+  let textWidth = metrics.width;
+  let textHeight = metrics.height
+  console.log(metrics.width)
+
+  ctx.canvas.width = textWidth*30+30;
+  ctx.canvas.height = textWidth*30+10;
 
   ctx.font="120px Roboto Mono"
   ctx.fillStyle = "#000000"
 
-  let metrics = ctx.measureText( name );
-  let textWidth = metrics.width;
+
+
+
 
 
   ctx.fillText(name, ctx.canvas.width/2 - textWidth/2, ctx.canvas.height/2)
@@ -1356,7 +1417,7 @@ function getNameSprite(name) {
 
   let spriteMat = new T.SpriteMaterial({map: texture, })
   let sprite = new T.Sprite(spriteMat)
-  sprite.scale.set(0.5, 0.5, 0.5)
+  sprite.scale.set(0.05*textWidth, 0.05*textWidth, 0.05*textWidth)
   return sprite
 }
 
@@ -1381,6 +1442,81 @@ let EdgeObj = class {
     this.end = end
     this.weight = weight
   }
+}
+
+function fileSelectEdges(evt) {
+    evt.stopPropagation()
+    evt.preventDefault()
+
+    var files = evt.dataTransfer.files; // FileList object.
+
+    var reader = new FileReader()
+
+    reader.onload = function() {
+      let text = reader.result
+      let lines = text.split('\n')
+      let i = -1
+      let inputNames = lines[0].split(',')
+      // console.log(lines)
+      for (let line of lines) {
+        i++
+        let data = line.split(',')
+        if (data[1] == '' || isNaN(data[1]))
+          continue
+        let currentNode = data[0]
+        let currentId = names[currentNode]
+        for (let j=1 ; j<i ; j++) {
+          let weight = parseFloat(data[j])
+          if (weight == 0)
+            continue
+          let endNode = inputNames[j]
+          let endId = names[endNode]
+          console.log(`${weight} edge from ${currentNode}(${currentId}) to ${endNode}(${endId})`)
+          addEdge(null, currentId, endId, weight)
+        }
+        // addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+      }
+    }
+    reader.readAsText(files[0])
+
+}
+
+function fileSelectNodes(evt) {
+    evt.stopPropagation()
+    evt.preventDefault()
+
+    var files = evt.dataTransfer.files; // FileList object.
+
+    // files is a FileList of File objects. List some properties.
+    // var output = [];
+    // for (var i = 0, f; f = files[i]; i++) {
+    //   output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+    //               f.size, ' bytes, last modified: ',
+    //               f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+    //               '</li>');
+    // }
+    // document.getElementById('node-list').innerHTML = '<ul>' + output.join('') + '</ul>';
+
+    var reader = new FileReader()
+
+    reader.onload = function() {
+      let text = reader.result
+      let lines = text.split('\n')
+      for (let line of lines) {
+        let data = line.split(',')
+        if (data[1] == '' || isNaN(data[1]))
+          continue
+        addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+      }
+    }
+    reader.readAsText(files[0])
+
+}
+
+function dragOver(evt) {
+  evt.stopPropagation()
+  evt.preventDefault()
+  evt.dataTransfer.dropEffect = 'copy' // Explicitly show this is a copy.
 }
 
 function getRandomIntInclusive(min, max) {

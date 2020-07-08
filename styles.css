@@ -71,13 +71,16 @@ button.btn-delete:hover {
   background: #4CAF50;
   cursor: pointer;
 }
-
+.name {
+  min-width: 80px;
+}
 input[type=text] {
   width: 30px;
   /* background-color: var(--main-bg-color) */
   margin-left: 0px;
   border: none;
 }
+
 label {
   margin-right: 0px;
 }
@@ -93,6 +96,9 @@ label {
 }
 .gui-box {
   margin: 5px;
+  padding-left: 20px;
+  padding-top: 15px;
+  height: 250px;
 }
 .gui-box>*{
   display: block;
@@ -105,7 +111,6 @@ label {
   margin-top: 10px;
   display: inline-block;
   overflow-y: auto;
-  height: 300px;
   width: 450px;
   border-style: solid;
   border-color: #E5E5E5;
@@ -115,7 +120,6 @@ label {
   /* TODO: inline-block and auto scroll */
   display: inline-block;
   overflow-y: auto;
-  height: 300px;
   width: 450px;
   /* background-color: #E5E5E5; */
   border-style: solid;
@@ -125,12 +129,20 @@ label {
 #div-edge {
   display: block;
   overflow-y: auto;
-  height: 300px;
   border-style: solid;
   border-color: #E5E5E5;
   border-width: 5px;
 }
-label[for=name] {
+.drop-box{
+  background-color: #E5E5E5;
+  display: inline-block;
+  height: 100px;
+  width: 150px;
+  text-align: center;
+  padding-top: 60px;
+}
+
+label[for=id] {
   color: #4CAF50;
   /* background: white; */
   margin: 0px;
