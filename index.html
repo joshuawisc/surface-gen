@@ -46,8 +46,18 @@
           <div id="drop-edges" class="drop-box">Drop edge files here</div>
           <output id="edge-list"></output>
         </div>
+        <p>Threshold:</p>
+        <input type="range" min="0" max="5" value="0" class="slider" step="1" id="threshold-slider">
+        <p>Positive Range:</p>
+        <input type="range" min="0.01" max="1.5" value="0.2" class="slider" step="0.01" id="posrange-slider">
+        <p>Positive Height:</p>
+        <input type="range" min="0.01" max="2" value="2" class="slider" step="0.01" id="posheight-slider">
         <p>Positive Amplitude:</p>
         <input type="range" min="1" max="3" value="3" class="slider" step="0.1" id="amp-slider">
+        <p>Saddle X Spread:</p>
+        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xspread-slider">
+        <p>Saddle Y Spread:</p>
+        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="yspread-slider">
         <p>Saddle Width:</p>
         <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xlimit-slider">
         <p>Saddle Narrowness:</p>
@@ -59,6 +69,7 @@
         <p>Hide -X:</p>
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide-x-slider">
         <p>Hide +Y:</p>
+
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide+y-slider">
         <p>Hide -Y:</p>
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide-y-slider"> -->

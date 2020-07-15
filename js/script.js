@@ -168,7 +168,7 @@ var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
 let mMat = [planeMat, transparentMat]
 var plane = new T.Mesh( geometry, mMat )
@@ -240,6 +240,7 @@ scene.add( alight );
 
 let vertices = {}
 let edges = {}
+let edgeCollection = []
 let names = {}
 let linesDrawn = []
 
@@ -377,11 +378,16 @@ window.onload = function() {
 
 
     let viewSeperate = false
-    let vertices_visual = vertices, edges_visual = edges
-    if (viewSeperate) {
-      vertices_visual = vertices2
-      edges_visual = edges2
-    }
+    // let vertices_visual = vertices, edges_visual = edges
+    // if (viewSeperate) {
+    //   vertices_visual = vertices2
+    //   edges_visual = edges2
+    // }
+    let current_edges = edges
+    if (edgeCollection.length > 0)
+      current_edges = edgeCollection[document.getElementById("threshold-slider").value]
+    // console.log(document.getElementById("threshold-slider").value)
+    console.log(document.getElementById("posrange-slider").value)
 
     // Graph 2
     // 0-A - -5, 0
@@ -403,8 +409,8 @@ window.onload = function() {
     ctx.setLineDash([])
 
     // Draw physical graph edge, texture edge
-    for (let id in edges_visual) {
-      let edge = edges_visual[id]
+    for (let id in current_edges) {
+      let edge = current_edges[id]
 
       // Draw graph edge
       drawEdge(edge, lineMat)
@@ -469,8 +475,8 @@ window.onload = function() {
 
 
     // Set height map for +ve edges
-    for (let id in edges) {
-      let edge = edges[id]
+    for (let id in current_edges) {
+      let edge = current_edges[id]
       if (edge.weight < 0)
         continue
 
@@ -519,8 +525,8 @@ window.onload = function() {
 
 
     // Set height map for -ve edges
-    for (let id in edges) {
-      let edge = edges[id]
+    for (let id in current_edges) {
+      let edge = current_edges[id]
       if (edge.weight >= 0)
         continue
 
@@ -567,8 +573,8 @@ window.onload = function() {
 
 
     // Draw point on surface texture
-    for (let id in vertices_visual) {
-      let vertex = vertices_visual[id]
+    for (let id in vertices) {
+      let vertex = vertices[id]
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
 
@@ -651,7 +657,6 @@ window.onload = function() {
       } else {
         face.materialIndex = 0
       }
-
     }
 
 
@@ -832,15 +837,16 @@ function setHeights(start, mid, end, weight) {
     let y = mid.x
     let amp = document.getElementById("amp-slider").value // Def 1000
     weight = 2.5*weight
-    let xSpread = (divisions/10)*(0.4*weight) // Use divisions variable instead of hard coding spread
-    let ySpread = (divisions/10)*(0.4*weight)
+    let spread = (divisions/10)*(0.4*weight)*document.getElementById("posrange-slider").value
+    let xSpread =  spread // Use divisions variable instead of hard coding spread
+    let ySpread = spread
     for (let i = 0 ; i < heightMap.length ; i++) {
       for (let j = 0 ; j < heightMap[0].length ; j++) {
         if ((i-x)**2 + (j-y)**2 > 250*(0.4*weight))
           continue
         let xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
         let yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
-        let newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))
+        let newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))*document.getElementById("posheight-slider").value
         // if (Math.abs(newHeight) <= 0.01) {
         //   newHeight = 0
         // }
@@ -869,8 +875,8 @@ function setHeights(start, mid, end, weight) {
     let angle = Math.atan(slope)
     let dist = calcDist(start, end)
 
-    let xSpread = Math.max(20, dist*0.56) // length // Def 26
-    let ySpread = 10*1.5*2.5 // 2.5 // width TODO: Multiply with edge length
+    let xSpread = Math.max(20, dist*0.56)*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26
+    let ySpread = 10*1.5*2.5*parseFloat(document.getElementById("yspread-slider").value) // 2.5 // width TODO: Multiply with edge length
     let xLimit = ((1.25*weight*2)/(xSpread)) * parseFloat(document.getElementById("xlimit-slider").value) // Def 1000// height along length Def 0.05
     let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) // 0.7 // 0.55 // depth along width TODO: Change based on edge length
     let addHeight = (-0.5 + weight) + parseFloat(document.getElementById("height-slider").value)
@@ -890,6 +896,8 @@ function setHeights(start, mid, end, weight) {
         // X and Y coordinate calculations are switched
         x_pos = Math.round((i-mid.x)*Math.sin(angle) + (j-mid.y)*Math.cos(angle)) + mid.y
         y_pos = Math.round((i-mid.x)*Math.cos(angle) - (j-mid.y)*Math.sin(angle)) + mid.x
+        if (x_pos >= heightMap.length || y_pos >= heightMap.length)
+          continue
 
         // Check closest to which pt
         if (newHeight > heightMap[x_pos][y_pos]) {
@@ -1449,35 +1457,66 @@ function fileSelectEdges(evt) {
     evt.preventDefault()
 
     var files = evt.dataTransfer.files; // FileList object.
+    console.log(files)
+    for (let file of files) {
+      readEdgeFile(file)
+    }
+}
 
-    var reader = new FileReader()
+function readEdgeFile(file) {
+  var reader = new FileReader()
+  reader.onload = function() {
+    let current_edges = {}
 
-    reader.onload = function() {
-      let text = reader.result
-      let lines = text.split('\n')
-      let i = -1
-      let inputNames = lines[0].split(',')
-      // console.log(lines)
-      for (let line of lines) {
-        i++
-        let data = line.split(',')
-        if (data[1] == '' || isNaN(data[1]))
-          continue
-        let currentNode = data[0]
-        let currentId = names[currentNode]
-        for (let j=1 ; j<i ; j++) {
-          let weight = parseFloat(data[j])
-          if (weight == 0)
-            continue
-          let endNode = inputNames[j]
-          let endId = names[endNode]
-          console.log(`${weight} edge from ${currentNode}(${currentId}) to ${endNode}(${endId})`)
-          addEdge(null, currentId, endId, weight)
-        }
-        // addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+    let text = reader.result
+    let lines = text.split('\n')
+    let i = -1
+    let inputNames = []
+    console.log(lines)
+    let inputNameData = lines[18].split('\"')
+    let k = -1
+    for (let nameData of inputNameData) {
+      k++
+      nameData = nameData.trim()
+      if (nameData == '')
+        continue
+      if (k%2 == 1)
+        inputNames.push(nameData)
+      else {
+        inputNames = inputNames.concat(nameData.split(' '))
       }
     }
-    reader.readAsText(files[0])
+    // console.log(lines)
+    for (let i = 19 ; i < lines.length ; i++) {
+      let line = lines[i]
+      let data = line.split("\"")
+      let currentNode = ''
+      if (data.length > 1) { // Two word name - deal with double quotes
+        currentNode = data[1]
+        data = data[2].split(" ")
+      } else {
+        data = data[0].split(" ")
+        currentNode = data[0]
+        data = data.splice(1)
+      }
+      if (data[0] == '' || isNaN(data[0]))
+        continue
+      let currentId = names[currentNode]
+      for (let j=0 ; j<i-19 ; j++) {
+        let weight = parseFloat(data[j])
+        if (weight == 0)
+          continue
+        let endNode = inputNames[j]
+        let endId = names[endNode]
+        console.log(`${weight} edge from ${currentNode}(${currentId}) to ${endNode}(${endId})`)
+        addEdgeSec(null, currentId, endId, weight, vertices, current_edges)
+      }
+      // addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+    }
+    edgeCollection.push(current_edges)
+    document.getElementById("threshold-slider").max = edgeCollection.length-1
+  }
+  reader.readAsText(file)
 
 }
 
