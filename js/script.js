@@ -645,8 +645,13 @@ window.onload = function() {
     let direction = new T.Vector3(0, 1, 0)
     for (let i=0; i<divisions ; i++) {
       for (let j=0; j < divisions ; j++) {
-        plane.geometry.vertices[i*divisions+j].z =  heightMap[i][j]
-
+        if (i < 2) {
+          plane.geometry.vertices[i*divisions+j].z =  heightMap[3][j]
+        } else if (i >= divisions-2) {
+          plane.geometry.vertices[i*divisions+j].z =  heightMap[divisions-3][j]
+        } else {
+          plane.geometry.vertices[i*divisions+j].z =  heightMap[i][j]
+        }
       }
     }
 
@@ -831,6 +836,14 @@ function raiseHeightMap() {
 }
 
 function smoothHeightMap() {
+  for (let j = 0 ; j < heightMap[0].length ; j++) {
+    heightMap[0][j] = heightMap[2][j]
+    heightMap[1][j] = heightMap[2][j]
+    heightMap[heightMap.length-2][j] = heightMap[heightMap.length-3][j]
+    heightMap[heightMap.length-1][j] = heightMap[heightMap.length-2][j]
+
+
+  }
   for (let i = 2 ; i < heightMap.length-2 ; i++) {
     for (let j = 2 ; j < heightMap[0].length-2; j++) {
       // if (heightMap[i][j] == 0) {
