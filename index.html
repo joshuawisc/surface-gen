@@ -24,6 +24,8 @@
     <script type="module" src="js/scripts/LineSegments2.js"></script>
     <script type="module" src="js/scripts/LineMaterial.js"></script>
     <script type="module" src="js/scripts/conrec.js"></script>
+    <script type="module" src="js/GreatCircle/GreatCircle.js"></script>
+
 
 
     <script type="module" src="js/scripts/three.module.js"></script>
@@ -36,10 +38,12 @@
       </div>
       <div id="div-edge" class="gui-box">
         <button type="button" id="btn-add-edge">Add edge</button>
+        <button type="button" id="btn-calc-curv">Calc Curvature</button>
       </div>
       <div id="div-extra" class="gui-box">
         <!-- <button type="button" id="btn-scrn">Take screenshot</button> -->
         <button type="button" id="btn-gen-graph">Generate graph</button>
+        <button type="button" id="btn-gen-graph-empty">Generate graph (No Weights)</button>
         <div id="dropzone">
           <div id="drop-nodes" class="drop-box">Drop location files here</div>
           <output id="node-list"></output>
@@ -57,7 +61,7 @@
         <p>Saddle X Spread:</p>
         <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xspread-slider">
         <p>Saddle Y Spread:</p>
-        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="yspread-slider">
+        <input type="range" min="0.1" max="2" value="0.3" class="slider" step="0.1" id="yspread-slider">
         <p>Saddle Width:</p>
         <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xlimit-slider">
         <p>Saddle Narrowness:</p>

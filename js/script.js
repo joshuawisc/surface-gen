@@ -6,6 +6,7 @@ import { FXAAShader } from './scripts/FXAAShader.js';
 import { LineGeometry } from './scripts/LineGeometry.js';
 import { Line2 } from './scripts/Line2.js';
 import { LineMaterial } from './scripts/LineMaterial.js';
+// import { GreatCircle } from './GreatCircle/GreatCircle.js';
 
 let bgcolor = 0xf3f3f3
 let graphcolor = 0xffffff
@@ -303,6 +304,8 @@ for (let i = 0 ; i < heightMap.length ; i++) {
 
 window.onload = function() {
 
+
+
   var dropNodes = document.getElementById('drop-nodes');
   dropNodes.addEventListener('dragover', dragOver, false);
   dropNodes.addEventListener('drop', fileSelectNodes, false);
@@ -327,6 +330,12 @@ window.onload = function() {
 
   let btnGenGraph = document.getElementById("btn-gen-graph")
   btnGenGraph.onclick = generateGraph
+
+  let btnGenGraphEmpty = document.getElementById("btn-gen-graph-empty")
+  btnGenGraphEmpty.onclick = generateGraphNoWeights
+
+  let btnCalcCurv = document.getElementById("btn-calc-curv")
+  btnCalcCurv.onclick = calculateCurvature
 
   // Set up opacity map for hiding surface
   let xlimit = 50
@@ -383,11 +392,11 @@ window.onload = function() {
     //   vertices_visual = vertices2
     //   edges_visual = edges2
     // }
-    let current_edges = edges
+    let current_edges = {...edges}
     if (edgeCollection.length > 0)
-      current_edges = edgeCollection[document.getElementById("threshold-slider").value]
+      current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
     // console.log(document.getElementById("threshold-slider").value)
-    console.log(document.getElementById("posrange-slider").value)
+    // console.log(document.getElementById("posrange-slider").value)
 
     // Graph 2
     // 0-A - -5, 0
@@ -411,8 +420,52 @@ window.onload = function() {
     // Draw physical graph edge, texture edge
     for (let id in current_edges) {
       let edge = current_edges[id]
-
+      // console.log(`${edge.start.lat}, ${edge.start.long}, ${edge.end.lat}, ${edge.end.long}`)
+      // console.log(edge.start)
+      // if (edge.start.name != "Tokyo")
+      //   continue
       // Draw graph edge
+      if (edge.split) {
+        // Create split edges
+        let eSize = Object.keys(current_edges).length
+        let end1 = {mesh: {position: {x: parseFloat(edge.end.mesh.position.x), z: parseFloat(edge.end.mesh.position.z)+20}}}
+        let edge1 = new EdgeObj(eSize, edge.start, end1, edge.weight)
+        drawEdge(edge1, lineMat)
+        let startPt = [parseFloat(edge1.start.mesh.position.x), parseFloat(edge1.start.mesh.position.z)]
+        let endPt = [parseFloat(edge1.end.mesh.position.x), parseFloat(edge1.end.mesh.position.z)]
+
+        // Draw texture edge
+        startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.beginPath();
+        ctx.moveTo(startPt[0], startPt[1])
+        ctx.lineTo(endPt[0], endPt[1])
+        ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
+        ctx.lineWidth = 12
+        ctx.stroke()
+
+        let start2 = {mesh: {position: {x: parseFloat(edge.start.mesh.position.x), z: parseFloat(edge.start.mesh.position.z)-20}}}
+        let edge2 = new EdgeObj(eSize+1, start2, edge.end, edge.weight)
+        drawEdge(edge2, lineMat)
+        startPt = [parseFloat(edge2.start.mesh.position.x), parseFloat(edge2.start.mesh.position.z)]
+        endPt = [parseFloat(edge2.end.mesh.position.x), parseFloat(edge2.end.mesh.position.z)]
+
+        // Draw texture edge
+        startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.beginPath();
+        ctx.moveTo(startPt[0], startPt[1])
+        ctx.lineTo(endPt[0], endPt[1])
+        ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
+        ctx.lineWidth = 12
+        ctx.stroke()
+
+        current_edges[eSize] = edge1
+        current_edges[eSize+1] = edge2
+        continue
+        // Add split edge to current edges
+        // Skip split edges in setHeights
+      }
       drawEdge(edge, lineMat)
 
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
@@ -896,9 +949,8 @@ function setHeights(start, mid, end, weight) {
         // X and Y coordinate calculations are switched
         x_pos = Math.round((i-mid.x)*Math.sin(angle) + (j-mid.y)*Math.cos(angle)) + mid.y
         y_pos = Math.round((i-mid.x)*Math.cos(angle) - (j-mid.y)*Math.sin(angle)) + mid.x
-        if (x_pos >= heightMap.length || y_pos >= heightMap.length)
+        if (x_pos >= heightMap.length || y_pos >= heightMap.length || x_pos < 0 || y_pos < 0)
           continue
-
         // Check closest to which pt
         if (newHeight > heightMap[x_pos][y_pos]) {
           if (heightMap[x_pos][y_pos] != 0)
@@ -1026,15 +1078,15 @@ function vertexPositionChange() {
 
 }
 
-function addVertex(obj, x, y, drawPoint, name) {
+function addVertex(obj, x, y, drawPoint, name, lat=0, long=0) {
   if (typeof drawPoint == 'undefined')
     drawPoint = true
 
   if (typeof x == 'undefined') {
-    x = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
+    x = getRandomArbitrary(-6, 6).toFixed(2)
   }
   if (typeof y == 'undefined') {
-    y = getRandomArbitrary(planeXMin+1, planeXMax-1).toFixed(2)
+    y = getRandomArbitrary(-9, 9).toFixed(2)
   }
 
   let vDiv = document.createElement("div")
@@ -1109,8 +1161,7 @@ function addVertex(obj, x, y, drawPoint, name) {
     scene.add(sprite)
     scene.add(newPt)
   }
-
-  vertices[String(vertexCount)] = new VertexObj(vertexCount, name, newPt, sprite)
+  vertices[String(vertexCount)] = new VertexObj(vertexCount, name, newPt, sprite, lat, long)
   names[name] = vertexCount
   vertexCount++
 }
@@ -1206,8 +1257,40 @@ function generateGraph() {
   }
 }
 
+function generateGraphNoWeights() {
+  // Graph 1 & 2
+  {
+    // Graph 1
+    addVertex(null, -5, 0)
+    addVertex(null, -4, -1.73)
+    addVertex(null, -3, -0.5)
+    addVertex(null, 3, -0.5)
+    addVertex(null, 4, 1.73)
+    addVertex(null, 5, 0)
+
+    addEdge(null, 2, 3, 0)
+    addEdge(null, 0, 1, 0)
+    addEdge(null, 0, 2, 0)
+    addEdge(null, 1, 2, 0)
+    addEdge(null, 3, 4, 0)
+    addEdge(null, 3, 5, 0)
+    addEdge(null, 4, 5, 0)
+
+    // Graph 2
+    // 0-A - -5, 0
+    // 1-B - -4.5, -1
+    // 2-C - -3.5, 0.5
+    // 3-E - -3, 0 // Skip D
+    // 4-F - -1.5, 0
+    // 5-G - 2.4, 0.5
+    // 6-H - 2.4, -0.5
+    // 7-I - 3.5, 0.8
+    // 8-J - 4, 3
+  }
+}
+
 function drawEdge(edge, lineMat) {
-  // console.log(edge)
+  // console.log(edge.end.mesh.position.x + " " + edge.end.mesh.position.z)
   let points = []
   if (lineMat != lineMatSec) {
     points.push(new T.Vector3(edge.start.mesh.position.x, vertexHeight+0.0001, edge.start.mesh.position.z))
@@ -1244,7 +1327,7 @@ function drawEdge(edge, lineMat) {
   // let line = new Line2(geom, matLine)
   // 0x2cc57c
   let mat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
-  mat = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, clippingPlanes: [clipPlane] })
+  mat = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane5, ] })
   let line = new T.Line(geom, mat)
   let color = new T.Color()
   if (edge.weight >= 0)
@@ -1267,7 +1350,7 @@ function addEdge(obj, start, end, weight) {
   }
 
   if (typeof weight == 'undefined') {
-    weight = 1
+    weight = 0
   }
 
   let vDiv = document.createElement("div")
@@ -1405,7 +1488,7 @@ function getNameSprite(name) {
   let metrics = ctx.measureText( name );
   let textWidth = metrics.width;
   let textHeight = metrics.height
-  console.log(metrics.width)
+  // console.log(metrics.width)
 
   ctx.canvas.width = textWidth*30+30;
   ctx.canvas.height = textWidth*30+10;
@@ -1433,13 +1516,15 @@ let VertexObj = class {
   start = [] // Edges starting at this vertex
   end = [] // Edges ending at this vertex
 
-  constructor(id, name, mesh, label, start, end) {
+  constructor(id, name, mesh, label, lat=0, long=0, start=[], end=[]) {
     this.id = id
     this.name = name
     this.mesh = mesh
     this.label = label
     this.start = start
     this.end = end
+    this.lat = lat
+    this.long = long
   }
 }
 
@@ -1449,7 +1534,58 @@ let EdgeObj = class {
     this.start = start
     this.end = end
     this.weight = weight
+    this.bearing = GreatCircle.bearing(start.lat, start.long, end.lat, end.long)
+    this.split = false
+    // console.log(`${start.long}, ${end.long}, ${this.bearing}`)
+    if (start.long > end.long && this.bearing <= 180)
+      this.split = true
   }
+}
+
+function calculateCurvature() {
+  console.log("calculate curvature")
+  var data = {nodes: [], links: []}
+  for (let id in vertices) {
+    data.nodes.push({id: id})
+  }
+  for (let id in edges) {
+    let edge = edges[id]
+    data.links.push({source: edge.start.id, target: edge.end.id})
+  }
+  // $.ajax({
+  // type: "POST",
+  // url: "./scripts/OllivierRicci.py",
+  // data: { param: text}
+  //   }).done(function( o ) {
+  //      // do something
+  //   })
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.onreadystatechange = function()
+  {
+      if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+      {
+          data = JSON.parse(xmlHttp.responseText)
+          console.log(data)
+          for(let id in data.links) {
+            let link = data.links[id]
+            for (let id2 in edges) {
+              let edge = edges[id2]
+              if ((edge.start.id == link.source && edge.end.id == link.target) || (edge.start.id == link.target && edge.end.id == link.source)) {
+                console.log("True")
+                edge.weight = parseFloat(link.ricciCurvature)
+                let edgeDiv = document.getElementById("edge" + id2)
+                edgeDiv.querySelector(".weight").value = parseFloat(link.ricciCurvature)
+                break
+              }
+            }
+          }
+      }
+  }
+  xmlHttp.open("post", "calc-curvature");
+  xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+  xmlHttp.send(JSON.stringify(data));
+  console.log(data)
 }
 
 function fileSelectEdges(evt) {
@@ -1472,7 +1608,7 @@ function readEdgeFile(file) {
     let lines = text.split('\n')
     let i = -1
     let inputNames = []
-    console.log(lines)
+    // console.log(lines)
     let inputNameData = lines[18].split('\"')
     let k = -1
     for (let nameData of inputNameData) {
@@ -1545,7 +1681,7 @@ function fileSelectNodes(evt) {
         let data = line.split(',')
         if (data[1] == '' || isNaN(data[1]))
           continue
-        addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+        addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
       }
     }
     reader.readAsText(files[0])
