@@ -44,6 +44,13 @@
         <!-- <button type="button" id="btn-scrn">Take screenshot</button> -->
         <button type="button" id="btn-gen-graph">Generate graph</button>
         <button type="button" id="btn-gen-graph-empty">Generate graph (No Weights)</button>
+        <button type="button" id="btn-calc-surface">Calculate Surface</button>
+        <input type="checkbox" id="hide-surface" name="hide-surface" checked>
+        <label for="hide-surface"> Hide extra surface</label><br>
+        <input type="checkbox" id="use-calc-surface" name="use-calc-surface" checked>
+        <label for="use-calc-surface"> Use calculated surface</label><br>
+
+
         <div id="dropzone">
           <div id="drop-nodes" class="drop-box">Drop location files here</div>
           <output id="node-list"></output>
@@ -77,8 +84,6 @@
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide+y-slider">
         <p>Hide -Y:</p>
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide-y-slider"> -->
-        <input type="checkbox" id="hide-surface" name="hide-surface" checked>
-        <label for="hide-surface"> Hide extra surface</label><br>
       </div>
     </div>
   </body>

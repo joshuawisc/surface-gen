@@ -52,9 +52,11 @@ let planeXMin = -10, planeXMax = 10
 let planeYMin = -10, planeYMax = 10
 let planeW = planeXMax - planeXMin
 let planeH = planeYMax - planeYMin
-let divisions = 150
+let divisions = 50 // Was 150
 let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 let opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+let calcHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+
 let vertexHeight = 3
 
 let time = Date.now()
@@ -321,6 +323,8 @@ window.onload = function() {
   btnAddEdge.onclick = addEdge
 
   let hideSurface = document.getElementById("hide-surface")
+  let chkCalcSurface = document.getElementById("use-calc-surface")
+
 
   let vertexControlDiv = document.getElementById("div-vertex")
   // vertexControlDiv.style.display = "none"
@@ -336,6 +340,8 @@ window.onload = function() {
 
   let btnCalcCurv = document.getElementById("btn-calc-curv")
   btnCalcCurv.onclick = calculateCurvature
+
+  document.getElementById("btn-calc-surface").onclick = calcSurface
 
   // Set up opacity map for hiding surface
   let xlimit = 50
@@ -641,16 +647,21 @@ window.onload = function() {
     texture.needsUpdate = true
 
     // Set plane vertices' height
+    let map = null
+    if (chkCalcSurface.checked)
+      map = calcHeightMap
+    else
+      map = heightMap
     let ex = 0.3
     let direction = new T.Vector3(0, 1, 0)
     for (let i=0; i<divisions ; i++) {
       for (let j=0; j < divisions ; j++) {
         if (i < 2) {
-          plane.geometry.vertices[i*divisions+j].z =  heightMap[3][j]
+          plane.geometry.vertices[i*divisions+j].z =  map[3][j]
         } else if (i >= divisions-2) {
-          plane.geometry.vertices[i*divisions+j].z =  heightMap[divisions-3][j]
+          plane.geometry.vertices[i*divisions+j].z =  map[divisions-3][j]
         } else {
-          plane.geometry.vertices[i*divisions+j].z =  heightMap[i][j]
+          plane.geometry.vertices[i*divisions+j].z =  map[i][j]
         }
       }
     }
@@ -1595,6 +1606,47 @@ function calculateCurvature() {
       }
   }
   xmlHttp.open("post", "calc-curvature");
+  xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+  xmlHttp.send(JSON.stringify(data));
+  console.log(data)
+}
+
+
+function calcSurface() {
+  console.log("calculate surface")
+  var data = {nodes: [], links: []}
+  for (let id in vertices) {
+    data.nodes.push({id: id})
+  }
+  for (let id in edges) {
+    let edge = edges[id]
+    data.links.push({source: edge.start.id, target: edge.end.id})
+  }
+  // $.ajax({
+  // type: "POST",
+  // url: "./scripts/OllivierRicci.py",
+  // data: { param: text}
+  //   }).done(function( o ) {
+  //      // do something
+  //   })
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.onreadystatechange = function()
+  {
+      if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+      {
+          data = JSON.parse(xmlHttp.responseText)
+          for (let i = 0 ; i < divisions ; i++) {
+            for (let j = 0 ; j < divisions ; j++) {
+              calcHeightMap[i][j] = data[i*divisions + j]*10
+            }
+          }
+          console.log(calcHeightMap)
+
+
+      }
+  }
+  xmlHttp.open("post", "calc-surface");
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
   xmlHttp.send(JSON.stringify(data));
