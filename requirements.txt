@@ -5,3 +5,4 @@ gunicorn==20.0.4
 matplotlib==3.0.3
 numpy==1.16.4
 tqdm==4.47.0
+seaborn==0.9.1
