@@ -19,6 +19,7 @@ import pandas as pd
 import itertools
 from matplotlib import animation
 import os
+from io import StringIO
 # Using matplotlib notebook allows you to interact with the resulting 3-D figure
 # get_ipython().run_line_magic('matplotlib', 'inline')
 
@@ -456,35 +457,46 @@ def generate_plots(runname, gridsize, xf, yf, zf, cv, locnamefile, refc):
 # In[ ]:
 mp.rcParams['animation.html'] = 'jshtml'
 
+L3 = None
 
-refc = pd.read_csv(r'python/surface/Data/mark_us_curv.csv', index_col = 0)
-refc.columns = refc.columns.astype('float')
+def main(data):
+    global L3
 
+    print("\n\ndata")
+    print(data)
 
-cellcoords = np.array(list(itertools.product(refc.index, refc.columns)), dtype='float')
-# we assume that ncols = nrows in the input dataframe
-gridsize = len(refc.columns)
-x = np.reshape(cellcoords[:,0], (gridsize, gridsize))
-y = np.reshape(cellcoords[:,1], (gridsize, gridsize))
-z = np.zeros((gridsize, gridsize))
-curvatures = np.reshape([refc.loc[x, y] for x, y in itertools.product(refc.index, refc.columns)],
-                        (gridsize, gridsize))
+    # df = pd.read_json(json_data)
+    # csv_string = df.to_csv()
 
-
-pos = np.empty(x.shape + (2,))
-pos[:, :, 0] = x; pos[:, :, 1] = y
-gridsize = x.shape[0]
+    # refc = pd.read_csv(r'python/surface/Data/mark_us_curv.csv', index_col = 0)
+    # print("\n\nCSV STRING")
+    # print(csv_string)
+    refc = pd.read_csv(StringIO(data), index_col = 0)
+    refc.columns = refc.columns.astype('float')
 
 
-Tr = trngln.trngln(gridsize)
-triangles = Tr.triangles()
+    cellcoords = np.array(list(itertools.product(refc.index, refc.columns)), dtype='float')
+    # we assume that ncols = nrows in the input dataframe
+    gridsize = len(refc.columns)
+    x = np.reshape(cellcoords[:,0], (gridsize, gridsize))
+    y = np.reshape(cellcoords[:,1], (gridsize, gridsize))
+    z = np.zeros((gridsize, gridsize))
+    curvatures = np.reshape([refc.loc[x, y] for x, y in itertools.product(refc.index, refc.columns)],
+                            (gridsize, gridsize))
 
 
-G = Tr.regularization_graph()
-L = nx.laplacian_matrix(G)
-L3 = L @ L @ L
+    pos = np.empty(x.shape + (2,))
+    pos[:, :, 0] = x; pos[:, :, 1] = y
+    gridsize = x.shape[0]
 
-def main():
+
+    Tr = trngln.trngln(gridsize)
+    triangles = Tr.triangles()
+
+
+    G = Tr.regularization_graph()
+    L = nx.laplacian_matrix(G)
+    L3 = L @ L @ L
 
     t_of_v = Tr.triangles_of_vertex()
 
@@ -519,7 +531,7 @@ def main():
     rate = 0.0001
     smooth_pen = 50
     momentum = 0.9
-    niter = 100
+    niter = 20
 
 
 

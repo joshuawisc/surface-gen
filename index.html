@@ -45,10 +45,6 @@
         <button type="button" id="btn-gen-graph">Generate graph</button>
         <button type="button" id="btn-gen-graph-empty">Generate graph (No Weights)</button>
         <button type="button" id="btn-calc-surface">Calculate Surface</button>
-        <input type="checkbox" id="hide-surface" name="hide-surface" checked>
-        <label for="hide-surface"> Hide extra surface</label><br>
-        <input type="checkbox" id="use-calc-surface" name="use-calc-surface" checked>
-        <label for="use-calc-surface"> Use calculated surface</label><br>
 
 
         <div id="dropzone">
@@ -57,6 +53,12 @@
           <div id="drop-edges" class="drop-box">Drop edge files here</div>
           <output id="edge-list"></output>
         </div>
+        <input type="checkbox" id="show-map" name="show-map" checked>
+        <label for="show-map"> Show map</label><br>
+        <input type="checkbox" id="hide-surface" name="hide-surface" checked>
+        <label for="hide-surface"> Hide extra surface</label><br>
+        <input type="checkbox" id="use-calc-surface" name="use-calc-surface" checked>
+        <label for="use-calc-surface"> Use calculated surface</label><br>
         <p>Threshold:</p>
         <input type="range" min="0" max="5" value="0" class="slider" step="1" id="threshold-slider">
         <p>Positive Range:</p>

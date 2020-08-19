@@ -324,6 +324,7 @@ window.onload = function() {
 
   let hideSurface = document.getElementById("hide-surface")
   let chkCalcSurface = document.getElementById("use-calc-surface")
+  let showMap = document.getElementById("show-map")
 
 
   let vertexControlDiv = document.getElementById("div-vertex")
@@ -387,7 +388,8 @@ window.onload = function() {
 
     ctx.fillStyle = canvascolor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    ctx.drawImage(background,0,0,697,998,250,-10,1650,2080) // 696x995
+    if (showMap.checked)
+      ctx.drawImage(background,0,0,697,998,250,-10,1650,2080) // 696x995
 
 
 
@@ -1572,8 +1574,12 @@ function calculateCurvature() {
   for (let id in vertices) {
     data.nodes.push({id: id})
   }
-  for (let id in edges) {
-    let edge = edges[id]
+  let current_edges = {...edges}
+  if (edgeCollection.length > 0)
+    current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
+  console.log(current_edges)
+  for (let id in current_edges) {
+    let edge = current_edges[id]
     data.links.push({source: edge.start.id, target: edge.end.id})
   }
   // $.ajax({
@@ -1590,15 +1596,18 @@ function calculateCurvature() {
       {
           data = JSON.parse(xmlHttp.responseText)
           console.log(data)
+          let current_edges = {...edges}
+          if (edgeCollection.length > 0)
+            current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
           for(let id in data.links) {
             let link = data.links[id]
-            for (let id2 in edges) {
-              let edge = edges[id2]
+            for (let id2 in current_edges) {
+              let edge = current_edges[id2]
               if ((edge.start.id == link.source && edge.end.id == link.target) || (edge.start.id == link.target && edge.end.id == link.source)) {
-                console.log("True")
                 edge.weight = parseFloat(link.ricciCurvature)
                 let edgeDiv = document.getElementById("edge" + id2)
-                edgeDiv.querySelector(".weight").value = parseFloat(link.ricciCurvature)
+                if (edgeDiv != null)
+                  edgeDiv.querySelector(".weight").value = parseFloat(link.ricciCurvature)
                 break
               }
             }
@@ -1616,12 +1625,16 @@ function calculateCurvature() {
 function calcSurface() {
   console.log("calculate surface")
   var data = {nodes: [], links: []}
+  let current_edges = {...edges}
+  if (edgeCollection.length > 0)
+    current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
   for (let id in vertices) {
-    data.nodes.push({id: id})
+    let node = vertices[id]
+    data.nodes.push({id: parseInt(id), city: node.name, lat: node.lat, long: node.long})
   }
-  for (let id in edges) {
-    let edge = edges[id]
-    data.links.push({source: edge.start.id, target: edge.end.id})
+  for (let id in current_edges) {
+    let edge = current_edges[id]
+    data.links.push({source: edge.start.id, target: edge.end.id, ricciCurvature: edge.weight})
   }
   // $.ajax({
   // type: "POST",
@@ -1638,7 +1651,7 @@ function calcSurface() {
           data = JSON.parse(xmlHttp.responseText)
           for (let i = 0 ; i < divisions ; i++) {
             for (let j = 0 ; j < divisions ; j++) {
-              calcHeightMap[i][j] = data[i*divisions + j]*10
+              calcHeightMap[i][j] = data[i*divisions + j]*5
             }
           }
           console.log(calcHeightMap)

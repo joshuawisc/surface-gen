@@ -6,6 +6,7 @@ import networkx as nx
 from networkx.readwrite import json_graph
 from OllivierRicci import ricciCurvature
 from python.surface import BasicDemo as bd
+from python.surface.src.generating_tessalation import generating_tessalation_2
 import sys
 
 sys.path.append(r'python/surface/src')
@@ -26,14 +27,23 @@ def calc_curvature():
 def calc_surface():
     print('start')
     data = request.json
-    print(data)
+    # print(data)
+    # print("\n\n")
+
 
     rate = 0.0001
     smooth_pen = 50
     momentum = 0.9
     niter = 20
 
-    zf = bd.main()
+    G = json_graph.node_link_graph(data)
+    print(G.number_of_edges())
+    H = nx.Graph(G)
+    print(type(H))
+    # print(G.edges(data=True))
+    # print("\n\n")
+    ret = generating_tessalation_2(H)
+    zf = bd.main(ret)
     return json.dumps(zf.tolist())
 
 @app.route('/')
