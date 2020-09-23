@@ -459,6 +459,78 @@ mp.rcParams['animation.html'] = 'jshtml'
 
 L3 = None
 
+def get_heatmap(data):
+    global L3
+
+    # df = pd.read_json(json_data)
+    # csv_string = df.to_csv()
+
+    # refc = pd.read_csv(r'python/surface/Data/mark_us_curv.csv', index_col = 0)
+    # print("\n\nCSV STRING")
+    # print(csv_string)
+    refc = pd.read_csv(StringIO(data), index_col = 0)
+    refc.columns = refc.columns.astype('float')
+
+
+    cellcoords = np.array(list(itertools.product(refc.index, refc.columns)), dtype='float')
+    # we assume that ncols = nrows in the input dataframe
+    gridsize = len(refc.columns)
+    x = np.reshape(cellcoords[:,0], (gridsize, gridsize))
+    y = np.reshape(cellcoords[:,1], (gridsize, gridsize))
+    z = np.zeros((gridsize, gridsize))
+    curvatures = np.reshape([refc.loc[x, y] for x, y in itertools.product(refc.index, refc.columns)],
+                            (gridsize, gridsize))
+
+
+    pos = np.empty(x.shape + (2,))
+    pos[:, :, 0] = x; pos[:, :, 1] = y
+    gridsize = x.shape[0]
+
+
+    Tr = trngln.trngln(gridsize)
+    triangles = Tr.triangles()
+
+
+    G = Tr.regularization_graph()
+    L = nx.laplacian_matrix(G)
+    L3 = L @ L @ L
+
+    t_of_v = Tr.triangles_of_vertex()
+
+
+    xf = x.flatten()
+    yf = y.flatten()
+    zf = z.flatten()
+
+
+    triangle_vertices = get_triangle_vertices(triangles, xf, yf, zf)
+    vertices = get_vertices(xf, yf, zf)
+
+
+    cmap = cm.seismic
+    maxscale = 0.1
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, facecolor="1.0")
+    # ax.scatter(yf, np.flip(xf), color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
+    ax.scatter(xf, yf, color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
+    ax.annotate("Mumbai", (-0.21195, 0.40487))
+    ax.annotate("Sydney", (0.37632, 0.84005))
+    ax.annotate("Amsterdam", (-0.581, 0.027))
+    ax.annotate("Ashburn", (-0.433, -0.430))
+    ax.annotate("Hong Kong", (-0.247, 0.634))
+    ax.annotate("Johannes", (0.291, 0.155))
+    ax.annotate("London", (-0.572, 0))
+    ax.annotate("Quincy", (-0.52, -0.66))
+    ax.annotate("Sao Paulo", (0.26, -0.25))
+    ax.annotate("Seoul", (-0.41, 0.7))
+    ax.annotate("Singapore", (0, 0.57))
+    ax.annotate("Tokyo", (-0.39, 0.77))
+
+
+
+    return fig
+    # return plt.scatter(xf, yf, color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
+
 def main(data):
     global L3
 
@@ -531,7 +603,7 @@ def main(data):
     rate = 0.0001
     smooth_pen = 50
     momentum = 0.9
-    niter = 20
+    niter = 10
 
 
 

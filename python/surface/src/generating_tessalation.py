@@ -95,52 +95,59 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
     :param tessalation_grid: float other type of precesion value
     :return: two csv files one is output_cities and the other one output
     '''
-    edge = 0.5
+    edge = 1.0
+    name_of_output = "output2"
+    name_of_output_cities = "cities2.csv"
     # x and y are the corresponding indices of a 2D mesh
     x, y = np.mgrid[-edge:edge:tessalation_grid, -edge:edge:tessalation_grid]
     # create the structure needed for evaluating pdfs
     pos = np.empty(x.shape + (2,))
     pos[:, :, 0] = x; pos[:, :, 1] = y
+    print(pos)
     gridsize = x.shape[0]
     # G = nx.read_graphml(path_to_graph)
     G = graphml_graph
-    print("G.nodes")
-    print(G.nodes(data=True))
+    # print("G.nodes")
+    # print(G.nodes(data=True))
     x_graph = nx.get_node_attributes(G,'long')
     y_graph = nx.get_node_attributes(G,'lat')
-    print("x_graph, y_graph")
-    print(x_graph,y_graph)
+    # print("x_graph, y_graph")
+    # print(x_graph,y_graph)
     max_x = max(x_graph.values())
     min_x = min(x_graph.values())
     max_y = max(y_graph.values())
     min_y = min(y_graph.values())
+    ####!!!!CHANGE
     for t in x_graph.keys():
-        x_graph[t]= (x_graph[t] - min_x)/ (max_x - min_x) - 0.5
-        y_graph[t]= -((y_graph[t]-min_y) / (max_y - min_y) - 0.5)
+        x_graph[t]= ((x_graph[t] - min_x)/ (max_x - min_x) - 0.5)*2
+        y_graph[t]= -((y_graph[t]-min_y) / (max_y - min_y) - 0.5)*2
     city = nx.get_node_attributes(G,'city')
     nx.set_node_attributes(G,x_graph,'x')
     nx.set_node_attributes(G,y_graph,'y')
     curv = nx.get_edge_attributes(G,'ricciCurvature')
-    print("curv")
-    print(curv)
-    print("x_graph, max_x")
-    print(x_graph,max_x)
+    # print("curv")
+    # print(curv)
+    # print("x_graph, max_x")
+    # print(x_graph,max_x)
     coordinates = {}
     for t in pos:
         for s in t:
             coordinates[tuple(s)] = []
     #         number_of_edges_in_this_field[tuple(s)] = 0
+    # print(coordinates)
     from tqdm import tqdm
     for i,t in enumerate(tqdm(G.edges())):
         number_of_edges_in_this_field = {}
         for var in np.arange(0,1,precision):
+            # print(t)
             line = ((x_graph[t[0]]-x_graph[t[1]])*var + x_graph[t[0]],(y_graph[t[0]]-y_graph[t[1]])*var + (y_graph[t[0]]))
             for s in coordinates.keys():
+                # print(np.array(line))
                 if np.linalg.norm(np.array(s)-np.array(line),1)<precision and  not(s in number_of_edges_in_this_field.keys()):
                     number_of_edges_in_this_field[s] = 1
-                    print("coords, curv, t")
-                    print(coordinates[s])
-                    print(curv, t)
+                    # print("coords, curv, t")
+                    # print(coordinates[s])
+                    # print(curv, t)
                     coordinates[s].append(curv[t])
         print(len(number_of_edges_in_this_field))
     new_x_graph = dict(zip(city.values(),x_graph.values()))
@@ -149,7 +156,7 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
     df_inter = pd.Series(new_x_graph)
     df_inter = pd.DataFrame(df_inter,columns=['x'])
     df_inter['y'] = pd.Series(new_y_graph)
-    # df_inter.to_csv(name_of_output_cities)
+    df_inter.to_csv(name_of_output_cities)
     ## DO SOMETHING ELSE
     for t in coordinates.keys():
         try:
@@ -176,8 +183,8 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
             df[t[0]][t[1]] = coordinates[t]
             if coordinates[t]<0:
                 print('success',df[t[0]][t[1]],coordinates[t])
-    print(df.to_csv())
-    # df.to_csv(name_of_output+'.csv')
+    # print(df.to_csv())
+    df.to_csv(name_of_output+'.csv')
     ## DO SOMETHING ELSE
     json_string = df.to_json()
     return df.to_csv()

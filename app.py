@@ -2,12 +2,15 @@
 import json
 import flask
 from flask import request
+from flask import Response
 import networkx as nx
 from networkx.readwrite import json_graph
 from OllivierRicci import ricciCurvature
 from python.surface import BasicDemo as bd
 from python.surface.src.generating_tessalation import generating_tessalation_2
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import sys
+import io
 
 sys.path.append(r'python/surface/src')
 
@@ -37,14 +40,20 @@ def calc_surface():
     niter = 20
 
     G = json_graph.node_link_graph(data)
-    print(G.number_of_edges())
     H = nx.Graph(G)
-    print(type(H))
+    # print(type(H))
     # print(G.edges(data=True))
     # print("\n\n")
+    nx.write_graphml(H, "newgraph.graphml")
     ret = generating_tessalation_2(H)
-    zf = bd.main(ret)
-    return json.dumps(zf.tolist())
+    # zf = bd.main(ret)
+    plot = bd.get_heatmap(ret)
+    output = io.BytesIO()
+    #print("\nplot\n")
+    FigureCanvas(plot).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
+
+    # return json.dumps(zf.tolist())
 
 @app.route('/')
 def static_proxy():

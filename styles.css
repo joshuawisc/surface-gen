@@ -133,6 +133,10 @@ label {
   border-color: #E5E5E5;
   border-width: 5px;
 }
+#heatmap-div {
+  display:block;
+  float:right;
+}
 .drop-box{
   background-color: #E5E5E5;
   display: inline-block;
@@ -140,6 +144,11 @@ label {
   width: 150px;
   text-align: center;
   padding-top: 60px;
+}
+
+#map {
+  height: 696px;
+  width: 995px;
 }
 
 label[for=id] {

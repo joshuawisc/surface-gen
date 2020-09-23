@@ -85,12 +85,15 @@ document.body.appendChild( renderer.domElement )
 scene.background = new THREE.Color(bgcolor)
 var controls = new T.OrbitControls( camera, renderer.domElement );
 
-const ctx = document.createElement('canvas').getContext('2d');
+const olMap = createMap()
+const canv = document.createElement('canvas')
+canv.id = "canvas-texture"
+const ctx = canv.getContext('2d');
 ctx.canvas.width = 2000;
 ctx.canvas.height = 2000;
 ctx.fillStyle = canvascolor;
 ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-const texture = new T.CanvasTexture(ctx.canvas);
+var texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
 
 let background = new Image()
@@ -304,9 +307,37 @@ for (let i = 0 ; i < heightMap.length ; i++) {
 }
 
 
+
+
 window.onload = function() {
 
 
+  var mapCanvas = document.getElementById('map').getElementsByTagName('canvas')[0]
+
+  // mapCanvas.style.transform = "rotate(90deg)"
+  const ctx = mapCanvas.getContext('2d')
+  // ctx.canvas.width = 2000;
+  // ctx.canvas.height = 2000;
+  // ctx.fillStyle = canvascolor;
+  // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const customTexture = texture
+  const mapTexture = new T.CanvasTexture(ctx.canvas)
+  mapTexture.minFilter = THREE.LinearFilter
+  mapTexture.center = new T.Vector2(0.5, 0.5)
+  mapTexture.rotation = -Math.PI/2
+
+  document.getElementById("map").style.display = "none"
+
+
+  window.addEventListener('wheel', function(e){
+    if (e.deltaY > 0) {
+      olMap.getView().setZoom(olMap.getView().getZoom()-0.05)
+      olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+    } else {
+      olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
+      olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+    }
+  }, true)
 
   var dropNodes = document.getElementById('drop-nodes');
   dropNodes.addEventListener('dragover', dragOver, false);
@@ -371,6 +402,15 @@ window.onload = function() {
 
 
   var animate = function () {
+    if (showMap.checked) {
+      plane.material[0].map = mapTexture
+      texture = mapTexture
+    } else {
+      plane.material[0].map = customTexture
+      texture = customTexture
+    }
+    plane.material[0].needsUpdate = true
+
   	requestAnimationFrame( animate )
 
     controls.update()
@@ -387,9 +427,10 @@ window.onload = function() {
 
 
     ctx.fillStyle = canvascolor
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    if (showMap.checked)
-      ctx.drawImage(background,0,0,697,998,250,-10,1650,2080) // 696x995
+    // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    // if (!showMap.checked) {
+    //   ctx.drawImage(background,0,0,697,998,250,-10,1650,2080) // 696x995
+    // }
 
 
 
@@ -733,7 +774,7 @@ window.onload = function() {
 
     contourCount++
 
-    calcContours(xlimit, ylimit)
+    // calcContours(xlimit, ylimit)
 
 
     plane.geometry.groupsNeedUpdate = true
@@ -778,6 +819,7 @@ function calcContours(xlimit, ylimit) {
   }
 
   // let levels = [-2.4, -2.2, -2, -1.8, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4]
+  //-- CONTOUT LINES --//
   conrec.contour(heightMap, xlimit, heightMap.length - xlimit - 1, ylimit, heightMap[0].length - 1 - ylimit, contX, contY, levels.length, levels)
 
   let lines = conrec.contourList()
@@ -1096,10 +1138,13 @@ function vertexPositionChange() {
   if (this.className == "xPos") {
     pt.mesh.position.x = this.value
     pt.label.position.x = this.value
+    pt.lat = this.value*(90/7)
 
   } else {
     pt.mesh.position.z = this.value
     pt.label.position.z = this.value
+    pt.long = this.value*(180/10)
+
   }
 
 }
@@ -1108,6 +1153,10 @@ function addVertex(obj, x, y, drawPoint, name, lat=0, long=0) {
   if (typeof drawPoint == 'undefined')
     drawPoint = true
 
+  if (lat == 0 && long == 0) {
+    lat = x
+    long = y
+  }
   if (typeof x == 'undefined') {
     x = getRandomArbitrary(-6, 6).toFixed(2)
   }
@@ -1568,6 +1617,32 @@ let EdgeObj = class {
   }
 }
 
+function createMap() {
+  var mapdiv = document.createElement('div')
+  mapdiv.id = 'map'
+  mapdiv.class = 'map-div'
+  document.body.appendChild(mapdiv)
+  var map = new ol.Map({
+        target: 'map',
+        renderer:'canvas',
+        layers: [
+          // new ol.layer.Tile({
+          //   source: new ol.source.OSM()
+          // })
+          new ol.layer.Tile({
+            source: new ol.source.Stamen({
+              layer: 'terrain'
+            })
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([0, 0]),
+          zoom: 0,
+        })
+  });
+  return map
+}
+
 function calculateCurvature() {
   console.log("calculate curvature")
   var data = {nodes: [], links: []}
@@ -1628,14 +1703,21 @@ function calcSurface() {
   let current_edges = {...edges}
   if (edgeCollection.length > 0)
     current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
+  length = Object.keys(vertices).length
   for (let id in vertices) {
     let node = vertices[id]
     data.nodes.push({id: parseInt(id), city: node.name, lat: node.lat, long: node.long})
   }
+  data.nodes.push({id: length, city: "border1", lat: 0.001, long: 180.001})
+  data.nodes.push({id: length+2, city: "border2", lat: 0.001, long: -180.001})
+  data.nodes.push({id: length+3, city: "border3", lat: 90.001, long: 0.001}) // 138.5
+  data.nodes.push({id: length+4, city: "border4", lat: -90.001, long: 0.001})
+
   for (let id in current_edges) {
     let edge = current_edges[id]
     data.links.push({source: edge.start.id, target: edge.end.id, ricciCurvature: edge.weight})
   }
+  console.log(vertices)
   // $.ajax({
   // type: "POST",
   // url: "./scripts/OllivierRicci.py",
@@ -1644,17 +1726,21 @@ function calcSurface() {
   //      // do something
   //   })
   var xmlHttp = new XMLHttpRequest();
+  xmlHttp.responseType = "arraybuffer"
   xmlHttp.onreadystatechange = function()
   {
       if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+
       {
-          data = JSON.parse(xmlHttp.responseText)
-          for (let i = 0 ; i < divisions ; i++) {
-            for (let j = 0 ; j < divisions ; j++) {
-              calcHeightMap[i][j] = data[i*divisions + j]*5
-            }
-          }
-          console.log(calcHeightMap)
+          document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
+          // data = JSON.parse(xmlHttp.responseText)
+          // console.log(data)
+          // for (let i = 0 ; i < divisions ; i++) {
+          //   for (let j = 0 ; j < divisions ; j++) {
+          //     calcHeightMap[49-j][49-i] = data[i*divisions + j]*2
+          //   }
+          // }
+          // console.log(calcHeightMap)
 
 
       }
@@ -1760,6 +1846,7 @@ function fileSelectNodes(evt) {
         if (data[1] == '' || isNaN(data[1]))
           continue
         addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
+        // addVertex(null, (parseFloat(data[1])/180)*10, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
       }
     }
     reader.readAsText(files[0])
