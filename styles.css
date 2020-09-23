@@ -147,8 +147,10 @@ label {
 }
 
 #map {
-  height: 696px;
+  height: 995px;
   width: 995px;
+  /* height: 696px;
+  width: 995px; */
 }
 
 label[for=id] {

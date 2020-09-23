@@ -7,6 +7,8 @@ import { LineGeometry } from './scripts/LineGeometry.js';
 import { Line2 } from './scripts/Line2.js';
 import { LineMaterial } from './scripts/LineMaterial.js';
 // import { GreatCircle } from './GreatCircle/GreatCircle.js';
+// import {transformExtent} from 'ol/proj';
+
 
 let bgcolor = 0xf3f3f3
 let graphcolor = 0xffffff
@@ -326,17 +328,31 @@ window.onload = function() {
   mapTexture.center = new T.Vector2(0.5, 0.5)
   mapTexture.rotation = -Math.PI/2
 
-  document.getElementById("map").style.display = "none"
+  var mapdiv = document.getElementById("map")
 
+  mapdiv.style.display = "none"
+
+  //TODO: Stack for -ve zoom levels for consistency
 
   window.addEventListener('wheel', function(e){
+    mapdiv.style.display = "block"
     if (e.deltaY > 0) {
       olMap.getView().setZoom(olMap.getView().getZoom()-0.05)
-      olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+      mapdiv.style.width = mapdiv.offsetWidth*0.95 + 'px'
+      mapdiv.style.height = mapdiv.offsetHeight*0.95 + 'px'
+      console.log(mapdiv.offsetWidth);
+      console.log(mapdiv.offsetHeight);
+      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
     } else {
       olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
-      olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+      mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
+      mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
+      console.log(mapdiv.offsetWidth);
+      console.log(mapdiv.offsetHeight);
+      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
     }
+    olMap.updateSize()
+    mapdiv.style.display = "none"
   }, true)
 
   var dropNodes = document.getElementById('drop-nodes');
@@ -1621,14 +1637,18 @@ function createMap() {
   var mapdiv = document.createElement('div')
   mapdiv.id = 'map'
   mapdiv.class = 'map-div'
+  // mapdiv.style.width = '400px'
+  // mapdiv.style.height = '400px'
   document.body.appendChild(mapdiv)
   var map = new ol.Map({
         target: 'map',
         renderer:'canvas',
         layers: [
           // new ol.layer.Tile({
-          //   source: new ol.source.OSM()
-          // })
+          //   source: new ol.source.OSM(),
+          //   // resolution: 152.87405654296876,
+          //   // tileSize: [1024,1024]
+          // }),
           new ol.layer.Tile({
             source: new ol.source.Stamen({
               layer: 'terrain'
@@ -1636,7 +1656,7 @@ function createMap() {
           })
         ],
         view: new ol.View({
-          center: ol.proj.fromLonLat([0, 0]),
+          center: ol.proj.fromLonLat([67.41, 8.82]),
           zoom: 0,
         })
   });

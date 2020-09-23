@@ -95,7 +95,7 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
     :param tessalation_grid: float other type of precesion value
     :return: two csv files one is output_cities and the other one output
     '''
-    edge = 1.0
+    edge = 0.5
     name_of_output = "output2"
     name_of_output_cities = "cities2.csv"
     # x and y are the corresponding indices of a 2D mesh
@@ -119,8 +119,8 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
     min_y = min(y_graph.values())
     ####!!!!CHANGE
     for t in x_graph.keys():
-        x_graph[t]= ((x_graph[t] - min_x)/ (max_x - min_x) - 0.5)*2
-        y_graph[t]= -((y_graph[t]-min_y) / (max_y - min_y) - 0.5)*2
+        x_graph[t]= ((x_graph[t] - min_x)/ (max_x - min_x) - 0.5)
+        y_graph[t]= -((y_graph[t]-min_y) / (max_y - min_y) - 0.5)
     city = nx.get_node_attributes(G,'city')
     nx.set_node_attributes(G,x_graph,'x')
     nx.set_node_attributes(G,y_graph,'y')
