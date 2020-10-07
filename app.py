@@ -16,10 +16,17 @@ sys.path.append(r'python/surface/src')
 
 app = flask.Flask(__name__, static_folder='')
 
+@app.route('/dummy', methods=['POST'])
+def dummy():
+    data = request.json
+    # print(data)
+
+    return data
+
 @app.route('/calc-curvature', methods=['POST'])
 def calc_curvature():
     data = request.json
-    print(data)
+    # print(data)
     G = json_graph.node_link_graph(data)
     Gf = ricciCurvature(G,alpha=0,verbose=True)
     Gr = json_graph.node_link_data(Gf)

@@ -73,6 +73,8 @@ let vertexHeight = 3
 
 let time = Date.now()
 
+let dataSent = false
+
 // ThreeJS Scene Setup
 
 var scene = new T.Scene()
@@ -351,29 +353,21 @@ window.onload = function() {
     mapdiv.style.display = "block"
     if (e.deltaY > 0) {
       if (zoomLevels.length != 0) {
-        console.log(olMap.getView().getZoom())
-        console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
         mapdiv.style.width = zoomWidths.pop() + 'px'
         mapdiv.style.height = zoomHeights.pop() + 'px'
-        console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
         olMap.updateSize()
         olMap.getView().setZoom(zoomLevels.pop())
-        console.log(olMap.getView().getZoom())
       }
 
       // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
     } else {
-      console.log(olMap.getView().getZoom())
       zoomWidths.push(mapdiv.offsetWidth)
       zoomHeights.push(mapdiv.offsetHeight)
       zoomLevels.push(olMap.getView().getZoom())
       olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
-      console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
       mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
       mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
       olMap.updateSize()
-      console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
-      console.log(olMap.getView().getZoom())
 
       // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
     }
@@ -668,10 +662,10 @@ window.onload = function() {
     }
 
 
-    smoothHeightMap()
-    smoothHeightMap()
-    smoothHeightMap()
-    smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
 
 
     // Set height map for -ve edges
@@ -716,10 +710,10 @@ window.onload = function() {
     }
 
 
-    smoothHeightMap()
-    smoothHeightMap()
-    smoothHeightMap()
-    smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
 
     // TODO: enable
 
@@ -764,23 +758,19 @@ window.onload = function() {
         }
       }
       p.plane.material.map.needsUpdate = true
-      console.log()
     }
 
 
     // Set materials for plane faces, to hide unwanted
 
     for (let face of plane.geometry.faces) {
-      // console.log(face.materialIndex)
       let z1 = plane.geometry.vertices[face.a].z
       let z2 = plane.geometry.vertices[face.b].z
       let z3 = plane.geometry.vertices[face.c].z
-      // console.log(face['a'])
       let hide = false
       let v = face.a
       let i = v/divisions
       let j = v%divisions
-      // console.log(face)
       // if (z1 > 1)
       //   face.vertexColors[0].setHSL( 1, 0, 0.5);
       // if (z2 > 1)
@@ -807,7 +797,6 @@ window.onload = function() {
       v = face.c
       i = v/divisions
       j = v%divisions
-      // console.log(i + " " + j)
       if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
         hide = true
       // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
@@ -829,8 +818,23 @@ window.onload = function() {
       }
     }
 
-
     contourCount++
+
+    if (dataSent) {
+      var xmlHttp = new XMLHttpRequest();
+      xmlHttp.onreadystatechange = function() {
+        if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+          // console.log("recv dummy")
+          // console.log(JSON.parse(xmlHttp.responseText))
+          let data = JSON.parse(xmlHttp.responseText)
+        }
+      }
+      xmlHttp.open("post", "dummy");
+      xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+      xmlHttp.send(JSON.stringify({"a": "b"}));
+      console.log("dummy data sent")
+    }
 
     // calcContours(xlimit, ylimit)
 
@@ -845,7 +849,6 @@ window.onload = function() {
     renderer.localClippingEnabled = hideSurface.checked
 
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
-    // console.log(heightMap)
     // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
     composer1.render()
     // renderer.render( scene, camera )
@@ -940,7 +943,7 @@ function subgraphSelect(selected) {
   let yRange = [10, -10]
   for (let id in selected) {
     if (selected[id].geometry.type == "SphereGeometry") {
-      console.log(`Name: ${selected[id].name}, Lat: ${selected[id].position.x}, Lon: ${selected[id].position.z}`)
+      // console.log(`Name: ${selected[id].name}, Lat: ${selected[id].position.x}, Lon: ${selected[id].position.z}`)
       xRange[0] = Math.min(xRange[0], selected[id].position.x)
       xRange[1] = Math.max(xRange[1], selected[id].position.x)
       yRange[0] = Math.min(yRange[0], selected[id].position.z)
@@ -957,7 +960,7 @@ function subgraphSelect(selected) {
       // console.log(selected[id].name)
       // console.log(selected[id].name.split('/'))
       // console.log(start)
-      console.log(`Start: ${start}(${ids[start]}), End: ${end}(${ids[end]}), Weight: ${weight}`)
+      // console.log(`Start: ${start}(${ids[start]}), End: ${end}(${ids[end]}), Weight: ${weight}`)
       if (ids[start] == undefined || ids[end] == undefined)
         continue
       data.links.push({source: ids[start], target: ids[end], ricciCurvature: weight})
@@ -977,8 +980,6 @@ function subgraphSelect(selected) {
   subTexture.repeat.x = (yRange[1] - yRange[0]) / 20
   subTexture.offset.x = mid[1] / 20
   subTexture.offset.y = mid[0] / 20
-  console.log(subTexture.offset.x)
-  console.log(subTexture.offset.y)
 
   var subGeom = new T.PlaneGeometry(width, height, divisions-1, divisions-1)
   // var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
@@ -1001,29 +1002,25 @@ function subgraphSelect(selected) {
   var xmlHttp = new XMLHttpRequest();
   xmlHttp.responseType = "text"
 
-  xmlHttp.onreadystatechange = function()
-  {
-      if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
-
-      {
-          data = JSON.parse(xmlHttp.responseText)
-          let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
-          for (let i = 0 ; i < divisions ; i++) {
-            for (let j = 0 ; j < divisions ; j++) {
-              newHeightMap[j][49-i] = data[i*divisions + j]*scale
-
-            }
-          }
-          setPlaneHeights(subPlane, newHeightMap)
-
-
-
+  xmlHttp.onreadystatechange = function() {
+    if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+      dataSent = false
+      data = JSON.parse(xmlHttp.responseText)
+      let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+      for (let i = 0 ; i < divisions ; i++) {
+        for (let j = 0 ; j < divisions ; j++) {
+          newHeightMap[j][49-i] = data[i*divisions + j]*scale
+        }
       }
+      setPlaneHeights(subPlane, newHeightMap)
+    }
   }
   xmlHttp.open("post", "calc-surface");
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
   xmlHttp.send(JSON.stringify(data));
+  console.log("data sent")
+  dataSent = true
 }
 
 function setPlaneHeights(plane, map) {
@@ -1925,7 +1922,8 @@ function calculateCurvature() {
       if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
       {
           data = JSON.parse(xmlHttp.responseText)
-          console.log(data)
+          // console.log(data)
+          console.log("data recv")
           let current_edges = {...edges}
           if (edgeCollection.length > 0)
             current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
@@ -1948,7 +1946,7 @@ function calculateCurvature() {
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
   xmlHttp.send(JSON.stringify(data));
-  console.log(data)
+  console.log("data sent")
 }
 
 function calcSurface() {
@@ -1971,7 +1969,7 @@ function calcSurface() {
     let edge = current_edges[id]
     data.links.push({source: edge.start.id, target: edge.end.id, ricciCurvature: edge.weight})
   }
-  console.log(vertices)
+  // console.log(vertices)
   // $.ajax({
   // type: "POST",
   // url: "./scripts/OllivierRicci.py",
@@ -1989,13 +1987,15 @@ function calcSurface() {
 
       {
           // document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
+          dataSent = false
           data = JSON.parse(xmlHttp.responseText)
-          console.log(data)
+          // console.log(data)
+          console.log("data recv")
           for (let i = 0 ; i < divisions ; i++) {
             for (let j = 0 ; j < divisions ; j++) {
               calcHeightMap[j][49-i] = data[i*divisions + j]*2
               if (data[i*divisions + j] < -0.1) {
-                console.log(data[i*divisions + j])
+                // console.log(data[i*divisions + j])
                 calcHeightMap[j][49-i] = data[i*divisions + j]*10
               }
             }
@@ -2009,7 +2009,8 @@ function calcSurface() {
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
   xmlHttp.send(JSON.stringify(data));
-  console.log(data)
+  console.log("data sent")
+  dataSent = true
 }
 
 function fileSelectEdges(evt) {

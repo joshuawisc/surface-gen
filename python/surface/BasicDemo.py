@@ -536,8 +536,8 @@ def main(data):
     global L3
     global cmap
 
-    print("\n\ndata")
-    print(data)
+    # print("\n\ndata")
+    # print(data)
 
     # df = pd.read_json(json_data)
     # csv_string = df.to_csv()

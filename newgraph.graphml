@@ -1,61 +1,80 @@
 <?xml version='1.0' encoding='utf-8'?>
-<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="ricciCurvature" attr.type="double" for="edge" id="d3"/>
-<key attr.name="city" attr.type="string" for="node" id="d2"/>
-<key attr.name="long" attr.type="double" for="node" id="d1"/>
-<key attr.name="lat" attr.type="double" for="node" id="d0"/>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="ricciCurvature" attr.type="double" for="edge" id="d6"/>
+<key attr.name="lat" attr.type="double" for="node" id="d5"/>
+<key attr.name="city" attr.type="string" for="node" id="d4"/>
+<key attr.name="long" attr.type="double" for="node" id="d3"/>
+<key attr.name="lat" attr.type="long" for="node" id="d2"/>
+<key attr.name="city" attr.type="long" for="node" id="d1"/>
+<key attr.name="long" attr.type="long" for="node" id="d0"/>
 <graph edgedefault="undirected"><node id="0">
-  <data key="d0">1.4399548387096772</data>
-  <data key="d1">6.3427444444444445</data>
-  <data key="d2">Hong Kong</data>
+  <data key="d0">0</data>
+  <data key="d1">0</data>
+  <data key="d2">-5</data>
 </node>
 <node id="1">
-  <data key="d0">1.2307096774193549</data>
-  <data key="d1">4.048761111111111</data>
-  <data key="d2">Mumbai</data>
+  <data key="d3">-1.73</data>
+  <data key="d1">1</data>
+  <data key="d2">-4</data>
 </node>
 <node id="2">
-  <data key="d0">2.4236451612903225</data>
-  <data key="d1">7.054333333333334</data>
-  <data key="d2">Seoul</data>
+  <data key="d3">-0.5</data>
+  <data key="d1">2</data>
+  <data key="d2">-3</data>
 </node>
 <node id="3">
-  <data key="d0">0.08723225806451614</data>
-  <data key="d1">5.767766666666667</data>
-  <data key="d2">Singapore</data>
+  <data key="d3">-0.5</data>
+  <data key="d1">3</data>
+  <data key="d2">3</data>
 </node>
 <node id="4">
-  <data key="d0">2.3019612903225806</data>
-  <data key="d1">7.764944444444445</data>
-  <data key="d2">Tokyo</data>
+  <data key="d3">1.73</data>
+  <data key="d1">4</data>
+  <data key="d2">4</data>
+</node>
+<node id="5">
+  <data key="d0">0</data>
+  <data key="d1">5</data>
+  <data key="d2">5</data>
+</node>
+<node id="6">
+  <data key="d3">180.001</data>
+  <data key="d4">border1</data>
+  <data key="d5">0.001</data>
+</node>
+<node id="8">
+  <data key="d3">-180.001</data>
+  <data key="d4">border2</data>
+  <data key="d5">0.001</data>
+</node>
+<node id="9">
+  <data key="d3">0.001</data>
+  <data key="d4">border3</data>
+  <data key="d5">155.001</data>
+</node>
+<node id="10">
+  <data key="d3">0.001</data>
+  <data key="d4">border4</data>
+  <data key="d5">-155.001</data>
 </node>
 <edge source="0" target="1">
-  <data key="d3">0.5999999999641461</data>
+  <data key="d6">0.8</data>
 </edge>
 <edge source="0" target="2">
-  <data key="d3">0.5999999998543901</data>
-</edge>
-<edge source="0" target="3">
-  <data key="d3">0.799999999774319</data>
-</edge>
-<edge source="0" target="4">
-  <data key="d3">0.6666666662919575</data>
+  <data key="d6">0.7</data>
 </edge>
 <edge source="1" target="2">
-  <data key="d3">0.5999999999356492</data>
-</edge>
-<edge source="1" target="3">
-  <data key="d3">0.5999999999641461</data>
-</edge>
-<edge source="1" target="4">
-  <data key="d3">0.4666666666171373</data>
+  <data key="d6">0.9</data>
 </edge>
 <edge source="2" target="3">
-  <data key="d3">0.59999999985439</data>
-</edge>
-<edge source="2" target="4">
-  <data key="d3">0.666666666106762</data>
+  <data key="d6">-0.5</data>
 </edge>
 <edge source="3" target="4">
-  <data key="d3">0.6666666662919574</data>
+  <data key="d6">0.6</data>
+</edge>
+<edge source="3" target="5">
+  <data key="d6">0.5</data>
+</edge>
+<edge source="4" target="5">
+  <data key="d6">0.4</data>
 </edge>
 </graph></graphml>

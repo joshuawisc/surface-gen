@@ -20,10 +20,10 @@ def generating_tessalation(path_to_graph,name_of_output,name_of_output_cities,pr
     pos[:, :, 0] = x; pos[:, :, 1] = y
     gridsize = x.shape[0]
     G = nx.read_graphml(path_to_graph)
-    print(G.nodes(data=True))
+    # print(G.nodes(data=True))
     x_graph = nx.get_node_attributes(G,'long')
     y_graph = nx.get_node_attributes(G,'lat')
-    print(x_graph,y_graph)
+    # print(x_graph,y_graph)
     max_x = max(x_graph.values())
     min_x = min(x_graph.values())
     max_y = max(y_graph.values())
@@ -35,7 +35,7 @@ def generating_tessalation(path_to_graph,name_of_output,name_of_output_cities,pr
     nx.set_node_attributes(G,x_graph,'x')
     nx.set_node_attributes(G,y_graph,'y')
     curv = nx.get_edge_attributes(G,'ricciCurvature')
-    print(x_graph,max_x)
+    # print(x_graph,max_x)
     coordinates = {}
     for t in pos:
         for s in t:
@@ -141,10 +141,6 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
         for var in np.arange(0,1,precision):
 
             line = ((x_graph[t[1]]-x_graph[t[0]])*var + x_graph[t[0]],(y_graph[t[1]]-y_graph[t[0]])*var + (y_graph[t[0]]))
-            if t[0] == 7 and t[0]-t[1] == -1:
-                print(x_graph[t[0]], y_graph[t[0]])
-                print(x_graph[t[1]], y_graph[t[1]])
-                print(line)
             for s in coordinates.keys():
                 # print(np.array(line))
 
