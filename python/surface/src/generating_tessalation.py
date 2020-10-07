@@ -139,10 +139,15 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
     for i,t in enumerate(tqdm(G.edges())):
         number_of_edges_in_this_field = {}
         for var in np.arange(0,1,precision):
-            # print(t)
-            line = ((x_graph[t[0]]-x_graph[t[1]])*var + x_graph[t[0]],(y_graph[t[0]]-y_graph[t[1]])*var + (y_graph[t[0]]))
+
+            line = ((x_graph[t[1]]-x_graph[t[0]])*var + x_graph[t[0]],(y_graph[t[1]]-y_graph[t[0]])*var + (y_graph[t[0]]))
+            if t[0] == 7 and t[0]-t[1] == -1:
+                print(x_graph[t[0]], y_graph[t[0]])
+                print(x_graph[t[1]], y_graph[t[1]])
+                print(line)
             for s in coordinates.keys():
                 # print(np.array(line))
+
                 if np.linalg.norm(np.array(s)-np.array(line),1)<precision and  not(s in number_of_edges_in_this_field.keys()):
                     number_of_edges_in_this_field[s] = 1
                     # print("coords, curv, t")

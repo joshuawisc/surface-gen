@@ -458,6 +458,7 @@ def generate_plots(runname, gridsize, xf, yf, zf, cv, locnamefile, refc):
 mp.rcParams['animation.html'] = 'jshtml'
 
 L3 = None
+cmap = None
 
 def get_heatmap(data):
     global L3
@@ -512,19 +513,19 @@ def get_heatmap(data):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, facecolor="1.0")
     # ax.scatter(yf, np.flip(xf), color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
-    ax.scatter(xf, yf, color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
-    ax.annotate("Mumbai", (-0.21195, 0.40487))
-    ax.annotate("Sydney", (0.37632, 0.84005))
-    ax.annotate("Amsterdam", (-0.581, 0.027))
-    ax.annotate("Ashburn", (-0.433, -0.430))
-    ax.annotate("Hong Kong", (-0.247, 0.634))
-    ax.annotate("Johannes", (0.291, 0.155))
-    ax.annotate("London", (-0.572, 0))
-    ax.annotate("Quincy", (-0.52, -0.66))
-    ax.annotate("Sao Paulo", (0.26, -0.25))
-    ax.annotate("Seoul", (-0.41, 0.7))
-    ax.annotate("Singapore", (0, 0.57))
-    ax.annotate("Tokyo", (-0.39, 0.77))
+    ax.scatter(yf, xf, color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
+    ax.annotate("Mumbai", (0.2024369309059394,-0.10597660025999711))
+    ax.annotate("Sydney", (0.4200234998694452,0.18815790935656268))
+    ax.annotate("Amsterdam", (0.013595757801345476,-0.2909228786346819))
+    ax.annotate("Ashburn", (-0.21524158199121113,-0.2169075899156676))
+    ax.annotate("Hong Kong", (0.31713546035855344,-0.12399473339185119))
+    ax.annotate("Johannes", (0.07790873384036756,0.14557671581426873))
+    ax.annotate("London", (-0.00035499802778876655,-0.28614904278841335))
+    ax.annotate("Quincy", (-0.3329220393220037,-0.26240986211264317))
+    ax.annotate("Sao Paulo", (-0.1295362247987511,0.13083465739269562))
+    ax.annotate("Seoul", (0.3527147071405158,-0.20870045888379007))
+    ax.annotate("Singapore", (0.28838673118482683,-0.007511583204631078))
+    ax.annotate("Tokyo", (0.38824506530519265,-0.1982222419750891))
 
 
 
@@ -533,6 +534,7 @@ def get_heatmap(data):
 
 def main(data):
     global L3
+    global cmap
 
     print("\n\ndata")
     print(data)
@@ -603,7 +605,7 @@ def main(data):
     rate = 0.0001
     smooth_pen = 50
     momentum = 0.9
-    niter = 10
+    niter = 50
 
 
 

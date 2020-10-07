@@ -46,14 +46,14 @@ def calc_surface():
     # print("\n\n")
     nx.write_graphml(H, "newgraph.graphml")
     ret = generating_tessalation_2(H)
-    # zf = bd.main(ret)
-    plot = bd.get_heatmap(ret)
-    output = io.BytesIO()
+    zf = bd.main(ret)
+    # plot = bd.get_heatmap(ret)
+    # output = io.BytesIO()
     #print("\nplot\n")
-    FigureCanvas(plot).print_png(output)
-    return Response(output.getvalue(), mimetype='image/png')
+    # FigureCanvas(plot).print_png(output)
+    # return Response(output.getvalue(), mimetype='image/png')
 
-    # return json.dumps(zf.tolist())
+    return json.dumps(zf.tolist())
 
 @app.route('/')
 def static_proxy():

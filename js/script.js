@@ -6,6 +6,8 @@ import { FXAAShader } from './scripts/FXAAShader.js';
 import { LineGeometry } from './scripts/LineGeometry.js';
 import { Line2 } from './scripts/Line2.js';
 import { LineMaterial } from './scripts/LineMaterial.js';
+import { SelectionBox } from './scripts/SelectionBox.js';
+import { SelectionHelper } from './scripts/SelectionHelper.js';
 // import { GreatCircle } from './GreatCircle/GreatCircle.js';
 // import {transformExtent} from 'ol/proj';
 
@@ -98,12 +100,12 @@ ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 var texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
 
-let background = new Image()
-background.src = "./images/grayworld2.jpg"
-background.onload = function() {
-  ctx.drawImage(background,0,0)
-
-}
+// let background = new Image()
+// background.src = "./images/grayworld2.jpg"
+// background.onload = function() {
+//   ctx.drawImage(background,0,0)
+//
+// }
 
 let ptGeom = new T.SphereGeometry(0.15, 32, 32)
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
@@ -251,6 +253,7 @@ let edges = {}
 let edgeCollection = []
 let names = {}
 let linesDrawn = []
+let subPlanes = []
 
 // edgecolor_sec = 0x6decaf
 edgecolor_sec = 0x2cc57c
@@ -332,28 +335,25 @@ window.onload = function() {
 
   mapdiv.style.display = "none"
 
-  //TODO: Stack for -ve zoom levels for consistency
+  // TODO: Stack for -ve zoom levels for consistency
 
-  window.addEventListener('wheel', function(e){
-    mapdiv.style.display = "block"
-    if (e.deltaY > 0) {
-      olMap.getView().setZoom(olMap.getView().getZoom()-0.05)
-      mapdiv.style.width = mapdiv.offsetWidth*0.95 + 'px'
-      mapdiv.style.height = mapdiv.offsetHeight*0.95 + 'px'
-      console.log(mapdiv.offsetWidth);
-      console.log(mapdiv.offsetHeight);
-      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-    } else {
-      olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
-      mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
-      mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
-      console.log(mapdiv.offsetWidth);
-      console.log(mapdiv.offsetHeight);
-      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-    }
-    olMap.updateSize()
-    mapdiv.style.display = "none"
-  }, true)
+  // TODO: enable
+  // window.addEventListener('wheel', function(e){
+  //   mapdiv.style.display = "block"
+  //   if (e.deltaY > 0) {
+  //     olMap.getView().setZoom(olMap.getView().getZoom()-0.05)
+  //     mapdiv.style.width = mapdiv.offsetWidth*0.95 + 'px'
+  //     mapdiv.style.height = mapdiv.offsetHeight*0.95 + 'px'
+  //     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+  //   } else {
+  //     olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
+  //     mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
+  //     mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
+  //     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+  //   }
+  //   olMap.updateSize()
+  //   mapdiv.style.display = "none"
+  // }, true)
 
   var dropNodes = document.getElementById('drop-nodes');
   dropNodes.addEventListener('dragover', dragOver, false);
@@ -368,6 +368,8 @@ window.onload = function() {
 
   let btnAddEdge  = document.getElementById("btn-add-edge")
   btnAddEdge.onclick = addEdge
+
+  document.getElementById("heatmap-div").style.display = "none"
 
   let hideSurface = document.getElementById("hide-surface")
   let chkCalcSurface = document.getElementById("use-calc-surface")
@@ -430,6 +432,10 @@ window.onload = function() {
   	requestAnimationFrame( animate )
 
     controls.update()
+    // controls.enabled = false
+    controls.enablePan = false
+    controls.enableRotate = true
+    controls.enableZoom = true
 
 
 
@@ -499,15 +505,15 @@ window.onload = function() {
         let startPt = [parseFloat(edge1.start.mesh.position.x), parseFloat(edge1.start.mesh.position.z)]
         let endPt = [parseFloat(edge1.end.mesh.position.x), parseFloat(edge1.end.mesh.position.z)]
 
-        // Draw texture edge
-        startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        ctx.beginPath();
-        ctx.moveTo(startPt[0], startPt[1])
-        ctx.lineTo(endPt[0], endPt[1])
-        ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
-        ctx.lineWidth = 12
-        ctx.stroke()
+        // Draw texture edge // TODO: undo
+        // startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        // endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        // ctx.beginPath();
+        // ctx.moveTo(startPt[0], startPt[1])
+        // ctx.lineTo(endPt[0], endPt[1])
+        // ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
+        // ctx.lineWidth = 12
+        // ctx.stroke()
 
         let start2 = {mesh: {position: {x: parseFloat(edge.start.mesh.position.x), z: parseFloat(edge.start.mesh.position.z)-20}}}
         let edge2 = new EdgeObj(eSize+1, start2, edge.end, edge.weight)
@@ -515,15 +521,15 @@ window.onload = function() {
         startPt = [parseFloat(edge2.start.mesh.position.x), parseFloat(edge2.start.mesh.position.z)]
         endPt = [parseFloat(edge2.end.mesh.position.x), parseFloat(edge2.end.mesh.position.z)]
 
-        // Draw texture edge
-        startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        ctx.beginPath();
-        ctx.moveTo(startPt[0], startPt[1])
-        ctx.lineTo(endPt[0], endPt[1])
-        ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
-        ctx.lineWidth = 12
-        ctx.stroke()
+        // Draw texture edge // TODO: undo
+        // startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        // endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        // ctx.beginPath();
+        // ctx.moveTo(startPt[0], startPt[1])
+        // ctx.lineTo(endPt[0], endPt[1])
+        // ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
+        // ctx.lineWidth = 12
+        // ctx.stroke()
 
         current_edges[eSize] = edge1
         current_edges[eSize+1] = edge2
@@ -536,15 +542,15 @@ window.onload = function() {
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
-      // Draw texture edge
-      startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      ctx.beginPath();
-      ctx.moveTo(startPt[0], startPt[1])
-      ctx.lineTo(endPt[0], endPt[1])
-      ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
-      ctx.lineWidth = 12
-      ctx.stroke()
+      // Draw texture edge // TODO: undo
+      // startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      // endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      // ctx.beginPath();
+      // ctx.moveTo(startPt[0], startPt[1])
+      // ctx.lineTo(endPt[0], endPt[1])
+      // ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
+      // ctx.lineWidth = 12
+      // ctx.stroke()
     }
 
     // Draw logical edges into graph, Draw logical edges into texture
@@ -689,19 +695,20 @@ window.onload = function() {
     smoothHeightMap()
     smoothHeightMap()
 
+    // TODO: enable
 
     // Draw point on surface texture
-    for (let id in vertices) {
-      let vertex = vertices[id]
-      let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
-      point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
-
-      ctx.fillStyle = "#035aa6" // #035aa6
-
-      ctx.beginPath();
-      ctx.arc(point[0], point[1], 10, 0, 2 * Math.PI);
-      ctx.fill();
-    }
+    // for (let id in vertices) {
+    //   let vertex = vertices[id]
+    //   let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
+    //   point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
+    //
+    //   ctx.fillStyle = "#035aa6" // #035aa6
+    //
+    //   ctx.beginPath();
+    //   ctx.arc(point[0], point[1], 10, 0, 2 * Math.PI);
+    //   ctx.fill();
+    // }
 
     texture.needsUpdate = true
 
@@ -813,6 +820,176 @@ window.onload = function() {
   };
 
   animate();
+}
+
+var selectionBox = new SelectionBox( camera, scene );
+var helper = new SelectionHelper( selectionBox, renderer, 'selectBox' );
+
+document.addEventListener( 'pointerdown', function ( event ) {
+  if (event.which != 3)
+    return
+  for ( var item of selectionBox.collection ) {
+    if (Array.isArray(item.material))
+      continue
+    item.material = item.material.clone()
+    item.material.color.set( 0x4CAF50 )
+
+
+  }
+
+  selectionBox.startPoint.set(
+  	( event.clientX / window.innerWidth ) * 2 - 1,
+  	- ( event.clientY / window.innerHeight ) * 2 + 1,
+  	0.5 );
+
+} );
+
+document.addEventListener( 'pointermove', function ( event ) {
+	if ( helper.isDown ) {
+		for ( var i = 0; i < selectionBox.collection.length; i ++ ) {
+      if (Array.isArray(selectionBox.collection[i].material))
+        continue
+      selectionBox.collection[i].material = selectionBox.collection[i].material.clone()
+			selectionBox.collection[i].material.color.set( 0x4CAF50 );
+
+		}
+
+		selectionBox.endPoint.set(
+			( event.clientX / window.innerWidth ) * 2 - 1,
+			- ( event.clientY / window.innerHeight ) * 2 + 1,
+			0.5 );
+
+		var allSelected = selectionBox.select();
+		for ( var i = 0; i < allSelected.length; i ++ ) {
+      if (Array.isArray(allSelected[ i ].material))
+        continue
+      allSelected[ i ].material = allSelected[ i ].material.clone()
+			allSelected[ i ].material.color.set( 0xffffff );
+
+		}
+
+	}
+
+} );
+
+document.addEventListener( 'pointerup', function ( event ) {
+  if (event.which != 3)
+    return
+	selectionBox.endPoint.set(
+		( event.clientX / window.innerWidth ) * 2 - 1,
+		- ( event.clientY / window.innerHeight ) * 2 + 1,
+		0.5 );
+
+	var allSelected = selectionBox.select();
+	for ( var i = 0; i < allSelected.length; i ++ ) {
+    if (Array.isArray(allSelected[ i ].material))
+      continue
+		allSelected[ i ].material.color.set( 0xffffff );
+
+	}
+  subgraphSelect(allSelected)
+
+} );
+
+function subgraphSelect(selected) {
+  // console.log(selected.length)
+  if (selected.length <= 1) {
+    for (let i in subPlanes)
+      scene.remove(subPlanes[i])
+    plane.position.set(0, 0, 0)
+
+    return
+  }
+  var data = {nodes: [], links: []}
+  let ids = {}
+  let xRange = [10, -10]
+  let yRange = [10, -10]
+  for (let id in selected) {
+    if (selected[id].geometry.type == "SphereGeometry") {
+      console.log(`Name: ${selected[id].name}, Lat: ${selected[id].position.x}, Lon: ${selected[id].position.z}`)
+      xRange[0] = Math.min(xRange[0], selected[id].position.x)
+      xRange[1] = Math.max(xRange[1], selected[id].position.x)
+      yRange[0] = Math.min(yRange[0], selected[id].position.z)
+      yRange[1] = Math.max(yRange[1], selected[id].position.z)
+
+      data.nodes.push({id: parseInt(id), city: selected[id].name, lat: parseFloat(selected[id].position.x), long: parseFloat(selected[id].position.z)})
+      ids[selected[id].name] = parseInt(id)
+
+    } else if (selected[id].geometry.type == "BufferGeometry") {
+      // console.log(ids)
+      let start = selected[id].name.split('/')[0]
+      let end = selected[id].name.split('/')[1]
+      let weight = selected[id].userData.weight
+      // console.log(selected[id].name)
+      // console.log(selected[id].name.split('/'))
+      // console.log(start)
+      console.log(`Start: ${start}(${ids[start]}), End: ${end}(${ids[end]}), Weight: ${weight}`)
+      if (ids[start] == undefined || ids[end] == undefined)
+        continue
+      data.links.push({source: ids[start], target: ids[end], ricciCurvature: weight})
+    }
+  }
+  let mid = [(xRange[0]+xRange[1])/2, (yRange[0]+yRange[1])/2]
+  let width = xRange[1] - xRange[0]
+  let height = yRange[1] - yRange[0]
+  // --- DRAW PLANE ---
+
+  var subGeom = new T.PlaneGeometry(width, height, divisions-1, divisions-1)
+  // var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
+  var subMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false} )
+  var subPlane = new T.Mesh( subGeom, subMat )
+
+  subPlane.position.set(mid[0], 1, mid[1])
+  plane.position.set(0, -2, 0)
+  subPlane.rotation.set(-1.57, 0, 0.)
+  scene.add( subPlane )
+  subPlanes.push(subPlane)
+  // ---GENERATE SURFACE
+
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.responseType = "text"
+
+  xmlHttp.onreadystatechange = function()
+  {
+      if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+
+      {
+          data = JSON.parse(xmlHttp.responseText)
+          let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+          for (let i = 0 ; i < divisions ; i++) {
+            for (let j = 0 ; j < divisions ; j++) {
+              newHeightMap[j][49-i] = data[i*divisions + j]*1
+
+            }
+          }
+          setPlaneHeights(subPlane, newHeightMap)
+
+
+
+      }
+  }
+  xmlHttp.open("post", "calc-surface");
+  xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+  xmlHttp.send(JSON.stringify(data));
+}
+
+function setPlaneHeights(plane, map) {
+  for (let i=0; i<divisions ; i++) {
+    for (let j=0; j < divisions ; j++) {
+      if (i < 2) {
+        plane.geometry.vertices[i*divisions+j].z =  map[3][j]
+      } else if (i >= divisions-2) {
+        plane.geometry.vertices[i*divisions+j].z =  map[divisions-3][j]
+      } else {
+        plane.geometry.vertices[i*divisions+j].z =  map[i][j]
+      }
+    }
+  }
+  plane.geometry.groupsNeedUpdate = true
+  plane.geometry.verticesNeedUpdate = true
+  plane.geometry.colorsNeedUpdate = true
+  plane.geometry.computeVertexNormals()
 }
 
 function calcContours(xlimit, ylimit) {
@@ -1244,6 +1421,7 @@ function addVertex(obj, x, y, drawPoint, name, lat=0, long=0) {
   newPt.position.y = vertexHeight
   newPt.position.x = xPos.value
   newPt.position.z = yPos.value
+  newPt.name = name
 
   let sprite = getNameSprite(name)
   sprite.position.set(xPos.value, vertexHeight + 0.5 + Math.random()*0.2, yPos.value)
@@ -1427,6 +1605,9 @@ function drawEdge(edge, lineMat) {
     var endColor = new T.Color("hsl(0, 76%, 43%)")
   color.lerpHSL(endColor, Math.abs(edge.weight))
   line.material.color.set(color)
+  line.name = edge.start.name + "/" + edge.end.name
+  line.userData = {weight: edge.weight}
+
   scene.add( line );
   linesDrawn.push(line)
 }
@@ -1656,7 +1837,9 @@ function createMap() {
           })
         ],
         view: new ol.View({
-          center: ol.proj.fromLonLat([67.41, 8.82]),
+          // center: ol.proj.fromLonLat([67.41, 8.82]),
+          // projection: 'EPSG:9823',
+          center: ol.proj.fromLonLat([0, 0]),
           zoom: 0,
         })
   });
@@ -1716,7 +1899,6 @@ function calculateCurvature() {
   console.log(data)
 }
 
-
 function calcSurface() {
   console.log("calculate surface")
   var data = {nodes: [], links: []}
@@ -1730,8 +1912,8 @@ function calcSurface() {
   }
   data.nodes.push({id: length, city: "border1", lat: 0.001, long: 180.001})
   data.nodes.push({id: length+2, city: "border2", lat: 0.001, long: -180.001})
-  data.nodes.push({id: length+3, city: "border3", lat: 90.001, long: 0.001}) // 138.5
-  data.nodes.push({id: length+4, city: "border4", lat: -90.001, long: 0.001})
+  data.nodes.push({id: length+3, city: "border3", lat: 155.001, long: 0.001}) // 138.5
+  data.nodes.push({id: length+4, city: "border4", lat: -155.001, long: 0.001})
 
   for (let id in current_edges) {
     let edge = current_edges[id]
@@ -1746,20 +1928,26 @@ function calcSurface() {
   //      // do something
   //   })
   var xmlHttp = new XMLHttpRequest();
-  xmlHttp.responseType = "arraybuffer"
+  // xmlHttp.responseType = "arraybuffer"
+  xmlHttp.responseType = "text"
+
   xmlHttp.onreadystatechange = function()
   {
       if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
 
       {
-          document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
-          // data = JSON.parse(xmlHttp.responseText)
-          // console.log(data)
-          // for (let i = 0 ; i < divisions ; i++) {
-          //   for (let j = 0 ; j < divisions ; j++) {
-          //     calcHeightMap[49-j][49-i] = data[i*divisions + j]*2
-          //   }
-          // }
+          // document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
+          data = JSON.parse(xmlHttp.responseText)
+          console.log(data)
+          for (let i = 0 ; i < divisions ; i++) {
+            for (let j = 0 ; j < divisions ; j++) {
+              calcHeightMap[j][49-i] = data[i*divisions + j]*2
+              if (data[i*divisions + j] < -0.1) {
+                console.log(data[i*divisions + j])
+                calcHeightMap[j][49-i] = data[i*divisions + j]*10
+              }
+            }
+          }
           // console.log(calcHeightMap)
 
 
@@ -1865,7 +2053,7 @@ function fileSelectNodes(evt) {
         let data = line.split(',')
         if (data[1] == '' || isNaN(data[1]))
           continue
-        addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
+        addVertex(null, (parseFloat(data[1])/155)*10, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
         // addVertex(null, (parseFloat(data[1])/180)*10, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
       }
     }
