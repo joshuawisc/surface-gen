@@ -821,19 +821,19 @@ window.onload = function() {
     contourCount++
 
     if (dataSent) {
-      var xmlHttp = new XMLHttpRequest();
-      xmlHttp.onreadystatechange = function() {
-        if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-          // console.log("recv dummy")
-          // console.log(JSON.parse(xmlHttp.responseText))
-          let data = JSON.parse(xmlHttp.responseText)
-        }
-      }
-      xmlHttp.open("post", "dummy");
-      xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-      xmlHttp.send(JSON.stringify({"a": "b"}));
-      console.log("dummy data sent")
+      // var xmlHttp = new XMLHttpRequest();
+      // xmlHttp.onreadystatechange = function() {
+      //   if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+      //     // console.log("recv dummy")
+      //     // console.log(JSON.parse(xmlHttp.responseText))
+      //     let data = JSON.parse(xmlHttp.responseText)
+      //   }
+      // }
+      // xmlHttp.open("post", "dummy");
+      // xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      //
+      // xmlHttp.send(JSON.stringify({"a": "b"}));
+      // console.log("dummy data sent")
     }
 
     // calcContours(xlimit, ylimit)
@@ -1991,15 +1991,16 @@ function calcSurface() {
           data = JSON.parse(xmlHttp.responseText)
           // console.log(data)
           console.log("data recv")
-          for (let i = 0 ; i < divisions ; i++) {
-            for (let j = 0 ; j < divisions ; j++) {
-              calcHeightMap[j][49-i] = data[i*divisions + j]*2
-              if (data[i*divisions + j] < -0.1) {
-                // console.log(data[i*divisions + j])
-                calcHeightMap[j][49-i] = data[i*divisions + j]*10
-              }
-            }
-          }
+          console.log(data)
+          // for (let i = 0 ; i < divisions ; i++) {
+          //   for (let j = 0 ; j < divisions ; j++) {
+          //     calcHeightMap[j][49-i] = data[i*divisions + j]*2
+          //     if (data[i*divisions + j] < -0.1) {
+          //       // console.log(data[i*divisions + j])
+          //       calcHeightMap[j][49-i] = data[i*divisions + j]*10
+          //     }
+          //   }
+          // }
           // console.log(calcHeightMap)
 
 
