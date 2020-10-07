@@ -8,6 +8,10 @@ import { Line2 } from './scripts/Line2.js';
 import { LineMaterial } from './scripts/LineMaterial.js';
 import { SelectionBox } from './scripts/SelectionBox.js';
 import { SelectionHelper } from './scripts/SelectionHelper.js';
+import RBush from './scripts/rbush/index.js'
+import quickselect from './scripts/quickselect/index.js'
+import Draw from './scripts/ol/interaction/Draw.js';
+
 // import { GreatCircle } from './GreatCircle/GreatCircle.js';
 // import {transformExtent} from 'ol/proj';
 
@@ -17,7 +21,7 @@ let graphcolor = 0xffffff
 let vertexcolor = 0x4CAF50
 let edgecolor = 0x21bf73
 let edgecolor_sec = 0x4cd995
-let canvascolor = "#c7c7c7"
+let canvascolor = "#ffffff" // #c7c7c7
 let contcolor = 0xff0000
 
 // Extra colors
@@ -51,6 +55,10 @@ let T = THREE
 
 let vertexCount = 0
 let edgeCount = 0
+
+let zoomWidths = []
+let zoomHeights = []
+let zoomLevels = []
 
 let planeXMin = -10, planeXMax = 10
 let planeYMin = -10, planeYMax = 10
@@ -191,7 +199,7 @@ var plane = new T.Mesh( geometry, mMat )
 // }
 // plane.receiveShadow = true
 // plane.castShadow = true
-plane.rotation.set(-1.57, 0, 0.)
+plane.rotation.set(-Math.PI/2, 0, 0.)
 scene.add( plane )
 
 
@@ -328,6 +336,7 @@ window.onload = function() {
   const customTexture = texture
   const mapTexture = new T.CanvasTexture(ctx.canvas)
   mapTexture.minFilter = THREE.LinearFilter
+  mapTexture.magFilter = THREE.NearestFilter
   mapTexture.center = new T.Vector2(0.5, 0.5)
   mapTexture.rotation = -Math.PI/2
 
@@ -338,22 +347,38 @@ window.onload = function() {
   // TODO: Stack for -ve zoom levels for consistency
 
   // TODO: enable
-  // window.addEventListener('wheel', function(e){
-  //   mapdiv.style.display = "block"
-  //   if (e.deltaY > 0) {
-  //     olMap.getView().setZoom(olMap.getView().getZoom()-0.05)
-  //     mapdiv.style.width = mapdiv.offsetWidth*0.95 + 'px'
-  //     mapdiv.style.height = mapdiv.offsetHeight*0.95 + 'px'
-  //     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-  //   } else {
-  //     olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
-  //     mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
-  //     mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
-  //     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-  //   }
-  //   olMap.updateSize()
-  //   mapdiv.style.display = "none"
-  // }, true)
+  window.addEventListener('wheel', function(e){
+    mapdiv.style.display = "block"
+    if (e.deltaY > 0) {
+      if (zoomLevels.length != 0) {
+        console.log(olMap.getView().getZoom())
+        console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
+        mapdiv.style.width = zoomWidths.pop() + 'px'
+        mapdiv.style.height = zoomHeights.pop() + 'px'
+        console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
+        olMap.updateSize()
+        olMap.getView().setZoom(zoomLevels.pop())
+        console.log(olMap.getView().getZoom())
+      }
+
+      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+    } else {
+      console.log(olMap.getView().getZoom())
+      zoomWidths.push(mapdiv.offsetWidth)
+      zoomHeights.push(mapdiv.offsetHeight)
+      zoomLevels.push(olMap.getView().getZoom())
+      olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
+      console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
+      mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
+      mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
+      olMap.updateSize()
+      console.log(mapdiv.offsetWidth + " " + mapdiv.offsetHeight)
+      console.log(olMap.getView().getZoom())
+
+      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+    }
+    mapdiv.style.display = "none"
+  }, true)
 
   var dropNodes = document.getElementById('drop-nodes');
   dropNodes.addEventListener('dragover', dragOver, false);
@@ -436,6 +461,7 @@ window.onload = function() {
     controls.enablePan = false
     controls.enableRotate = true
     controls.enableZoom = true
+    controls.minZoom = 1
 
 
 
@@ -543,14 +569,14 @@ window.onload = function() {
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
 
       // Draw texture edge // TODO: undo
-      // startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      // endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-      // ctx.beginPath();
-      // ctx.moveTo(startPt[0], startPt[1])
-      // ctx.lineTo(endPt[0], endPt[1])
-      // ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
-      // ctx.lineWidth = 12
-      // ctx.stroke()
+      startPt = [(1 - (startPt[0] - planeXMin) / planeW) * ctx.canvas.width, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      endPt = [(1 - (endPt[0] - planeXMin) / planeW) * ctx.canvas.width, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.beginPath();
+      ctx.moveTo(startPt[1], startPt[0])
+      ctx.lineTo(endPt[1], endPt[0])
+      ctx.strokeStyle = "#660000" // #2cacc9 // #40bad5
+      ctx.lineWidth = 2
+      ctx.stroke()
     }
 
     // Draw logical edges into graph, Draw logical edges into texture
@@ -698,17 +724,16 @@ window.onload = function() {
     // TODO: enable
 
     // Draw point on surface texture
-    // for (let id in vertices) {
-    //   let vertex = vertices[id]
-    //   let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
-    //   point = [(point[0] - planeXMin) * ctx.canvas.width / planeW, (point[1] - planeYMin) * ctx.canvas.height / planeH]
-    //
-    //   ctx.fillStyle = "#035aa6" // #035aa6
-    //
-    //   ctx.beginPath();
-    //   ctx.arc(point[0], point[1], 10, 0, 2 * Math.PI);
-    //   ctx.fill();
-    // }
+    for (let id in vertices) {
+      let vertex = vertices[id]
+      let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
+      point = [(1 - (point[0] - planeXMin) / planeW) * ctx.canvas.width, (point[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.fillStyle = "#FF5C5C" // #035aa6
+
+      ctx.beginPath();
+      ctx.arc(point[1], point[0], 5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
 
     texture.needsUpdate = true
 
@@ -730,6 +755,16 @@ window.onload = function() {
           plane.geometry.vertices[i*divisions+j].z =  map[i][j]
         }
       }
+    }
+
+    for (let p of subPlanes) {
+      for (let i=p.start[0]; i<p.end[0] ; i++) {
+        for (let j=p.start[1]; j<p.end[1] ; j++) {
+          plane.geometry.vertices[j*divisions+i].z = 0
+        }
+      }
+      p.plane.material.map.needsUpdate = true
+      console.log()
     }
 
 
@@ -895,8 +930,7 @@ function subgraphSelect(selected) {
   // console.log(selected.length)
   if (selected.length <= 1) {
     for (let i in subPlanes)
-      scene.remove(subPlanes[i])
-    plane.position.set(0, 0, 0)
+      scene.remove(subPlanes[i].plane)
 
     return
   }
@@ -933,17 +967,35 @@ function subgraphSelect(selected) {
   let width = xRange[1] - xRange[0]
   let height = yRange[1] - yRange[0]
   // --- DRAW PLANE ---
+  var mapCanvas = document.getElementById('map').getElementsByTagName('canvas')[0]
+  const ctx = mapCanvas.getContext('2d')
+  var subTexture = new T.CanvasTexture(ctx.canvas)
+  subTexture.minFilter = THREE.LinearFilter
+  subTexture.center = new T.Vector2(0.5, 0.5)
+  subTexture.rotation = -Math.PI/2
+  subTexture.repeat.y = (xRange[1] - xRange[0]) / 20
+  subTexture.repeat.x = (yRange[1] - yRange[0]) / 20
+  subTexture.offset.x = mid[1] / 20
+  subTexture.offset.y = mid[0] / 20
+  console.log(subTexture.offset.x)
+  console.log(subTexture.offset.y)
 
   var subGeom = new T.PlaneGeometry(width, height, divisions-1, divisions-1)
   // var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
-  var subMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false} )
+  var subMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: subTexture} )
   var subPlane = new T.Mesh( subGeom, subMat )
 
-  subPlane.position.set(mid[0], 1, mid[1])
-  plane.position.set(0, -2, 0)
-  subPlane.rotation.set(-1.57, 0, 0.)
+  subPlane.position.set(mid[0], 0.001, mid[1])
+  subPlane.rotation.set(-Math.PI/2, 0., 0.)
+  let spObj = {}
+  spObj.start = [Math.floor((xRange[0] + 10) * divisions / 20), Math.floor((yRange[0] + 10) * divisions / 20)]
+  spObj.end = [Math.ceil((xRange[1] + 10) * divisions / 20), Math.ceil((yRange[1] + 10) * divisions / 20)]
+  spObj.plane = subPlane
   scene.add( subPlane )
-  subPlanes.push(subPlane)
+  subPlanes.push(spObj)
+  let scale = Math.min(width, height) / divisions
+  scale *= 3
+  console.log(scale)
   // ---GENERATE SURFACE
 
   var xmlHttp = new XMLHttpRequest();
@@ -958,7 +1010,7 @@ function subgraphSelect(selected) {
           let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
           for (let i = 0 ; i < divisions ; i++) {
             for (let j = 0 ; j < divisions ; j++) {
-              newHeightMap[j][49-i] = data[i*divisions + j]*1
+              newHeightMap[j][49-i] = data[i*divisions + j]*scale
 
             }
           }

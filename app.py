@@ -57,10 +57,6 @@ def calc_surface():
 
 @app.route('/')
 def static_proxy():
-    print("Here", file=sys.stdout)
-    path = 'simple.graphml'
-    G = nx.read_graphml(path)
-    G = ricciCurvature(G,alpha=0,verbose=True)
 
     return app.send_static_file('index.html')
 

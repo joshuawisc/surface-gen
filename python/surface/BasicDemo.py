@@ -603,9 +603,9 @@ def main(data):
 
 
     rate = 0.0001
-    smooth_pen = 50
+    smooth_pen = 5
     momentum = 0.9
-    niter = 50
+    niter = 10
 
 
 
