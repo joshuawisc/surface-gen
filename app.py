@@ -9,7 +9,7 @@ from OllivierRicci import ricciCurvature
 from python.surface import BasicDemo as bd
 from python.surface.src.generating_tessalation import generating_tessalation_2
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-# import concurrent.futures
+import concurrent.futures
 import sys
 import io
 
@@ -55,27 +55,27 @@ def calc_surface():
     nx.write_graphml(H, "newgraph.graphml")
     ret = generating_tessalation_2(H)
     def generate():
-        # with concurrent.futures.ThreadPoolExecutor() as executor:
-        #     future = executor.submit(bd.main, ret)
-        #     while future.running():
-        #         print("running")
-        #         yield json.dumps("running")
-        #     result = future.result()
-        #     yield json.dumps(result.tolist())
-        for i in range(10):
-            print(i+10)
-            yield json.dumps(i+10)
-            import time
-            time.sleep(5)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(bd.main, ret)
+            while future.running():
+                print("running")
+                yield json.dumps("running")
+            result = future.result()
+            yield json.dumps(result.tolist())
+    #     for i in range(10):
+    #         print(i+10)
+    #         yield json.dumps(i+10)
+    #         import time
+    #         time.sleep(5)
     return Response(generate(), mimetype='text/plain')
-    # zf = bd.main(ret)
     # plot = bd.get_heatmap(ret)
     # output = io.BytesIO()
     #print("\nplot\n")
     # FigureCanvas(plot).print_png(output)
     # return Response(output.getvalue(), mimetype='image/png')
 
-    # return json.dumps(zf.tolist())
+    zf = bd.main(ret)
+    return json.dumps(zf.tolist())
 
 @app.route('/')
 def static_proxy():

@@ -1988,19 +1988,19 @@ function calcSurface() {
       {
           // document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
           dataSent = false
-          data = JSON.parse(xmlHttp.responseText)
-          // console.log(data)
-          console.log("data recv")
+          // data = JSON.parse(xmlHttp.responseText)
+          data = xmlHttp.responseText
           console.log(data)
-          // for (let i = 0 ; i < divisions ; i++) {
-          //   for (let j = 0 ; j < divisions ; j++) {
-          //     calcHeightMap[j][49-i] = data[i*divisions + j]*2
-          //     if (data[i*divisions + j] < -0.1) {
-          //       // console.log(data[i*divisions + j])
-          //       calcHeightMap[j][49-i] = data[i*divisions + j]*10
-          //     }
-          //   }
-          // }
+          console.log("data recv")
+          for (let i = 0 ; i < divisions ; i++) {
+            for (let j = 0 ; j < divisions ; j++) {
+              calcHeightMap[j][49-i] = data[i*divisions + j]*2
+              if (data[i*divisions + j] < -0.1) {
+                // console.log(data[i*divisions + j])
+                calcHeightMap[j][49-i] = data[i*divisions + j]*10
+              }
+            }
+          }
           // console.log(calcHeightMap)
 
 
