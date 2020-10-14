@@ -204,7 +204,6 @@ var plane = new T.Mesh( geometry, mMat )
 plane.rotation.set(-Math.PI/2, 0, 0.)
 scene.add( plane )
 
-
 controls.update();
 
 
@@ -322,8 +321,6 @@ for (let i = 0 ; i < heightMap.length ; i++) {
 }
 
 
-
-
 window.onload = function() {
 
 
@@ -357,6 +354,7 @@ window.onload = function() {
         mapdiv.style.height = zoomHeights.pop() + 'px'
         olMap.updateSize()
         olMap.getView().setZoom(zoomLevels.pop())
+
       }
 
       // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
@@ -391,6 +389,8 @@ window.onload = function() {
   document.getElementById("heatmap-div").style.display = "none"
 
   let hideSurface = document.getElementById("hide-surface")
+  hideSurface.style.visibility = "hidden"
+  document.getElementById("hide-surface-label").style.visibility = "hidden"
   let chkCalcSurface = document.getElementById("use-calc-surface")
   let showMap = document.getElementById("show-map")
 
@@ -406,6 +406,7 @@ window.onload = function() {
 
   let btnGenGraphEmpty = document.getElementById("btn-gen-graph-empty")
   btnGenGraphEmpty.onclick = generateGraphNoWeights
+  btnGenGraphEmpty.style.display = "none"
 
   let btnCalcCurv = document.getElementById("btn-calc-curv")
   btnCalcCurv.onclick = calculateCurvature
@@ -452,7 +453,8 @@ window.onload = function() {
 
     controls.update()
     // controls.enabled = false
-    controls.enablePan = false
+    controls.enablePan = true
+    controls.panSpeed = 0
     controls.enableRotate = true
     controls.enableZoom = true
     controls.minZoom = 1
@@ -929,18 +931,52 @@ document.addEventListener( 'pointerup', function ( event ) {
 
 } );
 
+
 function subgraphSelect(selected) {
-  // console.log(selected.length)
-  if (selected.length <= 1) {
+  console.log(selected.length)
+  console.log(vertexCount + edgeCount + 1)
+  if (selected.length <= 1 || selected.length >= vertexCount + edgeCount + 1) {
+    console.log("here")
     for (let i in subPlanes)
       scene.remove(subPlanes[i].plane)
 
+    // TODO: zoom widthd, heights, levels reset
+
+    gsap.to( camera, {
+  				duration: 1,
+  				zoom: 1,
+  				onUpdate: function () {
+  					camera.updateProjectionMatrix();
+  				}
+  	})
+    gsap.to( controls.target, {
+  				duration: 1,
+  				x: 0,
+  				y: 0,
+  				z: 0,
+  				onUpdate: function () {
+  					controls.update();
+  				}
+  	})
+    gsap.to( plane.position, {
+  				duration: 1,
+  				y: 0,
+          onStart: function() {
+            plane.visible = true
+          },
+  				onUpdate: function () {
+  				}
+  	})
+
+    olMap.getView().setZoom(0)
+    subPlanes = []
     return
   }
   var data = {nodes: [], links: []}
   let ids = {}
   let xRange = [10, -10]
   let yRange = [10, -10]
+
   for (let id in selected) {
     if (selected[id].geometry.type == "SphereGeometry") {
       // console.log(`Name: ${selected[id].name}, Lat: ${selected[id].position.x}, Lon: ${selected[id].position.z}`)
@@ -966,6 +1002,7 @@ function subgraphSelect(selected) {
       data.links.push({source: ids[start], target: ids[end], ricciCurvature: weight})
     }
   }
+
   let mid = [(xRange[0]+xRange[1])/2, (yRange[0]+yRange[1])/2]
   let width = xRange[1] - xRange[0]
   let height = yRange[1] - yRange[0]
@@ -986,7 +1023,7 @@ function subgraphSelect(selected) {
   var subMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: subTexture} )
   var subPlane = new T.Mesh( subGeom, subMat )
 
-  subPlane.position.set(mid[0], 0.001, mid[1])
+  subPlane.position.set(mid[0], 1, mid[1])
   subPlane.rotation.set(-Math.PI/2, 0., 0.)
   let spObj = {}
   spObj.start = [Math.floor((xRange[0] + 10) * divisions / 20), Math.floor((yRange[0] + 10) * divisions / 20)]
@@ -997,6 +1034,43 @@ function subgraphSelect(selected) {
   let scale = Math.min(width, height) / divisions
   scale *= 3
   console.log(scale)
+
+  // plane.position.set(0, -10, 0)
+
+
+  gsap.to( camera, {
+				duration: 1,
+				zoom: 2,
+				onUpdate: function () {
+					camera.updateProjectionMatrix();
+				}
+	})
+  gsap.to( controls.target, {
+				duration: 1,
+				x: subPlane.position.x,
+				y: subPlane.position.y,
+				z: subPlane.position.z,
+				onUpdate: function () {
+					controls.update();
+				}
+	})
+  gsap.to( plane.position, {
+        duration: 1,
+        y: -20,
+        onUpdate: function () {
+        },
+        onComplete: function() {
+          plane.visible = false
+        }
+  })
+  // plane.material.transparent = true
+  // plane.material.opacity = 0.5
+
+
+  // controls.target = subPlane.position
+  // camera.zoom = 2
+  // controls.update()
+  // camera.updateProjectionMatrix()
   // ---GENERATE SURFACE
 
   var xmlHttp = new XMLHttpRequest();
@@ -1005,7 +1079,11 @@ function subgraphSelect(selected) {
   xmlHttp.onreadystatechange = function() {
     if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
       dataSent = false
-      data = JSON.parse(xmlHttp.responseText)
+      data = xmlHttp.responseText
+      data = data.substring(data.indexOf('['))
+      data = JSON.parse(data)
+      console.log(data)
+      console.log("data recv")
       let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
       for (let i = 0 ; i < divisions ; i++) {
         for (let j = 0 ; j < divisions ; j++) {
@@ -1378,13 +1456,41 @@ function vertexPositionChange() {
   let id = parentDiv.childNodes[0].textContent
   let pt = vertices[id]
   if (this.className == "xPos") {
-    pt.mesh.position.x = this.value
-    pt.label.position.x = this.value
+    gsap.to( pt.mesh.position, {
+  				duration: 0.25,
+  				x: this.value,
+          onUpdate: function() {
+            olMap.render()
+          }
+  	})
+    gsap.to( pt.label.position, {
+  				duration: 0.25,
+  				x: this.value,
+          onUpdate: function() {
+            olMap.render()
+          }
+  	})
+    // pt.mesh.position.x = this.value
+    // pt.label.position.x = this.value
     pt.lat = this.value*(90/7)
 
   } else {
-    pt.mesh.position.z = this.value
-    pt.label.position.z = this.value
+    gsap.to( pt.mesh.position, {
+  				duration: 0.25,
+  				z: this.value,
+          onUpdate: function() {
+            olMap.render()
+          }
+  	})
+    gsap.to( pt.label.position, {
+  				duration: 0.25,
+  				z: this.value,
+          onUpdate: function() {
+            olMap.render()
+          }
+  	})
+    // pt.mesh.position.z = this.value
+    // pt.label.position.z = this.value
     pt.long = this.value*(180/10)
 
   }
