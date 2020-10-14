@@ -12,6 +12,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import concurrent.futures
 import sys
 import io
+import time
 
 sys.path.append(r'python/surface/src')
 
@@ -54,11 +55,16 @@ def calc_surface():
     # print("\n\n")
     nx.write_graphml(H, "newgraph.graphml")
     ret = generating_tessalation_2(H)
+
     def generate():
+        cur_time = time.time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(bd.main, ret)
             while future.running():
-                yield json.dumps("")
+                time.sleep(5)
+                if time.time() - cur_time > 27:
+                    cur_time = time.time()
+                    yield json.dumps('')
             result = future.result()
             yield json.dumps(result.tolist())
     #     for i in range(10):

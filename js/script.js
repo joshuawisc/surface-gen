@@ -1990,6 +1990,8 @@ function calcSurface() {
           dataSent = false
           // data = JSON.parse(xmlHttp.responseText)
           data = xmlHttp.responseText
+          data = data.substring(data.indexOf('['))
+          data = JSON.parse(data)
           console.log(data)
           console.log("data recv")
           for (let i = 0 ; i < divisions ; i++) {
