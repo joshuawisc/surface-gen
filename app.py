@@ -66,7 +66,7 @@ def calc_surface():
     #         yield json.dumps(i+10)
     #         import time
     #         time.sleep(5)
-    # return Response(generate(), mimetype='text/plain')
+    return Response(generate(), mimetype='text/plain')
     # plot = bd.get_heatmap(ret)
     # output = io.BytesIO()
     #print("\nplot\n")
