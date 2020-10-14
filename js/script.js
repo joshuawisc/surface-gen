@@ -660,7 +660,9 @@ window.onload = function() {
 
 
       // Set heightmap
-      setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+      if (!chkCalcSurface.checked) {
+        setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+      }
     }
 
 
@@ -708,7 +710,9 @@ window.onload = function() {
       newStartPt.x = Math.round((newStartPt.x / planeW) * divisions) // Change from (0, planeWidth) to (0, divisions)
       newStartPt.y = Math.round((newStartPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
 
-      setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+      if (!chkCalcSurface.checked) {
+        setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+      }
     }
 
 
@@ -849,6 +853,8 @@ window.onload = function() {
 
     // Render
     renderer.localClippingEnabled = hideSurface.checked
+
+    olMap.render()
 
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
     // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
@@ -1032,7 +1038,7 @@ function subgraphSelect(selected) {
   scene.add( subPlane )
   subPlanes.push(spObj)
   let scale = Math.min(width, height) / divisions
-  scale *= 3
+  scale *= 10
   console.log(scale)
 
   // plane.position.set(0, -10, 0)
@@ -2137,53 +2143,80 @@ function readEdgeFile(file) {
   var reader = new FileReader()
   reader.onload = function() {
     let current_edges = {}
-
     let text = reader.result
     let lines = text.split('\n')
     let i = -1
     let inputNames = []
-    // console.log(lines)
-    let inputNameData = lines[18].split('\"')
-    let k = -1
-    for (let nameData of inputNameData) {
-      k++
-      nameData = nameData.trim()
-      if (nameData == '')
-        continue
-      if (k%2 == 1)
-        inputNames.push(nameData)
-      else {
-        inputNames = inputNames.concat(nameData.split(' '))
-      }
-    }
-    // console.log(lines)
-    for (let i = 19 ; i < lines.length ; i++) {
-      let line = lines[i]
-      let data = line.split("\"")
-      let currentNode = ''
-      if (data.length > 1) { // Two word name - deal with double quotes
-        currentNode = data[1]
-        data = data[2].split(" ")
-      } else {
-        data = data[0].split(" ")
-        currentNode = data[0]
-        data = data.splice(1)
-      }
-      if (data[0] == '' || isNaN(data[0]))
-        continue
-      let currentId = names[currentNode]
-      for (let j=0 ; j<i-19 ; j++) {
-        let weight = parseFloat(data[j])
-        if (weight == 0)
+    if (file.name.substr(-3) != 'csv') {
+    // if (file.name.substr(-3))
+      let inputNameData = lines[0].split('\"')
+      let k = -1
+      for (let nameData of inputNameData) {
+        console.log("here3")
+        k++
+        nameData = nameData.trim()
+        if (nameData == '')
           continue
-        let endNode = inputNames[j]
-        let endId = names[endNode]
-        console.log(`${weight} edge from ${currentNode}(${currentId}) to ${endNode}(${endId})`)
-        addEdgeSec(null, currentId, endId, weight, vertices, current_edges)
+        if (k%2 == 1)
+          inputNames.push(nameData)
+        else {
+          inputNames = inputNames.concat(nameData.split(' '))
+        }
       }
-      // addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+    } else {
+      inputNames = lines[0].split(',').slice(1)
+    }
+
+    if (file.name.substr(-3) != 'csv') {
+      for (let i = 0 ; i < lines.length ; i++) {
+        let line = lines[i]
+        let data = line.split("\"")
+        let currentNode = ''
+        if (data.length > 1) { // Two word name - deal with double quotes
+          currentNode = data[1]
+          data = data[2].split(" ")
+        } else {
+          data = data[0].split(" ")
+          currentNode = data[0]
+          data = data.splice(1)
+        }
+        if (data[0] == '' || isNaN(data[0]))
+          continue
+        let currentId = names[currentNode]
+        for (let j=0 ; j<i ; j++) {
+          let weight = parseFloat(data[j])
+          if (weight == 0)
+            continue
+          let endNode = inputNames[j]
+          let endId = names[endNode]
+          console.log(`${weight} edge from ${currentNode}(${currentId}) to ${endNode}(${endId})`)
+          addEdgeSec(null, currentId, endId, weight, vertices, current_edges)
+        }
+        // addVertex(null, (parseFloat(data[1])/90)*7, (parseFloat(data[2])/180)*10, true, data[0])
+      }
+    } else {
+      for (let i = 0 ; i < lines.length ; i++) {
+        let line = lines[i]
+        let data = line.split(",")
+        let currentNode = data[0]
+        data = data.splice(1)
+
+        // if (data[0] == '' || isNaN(data[0]))
+        //   continue
+        let currentId = names[currentNode]
+        for (let j=0 ; j<i ; j++) {
+          if (data[j] == '' || isNaN(data[0]))
+            continue
+          let weight = parseFloat(data[j])
+          let endNode = inputNames[j]
+          let endId = names[endNode]
+          console.log(`${weight} edge from ${currentNode}(${currentId}) to ${endNode}(${endId})`)
+          addEdgeSec(null, currentId, endId, weight, vertices, current_edges)
+        }
+      }
     }
     edgeCollection.push(current_edges)
+    console.log(current_edges)
     document.getElementById("threshold-slider").max = edgeCollection.length-1
   }
   reader.readAsText(file)
@@ -2193,9 +2226,8 @@ function readEdgeFile(file) {
 function fileSelectNodes(evt) {
     evt.stopPropagation()
     evt.preventDefault()
-
+    console.log("read node file")
     var files = evt.dataTransfer.files; // FileList object.
-
     // files is a FileList of File objects. List some properties.
     // var output = [];
     // for (var i = 0, f; f = files[i]; i++) {
