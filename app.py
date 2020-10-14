@@ -62,7 +62,7 @@ def calc_surface():
             future = executor.submit(bd.main, ret)
             while future.running():
                 time.sleep(5)
-                if time.time() - cur_time > 27:
+                if time.time() - cur_time > 20:
                     cur_time = time.time()
                     yield json.dumps('')
             result = future.result()
