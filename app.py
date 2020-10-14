@@ -58,8 +58,7 @@ def calc_surface():
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(bd.main, ret)
             while future.running():
-                print("running")
-                yield json.dumps("running")
+                yield json.dumps("")
             result = future.result()
             yield json.dumps(result.tolist())
     #     for i in range(10):
@@ -67,7 +66,7 @@ def calc_surface():
     #         yield json.dumps(i+10)
     #         import time
     #         time.sleep(5)
-    return Response(generate(), mimetype='text/plain')
+    # return Response(generate(), mimetype='text/plain')
     # plot = bd.get_heatmap(ret)
     # output = io.BytesIO()
     #print("\nplot\n")
