@@ -107,6 +107,7 @@ input[type=text] {
   border-color: #E5E5E5;
   border-width: 5px;
   border-radius: 5px;
+  background-color: rgb(229, 229, 229, 0.2);
   /* box-shadow: 0 0 0 13px #E5E5E5 inset; */
 }
 .gui-box>*{
@@ -136,7 +137,13 @@ input[type=text] {
 #heatmap-div {
   display:block;
   float:right;
+  border: none;
 }
+
+#zoom-out {
+  display:
+}
+
 .drop-box{
   background-color: #E5E5E5;
   display: inline-block;

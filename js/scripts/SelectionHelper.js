@@ -19,7 +19,7 @@ var SelectionHelper = ( function () {
 		this.isDown = false;
 
 		this.renderer.domElement.addEventListener( 'mousedown', function ( event ) {
-			if (event.which != 3)
+			if (event.which != 1 || !event.shiftKey)
 				return
 			this.isDown = true;
 			this.onSelectStart( event );
@@ -27,7 +27,7 @@ var SelectionHelper = ( function () {
 		}.bind( this ), false );
 
 		this.renderer.domElement.addEventListener( 'mousemove', function ( event ) {
-			if (event.which != 3)
+			if (event.which != 1 || !event.shiftKey)
 				return
 			if ( this.isDown ) {
 
@@ -38,7 +38,7 @@ var SelectionHelper = ( function () {
 		}.bind( this ), false );
 
 		this.renderer.domElement.addEventListener( 'mouseup', function ( event ) {
-			if (event.which != 3)
+			if (event.which != 1 || !event.shiftKey)
 				return
 			this.isDown = false;
 			this.onSelectOver( event );

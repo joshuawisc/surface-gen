@@ -11,9 +11,10 @@ import { SelectionHelper } from './scripts/SelectionHelper.js';
 import RBush from './scripts/rbush/index.js'
 import quickselect from './scripts/quickselect/index.js'
 import Draw from './scripts/ol/interaction/Draw.js';
+import {transformExtent} from './scripts/ol/proj.js';
+
 
 // import { GreatCircle } from './GreatCircle/GreatCircle.js';
-// import {transformExtent} from 'ol/proj';
 
 
 let bgcolor = 0xf3f3f3
@@ -349,17 +350,20 @@ window.onload = function() {
   // TODO: enable
   window.addEventListener('wheel', function(e){
     mapdiv.style.display = "block"
-    if (e.deltaY > 0) {
+    if (e.deltaY > 0) { // zoom out
       if (zoomLevels.length != 0) {
         mapdiv.style.width = zoomWidths.pop() + 'px'
         mapdiv.style.height = zoomHeights.pop() + 'px'
         olMap.updateSize()
         olMap.getView().setZoom(zoomLevels.pop())
+        // console.log(olMap.getView().getZoom())
+        // console.log(olMap.getView().getResolution())
+
 
       }
 
       // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-    } else {
+    } else { // zoom in
       zoomWidths.push(mapdiv.offsetWidth)
       zoomHeights.push(mapdiv.offsetHeight)
       zoomLevels.push(olMap.getView().getZoom())
@@ -367,6 +371,14 @@ window.onload = function() {
       mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
       mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
       olMap.updateSize()
+      let p1 = ol.proj.fromLonLat([0, 0])
+      let p2 = ol.proj.fromLonLat([100/(2**zoomLevels.length), 100/(2**zoomLevels.length)])
+      let extents = [p1[0], p1[1], p2[0], p2[1]]
+      // console.log(olMap.getView().getZoom())
+      // console.log(olMap.getView().getResolution())
+
+      // olMap.getLayers().array_[0].setExtent(extents)
+
 
       // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
     }
@@ -439,6 +451,12 @@ window.onload = function() {
     }
   }
 
+  controls.enablePan = true
+  controls.panSpeed = 1
+  controls.enableRotate = true
+  controls.enableZoom = true
+  controls.minZoom = 1
+  controls.update()
 
   var animate = function () {
     if (showMap.checked) {
@@ -454,11 +472,7 @@ window.onload = function() {
 
     controls.update()
     // controls.enabled = false
-    controls.enablePan = true
-    controls.panSpeed = 0
-    controls.enableRotate = true
-    controls.enableZoom = true
-    controls.minZoom = 1
+
 
 
 
@@ -841,6 +855,8 @@ window.onload = function() {
     // Render
     renderer.localClippingEnabled = hideSurface.checked
 
+
+
     olMap.render()
 
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
@@ -855,81 +871,19 @@ window.onload = function() {
   animate();
 }
 
-var selectionBox = new SelectionBox( camera, scene );
-var helper = new SelectionHelper( selectionBox, renderer, 'selectBox' );
+var selectionBox = new SelectionBox( camera, scene )
+var helper = new SelectionHelper( selectionBox, renderer, 'selectBox' )
 
-document.addEventListener( 'pointerdown', function ( event ) {
-  if (event.which != 3)
-    return
-  for ( var item of selectionBox.collection ) {
-    if (Array.isArray(item.material))
-      continue
-    item.material = item.material.clone()
-    item.material.color.set( 0x4CAF50 )
-
-
-  }
-
-  selectionBox.startPoint.set(
-  	( event.clientX / window.innerWidth ) * 2 - 1,
-  	- ( event.clientY / window.innerHeight ) * 2 + 1,
-  	0.5 );
-
-} );
-
-document.addEventListener( 'pointermove', function ( event ) {
-	if ( helper.isDown ) {
-		for ( var i = 0; i < selectionBox.collection.length; i ++ ) {
-      if (Array.isArray(selectionBox.collection[i].material))
-        continue
-      selectionBox.collection[i].material = selectionBox.collection[i].material.clone()
-			selectionBox.collection[i].material.color.set( 0x4CAF50 );
-
-		}
-
-		selectionBox.endPoint.set(
-			( event.clientX / window.innerWidth ) * 2 - 1,
-			- ( event.clientY / window.innerHeight ) * 2 + 1,
-			0.5 );
-
-		var allSelected = selectionBox.select();
-		for ( var i = 0; i < allSelected.length; i ++ ) {
-      if (Array.isArray(allSelected[ i ].material))
-        continue
-      allSelected[ i ].material = allSelected[ i ].material.clone()
-			allSelected[ i ].material.color.set( 0xffffff );
-
-		}
-
-	}
-
-} );
-
-document.addEventListener( 'pointerup', function ( event ) {
-  if (event.which != 3)
-    return
-	selectionBox.endPoint.set(
-		( event.clientX / window.innerWidth ) * 2 - 1,
-		- ( event.clientY / window.innerHeight ) * 2 + 1,
-		0.5 );
-
-	var allSelected = selectionBox.select();
-	for ( var i = 0; i < allSelected.length; i ++ ) {
-    if (Array.isArray(allSelected[ i ].material))
-      continue
-		allSelected[ i ].material.color.set( 0xffffff );
-
-	}
-  subgraphSelect(allSelected)
-
-} );
-
-
-function subgraphSelect(selected) {
-  console.log(selected.length)
-  console.log(vertexCount + edgeCount + 1)
-  if (selected.length <= 1 || selected.length >= vertexCount + edgeCount + 1) {
-    console.log("here")
+document.addEventListener("keydown", function (event) { // Shift click for select
+  if (event.shiftKey) {
+    controls.enablePan = false
+    controls.update()
+    document.addEventListener( 'pointerdown', pointerDown )
+    document.addEventListener( 'pointermove', pointerMove )
+    document.addEventListener( 'pointerup', pointerUp )
+    console.log("select")
+  } else if (event.which == 27) {
+    console.log("clear selected")
     for (let i in subPlanes)
       scene.remove(subPlanes[i].plane)
 
@@ -963,6 +917,85 @@ function subgraphSelect(selected) {
 
     olMap.getView().setZoom(0)
     subPlanes = []
+  }
+})
+
+document.addEventListener("keyup", function(event) {
+  // controls.enablePan = true
+  document.removeEventListener( 'pointerdown', pointerDown )
+  document.removeEventListener( 'pointermove', pointerMove )
+  document.removeEventListener( 'pointerup', pointerUp )
+})
+
+function pointerDown(event) {
+  if (event.which != 1)
+    return
+  for ( var item of selectionBox.collection ) {
+    if (Array.isArray(item.material))
+      continue
+    item.material = item.material.clone()
+    item.material.color.set( 0x4CAF50 )
+  }
+
+  selectionBox.startPoint.set(
+  	( event.clientX / window.innerWidth ) * 2 - 1,
+  	- ( event.clientY / window.innerHeight ) * 2 + 1,
+  	0.5 )
+}
+
+function pointerMove(event) {
+  if ( helper.isDown ) {
+    for ( var i = 0; i < selectionBox.collection.length; i ++ ) {
+      if (Array.isArray(selectionBox.collection[i].material))
+        continue
+      selectionBox.collection[i].material = selectionBox.collection[i].material.clone()
+      selectionBox.collection[i].material.color.set( 0x4CAF50 );
+
+    }
+
+    selectionBox.endPoint.set(
+      ( event.clientX / window.innerWidth ) * 2 - 1,
+      - ( event.clientY / window.innerHeight ) * 2 + 1,
+      0.5 );
+
+    var allSelected = selectionBox.select();
+    for ( var i = 0; i < allSelected.length; i ++ ) {
+      if (Array.isArray(allSelected[ i ].material))
+        continue
+      allSelected[ i ].material = allSelected[ i ].material.clone()
+      allSelected[ i ].material.color.set( 0xffffff );
+
+    }
+
+  }
+}
+
+function pointerUp(event) {
+  if (event.which != 1)
+    return
+  selectionBox.endPoint.set(
+    ( event.clientX / window.innerWidth ) * 2 - 1,
+    - ( event.clientY / window.innerHeight ) * 2 + 1,
+    0.5 )
+
+  var allSelected = selectionBox.select();
+  for ( var i = 0; i < allSelected.length; i ++ ) {
+    if (Array.isArray(allSelected[ i ].material))
+      continue
+    allSelected[ i ].material.color.set( 0xffffff );
+
+  }
+  subgraphSelect(allSelected)
+}
+
+
+
+
+function subgraphSelect(selected) {
+  console.log(selected.length)
+  console.log(vertexCount + edgeCount + 1)
+  if (selected.length <= 1 || selected.length >= vertexCount + edgeCount + 1) {
+    console.log("return / empty select")
     return
   }
   var data = {nodes: [], links: []}
@@ -1056,6 +1089,11 @@ function subgraphSelect(selected) {
           plane.visible = false
         }
   })
+
+  // let btn = document.createElement("button")
+  // btn.innerHTML = "Zoom Out"
+  // btn.id = "zoom-out"
+  // document.body.appendChild(btn)
   // plane.material.transparent = true
   // plane.material.opacity = 0.5
 
@@ -1976,6 +2014,9 @@ function createMap() {
   mapdiv.class = 'map-div'
   // mapdiv.style.width = '400px'
   // mapdiv.style.height = '400px'
+  let p1 = ol.proj.fromLonLat([0, 0])
+  let p2 = ol.proj.fromLonLat([.1, .1])
+  let extents = [p1[0], p1[1], p2[0], p2[1]]
   document.body.appendChild(mapdiv)
   var map = new ol.Map({
         target: 'map',
@@ -1987,6 +2028,7 @@ function createMap() {
           //   // tileSize: [1024,1024]
           // }),
           new ol.layer.Tile({
+            // extent: extents,
             source: new ol.source.Stamen({
               layer: 'terrain'
             })
@@ -1997,8 +2039,10 @@ function createMap() {
           // projection: 'EPSG:9823',
           center: ol.proj.fromLonLat([0, 0]),
           zoom: 0,
+          zoomFactor: 2
         })
   });
+  // console.log(map.getView().getResolution())
   return map
 }
 
