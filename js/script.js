@@ -259,7 +259,8 @@ scene.add( alight );
 
 let vertices = {}
 let edges = {}
-let edgeCollection = []
+// let edgeCollection = [] // TODO: Remove
+let graphs = []
 let names = {}
 let linesDrawn = []
 let subPlanes = []
@@ -486,8 +487,8 @@ window.onload = function() {
     //   edges_visual = edges2
     // }
     let current_edges = {...edges}
-    if (edgeCollection.length > 0)
-      current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
+    if (graphs.length > 0)
+      current_edges = {...graphs[document.getElementById("threshold-slider").value].edges}
     // console.log(document.getElementById("threshold-slider").value)
     // console.log(document.getElementById("posrange-slider").value)
 
@@ -740,7 +741,10 @@ window.onload = function() {
     // Set plane vertices' height
     let map = null
     if (chkCalcSurface.checked)
-      map = calcHeightMap
+      if (graphs.length > 0)
+        map = graphs[document.getElementById("threshold-slider").value].heightmap
+      else
+        map = calcHeightMap
     else
       map = heightMap
     let ex = 0.3
@@ -825,23 +829,6 @@ window.onload = function() {
     }
 
     contourCount++
-
-    if (dataSent) {
-      // var xmlHttp = new XMLHttpRequest();
-      // xmlHttp.onreadystatechange = function() {
-      //   if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-      //     // console.log("recv dummy")
-      //     // console.log(JSON.parse(xmlHttp.responseText))
-      //     let data = JSON.parse(xmlHttp.responseText)
-      //   }
-      // }
-      // xmlHttp.open("post", "dummy");
-      // xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-      //
-      // xmlHttp.send(JSON.stringify({"a": "b"}));
-      // console.log("dummy data sent")
-    }
-
     // calcContours(xlimit, ylimit)
 
 
@@ -1975,6 +1962,14 @@ let EdgeObj = class {
   }
 }
 
+let GraphObj = class {
+  constructor(vertices, edges, heightmap) {
+    this.vertices = vertices
+    this.heightmap = heightmap
+    this.edges = edges
+  }
+}
+
 function createMap() {
   var mapdiv = document.createElement('div')
   mapdiv.id = 'map'
@@ -2014,8 +2009,8 @@ function calculateCurvature() {
     data.nodes.push({id: id})
   }
   let current_edges = {...edges}
-  if (edgeCollection.length > 0)
-    current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
+  if (graphs.length > 0)
+    current_edges = {...graphs[document.getElementById("threshold-slider").value].edges}
   console.log(current_edges)
   for (let id in current_edges) {
     let edge = current_edges[id]
@@ -2037,8 +2032,8 @@ function calculateCurvature() {
           // console.log(data)
           console.log("data recv")
           let current_edges = {...edges}
-          if (edgeCollection.length > 0)
-            current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
+          if (graphs.length > 0)
+            current_edges = {...graphs[document.getElementById("threshold-slider").value].edges}
           for(let id in data.links) {
             let link = data.links[id]
             for (let id2 in current_edges) {
@@ -2065,8 +2060,8 @@ function calcSurface() {
   console.log("calculate surface")
   var data = {nodes: [], links: []}
   let current_edges = {...edges}
-  if (edgeCollection.length > 0)
-    current_edges = {...edgeCollection[document.getElementById("threshold-slider").value]}
+  if (graphs.length > 0)
+    current_edges = {...graphs[document.getElementById("threshold-slider").value].edges}
   length = Object.keys(vertices).length
   for (let id in vertices) {
     let node = vertices[id]
@@ -2106,16 +2101,19 @@ function calcSurface() {
           data = JSON.parse(data)
           console.log(data)
           console.log("data recv")
+          let hm = []
+          if (graphs.length > 0)
+            hm = graphs[document.getElementById("threshold-slider").value].heightmap
+          else
+            hm = calcHeightMap
           for (let i = 0 ; i < divisions ; i++) {
             for (let j = 0 ; j < divisions ; j++) {
-              calcHeightMap[j][49-i] = data[i*divisions + j]*2
+              hm[j][49-i] = data[i*divisions + j]*2
               if (data[i*divisions + j] < -0.1) {
-                // console.log(data[i*divisions + j])
-                calcHeightMap[j][49-i] = data[i*divisions + j]*10
+                hm[j][49-i] = data[i*divisions + j]*10
               }
             }
           }
-          // console.log(calcHeightMap)
 
 
       }
@@ -2215,9 +2213,14 @@ function readEdgeFile(file) {
         }
       }
     }
-    edgeCollection.push(current_edges)
+    let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+    let newGraph = new GraphObj(vertices, current_edges, newHeightMap)
+    graphs.push(newGraph)
+    // graphs[document.getElementById("threshold-slider").value + 1].edges
+    // edgeCollection.push(current_edges)
     console.log(current_edges)
-    document.getElementById("threshold-slider").max = edgeCollection.length-1
+    document.getElementById("threshold-slider").max = graphs.length - 1
+    document.getElementById("threshold-slider").value = graphs.length - 1
   }
   reader.readAsText(file)
 
