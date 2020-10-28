@@ -359,6 +359,7 @@ def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 
             zf = new_zf
             cv = new_cv
             vertices = new_vertices
+            # yield zf, cv, errvals, c_errvals
             if (0 == i % 100):
                 if verbose:
                     print('step: {}, obj fn: {}'.format(i, of))
@@ -609,8 +610,12 @@ def main(data):
 
 
 
-    zf, cv, errvals, c_errvals = generate_surface(smooth_pen, rate, momentum, kappa, xf, yf,
-                                                  t_of_v, niter = niter, verbose = True)
+    zf, cv, errvals, c_errvals = generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = niter, verbose = True)
+
+    ## Yielding
+    # for zf, cv, errvals, c_errvals in generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = niter, verbose = True):
+    #     yield zf, cv, errvals, c_errvals
+
     # runname = 'python/surface/Output/sp{:d}i{:d}'.format(smooth_pen, niter)
     # try:
     #     os.mkdir(runname)

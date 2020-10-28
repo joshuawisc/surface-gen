@@ -73,14 +73,20 @@ def calc_surface():
     #         import time
     #         time.sleep(5)
     return Response(generate(), mimetype='text/plain')
+
+    # Generator test
+    # for val in bd.main(ret):
+    #     print(val)
+
+
     # plot = bd.get_heatmap(ret)
     # output = io.BytesIO()
     #print("\nplot\n")
     # FigureCanvas(plot).print_png(output)
     # return Response(output.getvalue(), mimetype='image/png')
 
-    zf = bd.main(ret)
-    return json.dumps(zf.tolist())
+    # zf = bd.main(ret)
+    # return json.dumps(zf.tolist())
 
 @app.route('/')
 def static_proxy():

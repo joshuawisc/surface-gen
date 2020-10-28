@@ -348,42 +348,7 @@ window.onload = function() {
   // TODO: Stack for -ve zoom levels for consistency
 
   // TODO: enable
-  window.addEventListener('wheel', function(e){
-    mapdiv.style.display = "block"
-    if (e.deltaY > 0) { // zoom out
-      if (zoomLevels.length != 0) {
-        mapdiv.style.width = zoomWidths.pop() + 'px'
-        mapdiv.style.height = zoomHeights.pop() + 'px'
-        olMap.updateSize()
-        olMap.getView().setZoom(zoomLevels.pop())
-        // console.log(olMap.getView().getZoom())
-        // console.log(olMap.getView().getResolution())
-
-
-      }
-
-      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-    } else { // zoom in
-      zoomWidths.push(mapdiv.offsetWidth)
-      zoomHeights.push(mapdiv.offsetHeight)
-      zoomLevels.push(olMap.getView().getZoom())
-      olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
-      mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
-      mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
-      olMap.updateSize()
-      let p1 = ol.proj.fromLonLat([0, 0])
-      let p2 = ol.proj.fromLonLat([100/(2**zoomLevels.length), 100/(2**zoomLevels.length)])
-      let extents = [p1[0], p1[1], p2[0], p2[1]]
-      // console.log(olMap.getView().getZoom())
-      // console.log(olMap.getView().getResolution())
-
-      // olMap.getLayers().array_[0].setExtent(extents)
-
-
-      // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
-    }
-    mapdiv.style.display = "none"
-  }, true)
+  window.addEventListener('wheel', wheelEvent, true)
 
   var dropNodes = document.getElementById('drop-nodes');
   dropNodes.addEventListener('dragover', dragOver, false);
@@ -423,6 +388,9 @@ window.onload = function() {
 
   let btnCalcCurv = document.getElementById("btn-calc-curv")
   btnCalcCurv.onclick = calculateCurvature
+
+  let btnHelp = document.getElementById("btn-help")
+  btnHelp.onclick = helpClick
 
   document.getElementById("btn-calc-surface").onclick = calcSurface
 
@@ -843,7 +811,15 @@ window.onload = function() {
     }
 
     contourCount++
-    // calcContours(xlimit, ylimit)
+
+    // CONTOURS
+    // if (chkCalcSurface.checked)
+    //   if (graphs.length > 0)
+    //     calcContours(100, 100, graphs[document.getElementById("threshold-slider").value].heightmap)
+    //   else
+    //     calcContours(100, 100, calcHeightMap)
+    // else
+    //   calcContours(100, 100, heightmap)
 
 
     plane.geometry.groupsNeedUpdate = true
@@ -878,15 +854,25 @@ document.addEventListener("keydown", function (event) { // Shift click for selec
   if (event.shiftKey) {
     controls.enablePan = false
     controls.update()
+    document.body.style.cursor = "crosshair"
     document.addEventListener( 'pointerdown', pointerDown )
     document.addEventListener( 'pointermove', pointerMove )
     document.addEventListener( 'pointerup', pointerUp )
     console.log("select")
   } else if (event.which == 27) {
     console.log("clear selected")
-    for (let i in subPlanes)
-      scene.remove(subPlanes[i].plane)
-
+    for (let i in subPlanes) {
+      var sPlane = subPlanes[i].plane
+      gsap.to( sPlane.scale, {
+            duration: 1,
+            x: 0.1,
+            y: 0.1,
+            z: 0.1,
+            onComplete: function() {
+              scene.remove(sPlane)
+            }
+      })
+    }
     // TODO: zoom widthd, heights, levels reset
 
     gsap.to( camera, {
@@ -921,11 +907,24 @@ document.addEventListener("keydown", function (event) { // Shift click for selec
 })
 
 document.addEventListener("keyup", function(event) {
-  // controls.enablePan = true
-  document.removeEventListener( 'pointerdown', pointerDown )
-  document.removeEventListener( 'pointermove', pointerMove )
-  document.removeEventListener( 'pointerup', pointerUp )
+  if (event.which == 16) {
+    document.body.style.cursor = "auto"
+    controls.enablePan = true
+    controls.update()
+    document.removeEventListener( 'pointerdown', pointerDown )
+    document.removeEventListener( 'pointermove', pointerMove )
+    document.removeEventListener( 'pointerup', pointerUp )
+  }
 })
+
+function helpClick(event) {
+  let helpDiv = document.getElementById("div-help")
+  if (helpDiv.style.display === "none") {
+    helpDiv.style.display = "block";
+  } else {
+    helpDiv.style.display = "none";
+  }
+}
 
 function pointerDown(event) {
   if (event.which != 1)
@@ -988,8 +987,36 @@ function pointerUp(event) {
   subgraphSelect(allSelected)
 }
 
+function wheelEvent(event) {
+  if (document.elementFromPoint(event.clientX, event.clientY).tagName != 'CANVAS')
+    return
+  var mapdiv = document.getElementById("map")
+  mapdiv.style.display = "block"
+  if (event.deltaY > 0) { // zoom out
+    if (zoomLevels.length != 0) {
+      mapdiv.style.width = zoomWidths.pop() + 'px'
+      mapdiv.style.height = zoomHeights.pop() + 'px'
+      olMap.updateSize()
+      olMap.getView().setZoom(zoomLevels.pop())
+    }
 
-
+    // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+  } else { // zoom in
+    zoomWidths.push(mapdiv.offsetWidth)
+    zoomHeights.push(mapdiv.offsetHeight)
+    zoomLevels.push(olMap.getView().getZoom())
+    olMap.getView().setZoom(olMap.getView().getZoom()+0.05)
+    mapdiv.style.width = mapdiv.offsetWidth*1.05 + 'px'
+    mapdiv.style.height = mapdiv.offsetHeight*1.05 + 'px'
+    olMap.updateSize()
+    let p1 = ol.proj.fromLonLat([0, 0])
+    let p2 = ol.proj.fromLonLat([100/(2**zoomLevels.length), 100/(2**zoomLevels.length)])
+    let extents = [p1[0], p1[1], p2[0], p2[1]]
+    // olMap.getLayers().array_[0].setExtent(extents)
+    // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
+  }
+  mapdiv.style.display = "none"
+}
 
 function subgraphSelect(selected) {
   console.log(selected.length)
@@ -1055,6 +1082,7 @@ function subgraphSelect(selected) {
   spObj.start = [Math.floor((xRange[0] + 10) * divisions / 20), Math.floor((yRange[0] + 10) * divisions / 20)]
   spObj.end = [Math.ceil((xRange[1] + 10) * divisions / 20), Math.ceil((yRange[1] + 10) * divisions / 20)]
   spObj.plane = subPlane
+  subPlane.scale.set(0.1, 0.1, 0.1)
   scene.add( subPlane )
   subPlanes.push(spObj)
   let scale = Math.min(width, height) / divisions
@@ -1088,6 +1116,13 @@ function subgraphSelect(selected) {
         onComplete: function() {
           plane.visible = false
         }
+  })
+
+  gsap.to( subPlane.scale, {
+        duration: 1,
+        x: 1,
+        y: 1,
+        z: 1,
   })
 
   // let btn = document.createElement("button")
@@ -1150,7 +1185,7 @@ function setPlaneHeights(plane, map) {
   plane.geometry.computeVertexNormals()
 }
 
-function calcContours(xlimit, ylimit) {
+function calcContours(xlimit, ylimit, heightMap) {
   xlimit = 0
   ylimit = 0
   if (contourMeshLines.length != 0) {
@@ -1159,36 +1194,38 @@ function calcContours(xlimit, ylimit) {
   }
 
   contcolor = 0x000000 // ffffff // 707070
-  var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
+  var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.5, clippingPlanes: [clipPlane, clipPlane2]})
   var conrec = new Conrec
   let nLevels = 26
   let levels = []
   let min = -2.2
-  let max = 1.6
+  let max = 2.2
   for (let i = min; i < max ; i+=(max-min)/nLevels) {
     levels.push(i)
   }
 
   // let levels = [-2.4, -2.2, -2, -1.8, -1.6, -1.4, -1.2, -1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1, 1.2, 1.4]
   //-- CONTOUT LINES --//
+  // conrec.contour(heightMap, xlimit, heightMap.length - xlimit - 1, ylimit, heightMap[0].length - 1 - ylimit, contX, contY, levels.length, levels)
   conrec.contour(heightMap, xlimit, heightMap.length - xlimit - 1, ylimit, heightMap[0].length - 1 - ylimit, contX, contY, levels.length, levels)
 
   let lines = conrec.contourList()
 
+  // LIMITS OF LINES IN HERE
   for (let line of lines) {
     let points = []
     // console.log(line)
     // console.log(line)
     for (let pt of line) {
-      pt.x = (pt.x*(planeW/149)) - (planeW/2)// (0, 149) to (planeXMin, planeXMax)
-      pt.y = (pt.y*(planeH/149)) - (planeH/2)// (0, 149) to (planeYMin, planeYMax)
+      pt.x = (pt.x*(planeW/49)) - (planeW/2)// (0, 149) to (planeXMin, planeXMax)
+      pt.y = (pt.y*(planeH/49)) - (planeH/2)// (0, 149) to (planeYMin, planeYMax)
       // console.log(pt.x)
       let limits = 5
       // if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
       //   points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
       // if (pt.x >= -5 && pt.x <= 5 && pt.y >= -7 && pt.y <= 7)
       //   points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
-      if (pt.x >= -10 && pt.x <= 10 && pt.y >= -7 && pt.y <= 7)
+      if (pt.x > -10 && pt.x < 10 && pt.y > -7 && pt.y < 7)
         points.push(new T.Vector3(pt.y, line.level+0.01, pt.x))
     }
 
@@ -1614,7 +1651,15 @@ function addVertex(obj, x, y, drawPoint, name, lat=0, long=0) {
 
   if (drawPoint) {
     scene.add(sprite)
+    newPt.scale.set(0.1, 0.1, 0.1)
     scene.add(newPt)
+    gsap.to( newPt.scale, {
+          duration: 1.5,
+          x: 1,
+          y: 1,
+          z: 1,
+          ease: 'elastic'
+    })
   }
   vertices[String(vertexCount)] = new VertexObj(vertexCount, name, newPt, sprite, lat, long)
   names[name] = vertexCount
@@ -1634,7 +1679,15 @@ function addVertexSec(obj, x, y, vertices, drawPoint=false) {
 
   if (drawPoint) {
     scene.add(sprite)
+    newPt.scale.set(0.1, 0.1, 0.1)
     scene.add(newPt)
+    gsap.to( newPt.scale, {
+          duration: 1,
+          x: 1,
+          y: 1,
+          z: 1,
+          ease: 'elastic'
+    })
     // console.log(length)
   }
 
@@ -2139,6 +2192,7 @@ function calcSurface() {
       {
           // document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
           dataSent = false
+          document.body.style.cursor = "auto"
           // data = JSON.parse(xmlHttp.responseText)
           data = xmlHttp.responseText
           data = data.substring(data.indexOf('['))
@@ -2168,6 +2222,7 @@ function calcSurface() {
   xmlHttp.send(JSON.stringify(data));
   console.log("data sent")
   dataSent = true
+  document.body.style.cursor = "progress"
 }
 
 function fileSelectEdges(evt) {
@@ -2262,7 +2317,7 @@ function readEdgeFile(file) {
     graphs.push(newGraph)
     // graphs[document.getElementById("threshold-slider").value + 1].edges
     // edgeCollection.push(current_edges)
-    console.log(current_edges)
+    // console.log(current_edges)
     document.getElementById("threshold-slider").max = graphs.length - 1
     document.getElementById("threshold-slider").value = graphs.length - 1
   }
