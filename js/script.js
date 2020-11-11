@@ -189,9 +189,10 @@ var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture, transparent: true, opacity: 1.0} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
-let mMat = [planeMat, transparentMat]
+var transparentPlaneMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture, transparent: true, opacity: 0.5} )
+let mMat = [planeMat, transparentMat, transparentPlaneMat]
 var plane = new T.Mesh( geometry, mMat )
 
 // for (let i = -1 ; i < 1 ; i+= 0.4) {
@@ -340,6 +341,7 @@ window.onload = function() {
   mapTexture.magFilter = THREE.NearestFilter
   mapTexture.center = new T.Vector2(0.5, 0.5)
   mapTexture.rotation = -Math.PI/2
+  plane.material[2].map = mapTexture
 
   var mapdiv = document.getElementById("map")
 
@@ -394,30 +396,6 @@ window.onload = function() {
 
   document.getElementById("btn-calc-surface").onclick = calcSurface
 
-  // Set up opacity map for hiding surface
-  let xlimit = 50
-  let ylimit = 30
-  for (let j = ylimit ; j < heightMap[0].length - ylimit ; j++) {
-
-    let factor = 0
-    // factor = (Math.abs((heightMap[0].length/2) - j) / (heightMap[0].length/2-ylimit))**(1/10)
-    // // factor = (ylimit - j)**2
-    // factor = 1-factor
-    // // factor /= 3
-    // console.log(factor)
-    // if (factor > 0.3)
-    //   factor = 0.3
-    let limit = xlimit
-    // if (j > heightMap[0].length/2-25 && j < heightMap[0].length/2+25) {
-    //   limit = 50
-    //   // factor = Math.abs((heightMap[0].length/2) - j) / (heightMap[0].length/2)
-    //   // factor = 1-factor
-    //   // factor /= 4
-    // }
-    for (let i = limit + Math.floor(limit*factor) ; i <= heightMap.length - limit - (limit*factor) ; i++) {
-      opacityMap[i][j] = 1
-    }
-  }
 
   controls.enablePan = true
   controls.panSpeed = 1
@@ -435,6 +413,9 @@ window.onload = function() {
       texture = customTexture
     }
     plane.material[0].needsUpdate = true
+    plane.material[2].needsUpdate = true
+
+    opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 
   	requestAnimationFrame( animate )
 
@@ -471,19 +452,6 @@ window.onload = function() {
     let current_edges = {...edges}
     if (graphs.length > 0)
       current_edges = {...graphs[document.getElementById("threshold-slider").value].edges}
-    // console.log(document.getElementById("threshold-slider").value)
-    // console.log(document.getElementById("posrange-slider").value)
-
-    // Graph 2
-    // 0-A - -5, 0
-    // 1-B - -4.5, -1
-    // 2-C - -3.5, 0.5
-    // 3-E - -3, 0 // Skip D
-    // 4-F - -1.5, 0
-    // 5-G - 2.4, 0.5
-    // 6-H - 2.4, -0.5
-    // 7-I - 3.5, 0.8
-    // 8-J - 4, 3
 
     // let logical_edges = [[1, 6, null, null], [4, 7, 1, -0.5], [0, 8, 2, -0.8], [2, 8, 2, -0.7], [2, 5, 0.5, -0.8]]
     // let logical_edges = [[1, 6, null, null], [4, 7, 1.2, -0.3], [0, 8, 1.6, -0.3], [2, 8, 1.6, -0.3], [2, 5, 1.2, -0.3]]
@@ -718,17 +686,19 @@ window.onload = function() {
       ctx.fill();
     }
 
+    // Set up opacity map for hiding surface
+    calcOpacityMap(opacityMap, vertices, current_edges)
+
+
     texture.needsUpdate = true
 
     // Set plane vertices' height
-    let map = null
+    let map = heightMap
     if (chkCalcSurface.checked)
       if (graphs.length > 0)
         map = graphs[document.getElementById("threshold-slider").value].heightmap
       else
         map = calcHeightMap
-    else
-      map = heightMap
     let ex = 0.3
     let direction = new T.Vector3(0, 1, 0)
     for (let i=0; i<divisions ; i++) {
@@ -777,20 +747,39 @@ window.onload = function() {
       // face.vertexColors[0] = new T.Color( 0xff00ff )
       // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
       //   hide = true
-      if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
-        hide = true
+      let transparent = true
+      let points = []
+      points.push([Math.floor(i), Math.floor(j)])
+      points.push([Math.ceil(i), Math.ceil(j)])
+      points.push([Math.floor(i), Math.ceil(j)])
+      points.push([Math.ceil(i), Math.floor(j)])
+      // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
+      //   transparent = false
       v = face.b
       i = v/divisions
       j = v%divisions
-      if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
-        hide = true
+      points.push([Math.floor(i), Math.floor(j)])
+      points.push([Math.ceil(i), Math.ceil(j)])
+      points.push([Math.floor(i), Math.ceil(j)])
+      points.push([Math.ceil(i), Math.floor(j)])
+      // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
+      //   transparent = false
       // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
       //   hide = true
       v = face.c
       i = v/divisions
       j = v%divisions
-      if (opacityMap[Math.floor(i)][Math.floor(j)] == 0)
-        hide = true
+      points.push([Math.floor(i), Math.floor(j)])
+      points.push([Math.ceil(i), Math.ceil(j)])
+      points.push([Math.floor(i), Math.ceil(j)])
+      points.push([Math.ceil(i), Math.floor(j)])
+      // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
+      //   transparent = false
+      for (let p of points) {
+        if (0 <= p[0] && p[0] < divisions && 0 <= p[1] && p[1] < divisions)
+          if (opacityMap[p[0]][p[1]] == 1 || Math.abs(map[p[0]][p[1]]) > 0.5)
+            transparent = false
+      }
       // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
       //   hide = true
       if (false && hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
@@ -805,6 +794,8 @@ window.onload = function() {
         face.materialIndex = 1
       } else if (false && hideSurface.checked && (z1 < -2.4 || z2 < -2.4 || z3 < -2.4)) { // Inward edge
         face.materialIndex = 1
+      } else if (transparent) {
+        face.materialIndex = 2
       } else {
         face.materialIndex = 0
       }
@@ -1016,6 +1007,29 @@ function wheelEvent(event) {
     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
   }
   mapdiv.style.display = "none"
+}
+
+function calcOpacityMap(opacityMap, vertices, edges) {
+  for (let id in vertices) {
+    newPt = convert3JStoHM([vertices[id].mesh.position.x, vertices[id].mesh.position.z])
+    opacityMap[newPt[1]][newPt[0]] = 1
+  }
+
+  for (let id in edges) {
+    let startPt = [edges[id].start.mesh.position.x, edges[id].start.mesh.position.z]
+    let endPt = [edges[id].end.mesh.position.x, edges[id].end.mesh.position.z]
+
+    startPt = convert3JStoHM(startPt)
+    endPt = convert3JStoHM(endPt)
+    for (let i = 0 ; i < divisions ; i++) {
+      for (let j = 0 ; j < divisions ; j++) {
+        // if (distanceToLine(startPt, endPt, [i, j]) < 0.3)
+        //   opacityMap[j][i] = 1
+        if (Math.abs(dist(startPt, [i, j]) + dist([i, j], endPt) - dist(startPt, endPt)) < 0.1)
+          opacityMap[j][i] = 1
+      }
+    }
+  }
 }
 
 function subgraphSelect(selected) {
@@ -2017,7 +2031,7 @@ function getNameSprite(name) {
   let texture = new T.CanvasTexture(ctx.canvas)
   texture.needsUpdate = true
 
-  let spriteMat = new T.SpriteMaterial({map: texture, })
+  let spriteMat = new T.SpriteMaterial({map: texture, alphaTest: 0.1})
   let sprite = new T.Sprite(spriteMat)
   sprite.scale.set(0.05*textWidth, 0.05*textWidth, 0.05*textWidth)
   return sprite
@@ -2162,7 +2176,7 @@ function calcSurface() {
   length = Object.keys(vertices).length
   for (let id in vertices) {
     let node = vertices[id]
-    data.nodes.push({id: parseInt(id), city: node.name, lat: node.lat, long: node.long})
+    data.nodes.push({id: parseInt(id), city: String(node.name), lat: node.lat + 1E-10, long: node.long + 1E-10})
   }
   data.nodes.push({id: length, city: "border1", lat: 0.001, long: 180.001})
   data.nodes.push({id: length+2, city: "border2", lat: 0.001, long: -180.001})
@@ -2184,6 +2198,7 @@ function calcSurface() {
   var xmlHttp = new XMLHttpRequest();
   // xmlHttp.responseType = "arraybuffer"
   xmlHttp.responseType = "text"
+  console.log(data)
 
   xmlHttp.onreadystatechange = function()
   {
@@ -2371,4 +2386,29 @@ function getRandomIntInclusive(min, max) {
 
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
+}
+
+function convert3JStoHM(point) {
+  point[0] = (point[0] - planeXMin)// Change from (min,max) to (0, newmax)
+  point[1] = (point[1] - planeYMin)// Change from (min,max) to (0, newmax)
+
+  point[0] = Math.round((point[0] / planeW) * (divisions-1)) // Change from (0, planeWidth) to (0, divisions)
+  point[1] = Math.round((point[1] / planeH) * (divisions-1)) // Change from (0, planeHeight) to (0, divisions)
+
+  return point;
+
+}
+
+function distanceToLine(startPt, endPt, pt) {
+  let t1 = (endPt[1] - startPt[1])*pt[0]
+  let t2 = (endPt[0] - startPt[0])*pt[1]
+  let t3 = (endPt[0] * startPt[1])
+  let t4 = (endPt[1] * startPt[0])
+  let t5 = Math.abs(t1 - t2 + t3 - t4)
+  t5 /= Math.sqrt((endPt[1] - startPt[1])**2 + (endPt[0] - startPt[0])**2)
+  return t5
+}
+
+function dist(startPt, endPt) {
+  return Math.sqrt((startPt[0] - endPt[0])**2 + (startPt[1] - endPt[1])**2)
 }

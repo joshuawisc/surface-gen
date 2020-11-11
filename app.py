@@ -53,6 +53,7 @@ def calc_surface():
     # print(type(H))
     # print(G.edges(data=True))
     # print("\n\n")
+    print("Output graph")
     nx.write_graphml(H, "newgraph.graphml")
     ret = generating_tessalation_2(H)
 

@@ -419,37 +419,37 @@ def generate_plots(runname, gridsize, xf, yf, zf, cv, locnamefile, refc):
     plt.savefig('{}/surface-with-curvature.png'.format(runname))
     #
     # now visualize with solid color and location names
-    fig = plt.figure(figsize = (12, 12))
-    ax = fig.add_subplot(111, projection='3d')
-    ls = mp.colors.LightSource(azdeg = 270, altdeg = 30)
-    ax.view_init(azim = 315, elev = 75)
-    plt.axis('off')
-    ax.plot_surface(x, y, z, rcount = gridsize, ccount = gridsize, color='skyblue', lightsource = ls) #, facecolors = cvcol, lightsource = ls)
-    labels = pd.read_csv(locnamefile)
-    x_axis_vals = list(refc.columns.values)
-    y_axis_vals = list(refc.index.values)
-    for i in labels.iterrows():
-        lbl = i[1][0]
-        xpt = i[1][1]
-        ypt = i[1][2]
-        xndx = x_axis_vals.index(i[1][1])
-        yndx = y_axis_vals.index(i[1][2])
-        zpt = z[yndx, xndx]
-        ax.text(ypt, xpt, zpt, lbl, color='red')
-    plt.savefig('{}/surface-with-labels.png'.format(runname))
+    # fig = plt.figure(figsize = (12, 12))
+    # ax = fig.add_subplot(111, projection='3d')
+    # ls = mp.colors.LightSource(azdeg = 270, altdeg = 30)
+    # ax.view_init(azim = 315, elev = 75)
+    # plt.axis('off')
+    # ax.plot_surface(x, y, z, rcount = gridsize, ccount = gridsize, color='skyblue', lightsource = ls) #, facecolors = cvcol, lightsource = ls)
+    # # labels = pd.read_csv(locnamefile)
+    # x_axis_vals = list(refc.columns.values)
+    # y_axis_vals = list(refc.index.values)
+    # for i in labels.iterrows():
+    #     lbl = i[1][0]
+    #     xpt = i[1][1]
+    #     ypt = i[1][2]
+    #     xndx = x_axis_vals.index(i[1][1])
+    #     yndx = y_axis_vals.index(i[1][2])
+    #     zpt = z[yndx, xndx]
+    #     ax.text(ypt, xpt, zpt, lbl, color='red')
+    # plt.savefig('{}/surface-with-labels.png'.format(runname))
+    # #
+    # # generate animated gif
+    # def rotate(angle):
+    #     ax.view_init(azim = angle, elev = 75)
     #
-    # generate animated gif
-    def rotate(angle):
-        ax.view_init(azim = angle, elev = 75)
-
-    rot_animation = animation.FuncAnimation(fig,
-                                        rotate,
-                                        frames=np.arange(0,360,5),
-                                        interval=100,
-                                        repeat=False)
-    plt.close()
-    fname = '{}/animation.gif'.format(runname)
-    rot_animation.save(fname, dpi=80, writer='imagemagick')
+    # rot_animation = animation.FuncAnimation(fig,
+    #                                     rotate,
+    #                                     frames=np.arange(0,360,5),
+    #                                     interval=100,
+    #                                     repeat=False)
+    # plt.close()
+    # fname = '{}/animation.gif'.format(runname)
+    # rot_animation.save(fname, dpi=80, writer='imagemagick')
 
 
 # In[23]:
@@ -616,11 +616,11 @@ def main(data):
     # for zf, cv, errvals, c_errvals in generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = niter, verbose = True):
     #     yield zf, cv, errvals, c_errvals
 
-    # runname = 'python/surface/Output/sp{:d}i{:d}'.format(smooth_pen, niter)
-    # try:
-    #     os.mkdir(runname)
-    # except FileExistsError:
-    #     pass
-    # document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize)
-    # generate_plots(runname, gridsize, xf, yf, zf, cv, 'Data/map_points.csv', refc)
+    runname = 'python/surface/Output/sp{:d}i{:d}'.format(smooth_pen, niter)
+    try:
+        os.mkdir(runname)
+    except FileExistsError:
+        pass
+    document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize)
+    generate_plots(runname, gridsize, xf, yf, zf, cv, 'Data/map_points.csv', refc)
     return zf
