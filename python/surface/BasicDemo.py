@@ -533,7 +533,7 @@ def get_heatmap(data):
     return fig
     # return plt.scatter(xf, yf, color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
 
-def main(data):
+def main(data, smooth_pen=5, niter=20):
     global L3
     global cmap
 
@@ -604,9 +604,9 @@ def main(data):
 
 
     rate = 0.0001
-    smooth_pen = 5
+    # smooth_pen = 5
     momentum = 0.9
-    niter = 10
+    # niter = 20
 
 
 
@@ -621,6 +621,6 @@ def main(data):
         os.mkdir(runname)
     except FileExistsError:
         pass
-    document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize)
-    generate_plots(runname, gridsize, xf, yf, zf, cv, 'Data/map_points.csv', refc)
+    # document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize)
+    # generate_plots(runname, gridsize, xf, yf, zf, cv, 'Data/map_points.csv', refc)
     return zf

@@ -1,171 +1,25 @@
 <?xml version='1.0' encoding='utf-8'?>
-<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="ricciCurvature" attr.type="double" for="edge" id="d3"/>
-<key attr.name="city" attr.type="string" for="node" id="d2"/>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="city" attr.type="string" for="node" id="d2"/>
 <key attr.name="long" attr.type="double" for="node" id="d1"/>
 <key attr.name="lat" attr.type="double" for="node" id="d0"/>
 <graph edgedefault="undirected"><node id="0">
-  <data key="d0">52.3667000001</data>
-  <data key="d1">4.8945000001</data>
-  <data key="d2">Amsterdam</data>
-</node>
-<node id="1">
-  <data key="d0">39.0438000001</data>
-  <data key="d1">-77.48739999989999</data>
-  <data key="d2">Ashburn</data>
-</node>
-<node id="2">
-  <data key="d0">36.6676000001</data>
-  <data key="d1">-78.3874999999</data>
-  <data key="d2">Boydton</data>
-</node>
-<node id="3">
-  <data key="d0">41.5868000001</data>
-  <data key="d1">-93.6249999999</data>
-  <data key="d2">Des Moines</data>
-</node>
-<node id="4">
-  <data key="d0">53.349800000100004</data>
-  <data key="d1">-6.2602999999</data>
-  <data key="d2">Dublin</data>
-</node>
-<node id="5">
-  <data key="d0">22.319300000099997</data>
-  <data key="d1">114.1694000001</data>
-  <data key="d2">Hong Kong</data>
-</node>
-<node id="6">
-  <data key="d0">-26.204099999900002</data>
-  <data key="d1">28.047300000099998</data>
-  <data key="d2">Johannesburg</data>
-</node>
-<node id="7">
-  <data key="d0">51.5074000001</data>
-  <data key="d1">-0.1277999999</data>
-  <data key="d2">London</data>
-</node>
-<node id="8">
-  <data key="d0">19.0760000001</data>
-  <data key="d1">72.8777000001</data>
-  <data key="d2">Mumbai</data>
-</node>
-<node id="9">
-  <data key="d0">41.9173000001</data>
-  <data key="d1">-87.8955999999</data>
-  <data key="d2">Northlake</data>
-</node>
-<node id="10">
-  <data key="d0">47.2343000001</data>
-  <data key="d1">-119.8525999999</data>
-  <data key="d2">Quincy</data>
-</node>
-<node id="11">
-  <data key="d0">-23.5504999999</data>
-  <data key="d1">-46.6332999999</data>
-  <data key="d2">Sao Paulo</data>
-</node>
-<node id="12">
-  <data key="d0">37.5665000001</data>
-  <data key="d1">126.9780000001</data>
-  <data key="d2">Seoul</data>
-</node>
-<node id="13">
-  <data key="d0">1.3521000001</data>
-  <data key="d1">103.8198000001</data>
-  <data key="d2">Singapore</data>
-</node>
-<node id="14">
-  <data key="d0">-33.8687999999</data>
-  <data key="d1">151.2093000001</data>
-  <data key="d2">Sydney</data>
-</node>
-<node id="15">
-  <data key="d0">35.6804000001</data>
-  <data key="d1">139.7690000001</data>
-  <data key="d2">Tokyo</data>
-</node>
-<node id="16">
-  <data key="d0">43.6532000001</data>
-  <data key="d1">-79.3831999999</data>
-  <data key="d2">Toronto</data>
-</node>
-<node id="17">
   <data key="d0">0.001</data>
   <data key="d1">180.001</data>
   <data key="d2">border1</data>
 </node>
-<node id="19">
+<node id="2">
   <data key="d0">0.001</data>
   <data key="d1">-180.001</data>
   <data key="d2">border2</data>
 </node>
-<node id="20">
+<node id="3">
   <data key="d0">155.001</data>
   <data key="d1">0.001</data>
   <data key="d2">border3</data>
 </node>
-<node id="21">
+<node id="4">
   <data key="d0">-155.001</data>
   <data key="d1">0.001</data>
   <data key="d2">border4</data>
 </node>
-<edge source="0" target="4">
-  <data key="d3">0.4999999995794805</data>
-</edge>
-<edge source="0" target="7">
-  <data key="d3">0.4999999995794806</data>
-</edge>
-<edge source="1" target="16">
-  <data key="d3">0.7999999997820814</data>
-</edge>
-<edge source="1" target="9">
-  <data key="d3">0.7999999997820813</data>
-</edge>
-<edge source="1" target="10">
-  <data key="d3">0.5999999999489752</data>
-</edge>
-<edge source="1" target="2">
-  <data key="d3">0.5999999999489747</data>
-</edge>
-<edge source="2" target="16">
-  <data key="d3">0.5999999999489756</data>
-</edge>
-<edge source="2" target="3">
-  <data key="d3">0.5999999999489745</data>
-</edge>
-<edge source="2" target="9">
-  <data key="d3">0.5999999999489756</data>
-</edge>
-<edge source="3" target="9">
-  <data key="d3">0.7999999997820813</data>
-</edge>
-<edge source="4" target="7">
-  <data key="d3">0.4999999995794804</data>
-</edge>
-<edge source="5" target="12">
-  <data key="d3">0.6666666654617789</data>
-</edge>
-<edge source="5" target="13">
-  <data key="d3">0.3333333331283149</data>
-</edge>
-<edge source="5" target="15">
-  <data key="d3">0.33333333331283244</data>
-</edge>
-<edge source="8" target="13">
-  <data key="d3">-9.792167077193881e-14</data>
-</edge>
-<edge source="9" target="16">
-  <data key="d3">0.7999999997820813</data>
-</edge>
-<edge source="9" target="10">
-  <data key="d3">0.5999999998601975</data>
-</edge>
-<edge source="10" target="16">
-  <data key="d3">0.5999999998601979</data>
-</edge>
-<edge source="12" target="13">
-  <data key="d3">0.3333333329552397</data>
-</edge>
-<edge source="12" target="15">
-  <data key="d3">0.3333333333108196</data>
-</edge>
 </graph></graphml>

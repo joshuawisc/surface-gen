@@ -50,7 +50,12 @@ button.btn-delete:hover {
   border-color: red;
 
 }
-
+#btn-add-edge {
+  display: inline-block;
+}
+#btn-calc-curv {
+  display: inline-block;
+}
 #btn-help {
   border-radius: 50px;
   min-width: 50px;
@@ -98,6 +103,7 @@ input[type=text] {
   margin-left: 0px;
   border: none;
   border-radius: 5px;
+  padding: 5px;
 }
 
 .gui-box>label {
@@ -123,7 +129,7 @@ input[type=text] {
   border-color: #E5E5E5;
   border-width: 5px;
   border-radius: 5px;
-  background-color: rgb(229, 229, 229, 0.2cd w);
+  background-color: rgb(229, 229, 229, 0.2);
   /* box-shadow: 0 0 0 13px #E5E5E5 inset; */
 }
 .gui-box>*{
@@ -162,6 +168,14 @@ input[type=text] {
   box-shadow: 0px 0px 15px #c2c2c2;
   padding: 10px;
 }
+#div-calc-surface {
+  padding: 5px;
+  border-radius: 5px;
+  background-color: rgb(229, 229, 229, 1.0);
+  width: 70%;
+  margin-bottom: 10px;
+
+}
 li {
   padding: 5px;
 }
@@ -172,7 +186,7 @@ li {
 }
 
 #zoom-out {
-  display:
+  display: none;
 }
 
 kbd.key {

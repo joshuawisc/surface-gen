@@ -372,6 +372,7 @@ window.onload = function() {
   hideSurface.style.visibility = "hidden"
   document.getElementById("hide-surface-label").style.visibility = "hidden"
   let chkCalcSurface = document.getElementById("use-calc-surface")
+  let useTransp = document.getElementById("use-transparency")
   let showMap = document.getElementById("show-map")
 
 
@@ -731,7 +732,7 @@ window.onload = function() {
       let z3 = plane.geometry.vertices[face.c].z
       let hide = false
       let v = face.a
-      let i = v/divisions
+      let i = Math.floor(v/divisions)
       let j = v%divisions
       // if (z1 > 1)
       //   face.vertexColors[0].setHSL( 1, 0, 0.5);
@@ -794,11 +795,13 @@ window.onload = function() {
         face.materialIndex = 1
       } else if (false && hideSurface.checked && (z1 < -2.4 || z2 < -2.4 || z3 < -2.4)) { // Inward edge
         face.materialIndex = 1
-      } else if (transparent) {
+      } else if (transparent && useTransp.checked) {
         face.materialIndex = 2
       } else {
         face.materialIndex = 0
       }
+
+
     }
 
     contourCount++
@@ -1579,13 +1582,15 @@ function vertexPositionChange() {
 
 }
 
-function addVertex(obj, x, y, drawPoint, name, lat=0, long=0) {
+function addVertex(obj, x, y, drawPoint, name, lat=null, long=null) {
   if (typeof drawPoint == 'undefined')
     drawPoint = true
 
-  if (lat == 0 && long == 0) {
-    lat = x
-    long = y
+  if (lat == null) {
+    lat = x*155/10
+  }
+  if (long == null) {
+    long = y*180/10
   }
   if (typeof x == 'undefined') {
     x = getRandomArbitrary(-6, 6).toFixed(2)
@@ -2198,7 +2203,9 @@ function calcSurface() {
   var xmlHttp = new XMLHttpRequest();
   // xmlHttp.responseType = "arraybuffer"
   xmlHttp.responseType = "text"
-  console.log(data)
+  var smooth_pen = document.getElementById("input-smooth").value
+  var niter = document.getElementById("input-niter").value
+  var send_data = {graph: data, smooth_pen: smooth_pen, niter: niter}
 
   xmlHttp.onreadystatechange = function()
   {
@@ -2233,8 +2240,8 @@ function calcSurface() {
   }
   xmlHttp.open("post", "calc-surface");
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-  xmlHttp.send(JSON.stringify(data));
+  console.log(send_data)
+  xmlHttp.send(JSON.stringify(send_data));
   console.log("data sent")
   dataSent = true
   document.body.style.cursor = "progress"

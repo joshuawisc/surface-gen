@@ -49,8 +49,17 @@
       </div>
       <div id="div-extra" class="gui-box">
         <!-- <button type="button" id="btn-scrn">Take screenshot</button> -->
-        <button type="button" id="btn-calc-surface">Calculate Surface</button>
-        <button type="button" id="btn-gen-graph">Generate template graph</button>
+        <div id="div-calc-surface">
+          <button type="button" id="btn-calc-surface">Calculate Surface</button>
+          <br>
+          <label for="show-map">Smoothness</label>
+          <input type="text" value="5" id="input-smooth">
+          <br>
+          <label for="show-map">No. of iterations</label>
+          <input type="text" value="20" id="input-niter">
+        </div>
+
+        <button type="button" id="btn-gen-graph">Generate sample graph</button>
         <button type="button" id="btn-gen-graph-empty">Generate graph (No Weights)</button>
 
 
@@ -64,6 +73,8 @@
         <input type="range" min="0" max="5" value="0" class="slider" step="1" id="threshold-slider">
         <input type="checkbox" id="show-map" name="show-map" checked>
         <label for="show-map"> Show map</label><br>
+        <input type="checkbox" id="use-transparency" name="use-transparency" checked>
+        <label for="use-transparency"> Use transparent surface</label><br>
         <input type="checkbox" id="hide-surface" name="hide-surface" checked>
         <label for="hide-surface" id="hide-surface-label"> Hide extra surface</label><br>
         <input type="checkbox" id="use-calc-surface" name="use-calc-surface" checked>

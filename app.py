@@ -39,16 +39,12 @@ def calc_curvature():
 def calc_surface():
     print('start')
     data = request.json
-    # print(data)
+    print(data)
     # print("\n\n")
 
-
-    rate = 0.0001
-    smooth_pen = 50
-    momentum = 0.9
-    niter = 20
-
-    G = json_graph.node_link_graph(data)
+    smooth_pen = int(data['smooth_pen'])
+    niter = int(data['niter'])
+    G = json_graph.node_link_graph(data['graph'])
     H = nx.Graph(G)
     # print(type(H))
     # print(G.edges(data=True))
@@ -60,7 +56,7 @@ def calc_surface():
     def generate():
         cur_time = time.time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(bd.main, ret)
+            future = executor.submit(bd.main, ret, smooth_pen, niter)
             while future.running():
                 time.sleep(5)
                 if time.time() - cur_time > 10:
