@@ -1,25 +1,263 @@
 <?xml version='1.0' encoding='utf-8'?>
-<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="city" attr.type="string" for="node" id="d2"/>
-<key attr.name="long" attr.type="double" for="node" id="d1"/>
-<key attr.name="lat" attr.type="double" for="node" id="d0"/>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="ricciCurvature" attr.type="double" for="edge" id="d4"/>
+<key attr.name="long" attr.type="long" for="node" id="d3"/>
+<key attr.name="city" attr.type="string" for="node" id="d2"/>
+<key attr.name="lat" attr.type="double" for="node" id="d1"/>
+<key attr.name="long" attr.type="double" for="node" id="d0"/>
 <graph edgedefault="undirected"><node id="0">
-  <data key="d0">0.001</data>
-  <data key="d1">180.001</data>
-  <data key="d2">border1</data>
+  <data key="d0">4.8945000001</data>
+  <data key="d1">52.3667000001</data>
+  <data key="d2">Amsterdam</data>
+</node>
+<node id="1">
+  <data key="d0">-77.48739999989999</data>
+  <data key="d1">39.0438000001</data>
+  <data key="d2">Ashburn</data>
 </node>
 <node id="2">
-  <data key="d0">0.001</data>
-  <data key="d1">-180.001</data>
-  <data key="d2">border2</data>
+  <data key="d0">-78.3874999999</data>
+  <data key="d1">36.6676000001</data>
+  <data key="d2">Boydton</data>
 </node>
 <node id="3">
-  <data key="d0">155.001</data>
-  <data key="d1">0.001</data>
-  <data key="d2">border3</data>
+  <data key="d0">-93.6249999999</data>
+  <data key="d1">41.5868000001</data>
+  <data key="d2">Des Moines</data>
 </node>
 <node id="4">
-  <data key="d0">-155.001</data>
-  <data key="d1">0.001</data>
-  <data key="d2">border4</data>
+  <data key="d0">-6.2602999999</data>
+  <data key="d1">53.349800000100004</data>
+  <data key="d2">Dublin</data>
 </node>
+<node id="5">
+  <data key="d0">114.1694000001</data>
+  <data key="d1">22.319300000099997</data>
+  <data key="d2">Hong Kong</data>
+</node>
+<node id="6">
+  <data key="d0">28.047300000099998</data>
+  <data key="d1">-26.204099999900002</data>
+  <data key="d2">Johannesburg</data>
+</node>
+<node id="7">
+  <data key="d0">-0.1277999999</data>
+  <data key="d1">51.5074000001</data>
+  <data key="d2">London</data>
+</node>
+<node id="8">
+  <data key="d0">72.8777000001</data>
+  <data key="d1">19.0760000001</data>
+  <data key="d2">Mumbai</data>
+</node>
+<node id="9">
+  <data key="d0">-87.8955999999</data>
+  <data key="d1">41.9173000001</data>
+  <data key="d2">Northlake</data>
+</node>
+<node id="10">
+  <data key="d0">-119.8525999999</data>
+  <data key="d1">47.2343000001</data>
+  <data key="d2">Quincy</data>
+</node>
+<node id="11">
+  <data key="d0">-46.6332999999</data>
+  <data key="d1">-23.5504999999</data>
+  <data key="d2">Sao Paulo</data>
+</node>
+<node id="12">
+  <data key="d0">126.9780000001</data>
+  <data key="d1">37.5665000001</data>
+  <data key="d2">Seoul</data>
+</node>
+<node id="13">
+  <data key="d0">103.8198000001</data>
+  <data key="d1">1.3521000001</data>
+  <data key="d2">Singapore</data>
+</node>
+<node id="14">
+  <data key="d0">151.2093000001</data>
+  <data key="d1">-33.8687999999</data>
+  <data key="d2">Sydney</data>
+</node>
+<node id="15">
+  <data key="d0">139.7690000001</data>
+  <data key="d1">35.6804000001</data>
+  <data key="d2">Tokyo</data>
+</node>
+<node id="16">
+  <data key="d0">-79.3831999999</data>
+  <data key="d1">43.6532000001</data>
+  <data key="d2">Toronto</data>
+</node>
+<node id="17">
+  <data key="d0">180.001</data>
+  <data key="d1">155.001</data>
+  <data key="d2">border1</data>
+</node>
+<node id="18">
+  <data key="d0">-180.001</data>
+  <data key="d1">-155.001</data>
+  <data key="d2">border2</data>
+</node>
+<node id="19">
+  <data key="d3">180</data>
+  <data key="d1">33.8900060154471</data>
+  <data key="d2">splitstart0</data>
+</node>
+<node id="20">
+  <data key="d3">-180</data>
+  <data key="d1">40.31112683864257</data>
+  <data key="d2">splitend0</data>
+</node>
+<node id="21">
+  <data key="d3">180</data>
+  <data key="d1">35.48974739477196</data>
+  <data key="d2">splitstart1</data>
+</node>
+<node id="22">
+  <data key="d3">-180</data>
+  <data key="d1">42.09604678208066</data>
+  <data key="d2">splitend1</data>
+</node>
+<edge source="0" target="16">
+  <data key="d4">0.7499999999856304</data>
+</edge>
+<edge source="0" target="1">
+  <data key="d4">0.6666666649177905</data>
+</edge>
+<edge source="0" target="2">
+  <data key="d4">0.6666666666462981</data>
+</edge>
+<edge source="0" target="4">
+  <data key="d4">0.8571428563070238</data>
+</edge>
+<edge source="0" target="7">
+  <data key="d4">0.7499999999580252</data>
+</edge>
+<edge source="0" target="9">
+  <data key="d4">0.7499999999856306</data>
+</edge>
+<edge source="1" target="16">
+  <data key="d4">0.7777777777378829</data>
+</edge>
+<edge source="1" target="2">
+  <data key="d4">0.8888888888281674</data>
+</edge>
+<edge source="1" target="4">
+  <data key="d4">0.6666666649177917</data>
+</edge>
+<edge source="1" target="7">
+  <data key="d4">0.6249999999781484</data>
+</edge>
+<edge source="1" target="9">
+  <data key="d4">0.777777777737883</data>
+</edge>
+<edge source="1" target="10">
+  <data key="d4">0.2063492053632413</data>
+</edge>
+<edge source="2" target="3">
+  <data key="d4">0.7777777777343258</data>
+</edge>
+<edge source="2" target="4">
+  <data key="d4">0.666666666646298</data>
+</edge>
+<edge source="2" target="16">
+  <data key="d4">0.7777777777343255</data>
+</edge>
+<edge source="2" target="7">
+  <data key="d4">0.624999999955178</data>
+</edge>
+<edge source="2" target="9">
+  <data key="d4">0.7777777777343258</data>
+</edge>
+<edge source="2" target="10">
+  <data key="d4">0.20634920555509018</data>
+</edge>
+<edge source="2" target="11">
+  <data key="d4">0.11111111110080929</data>
+</edge>
+<edge source="3" target="9">
+  <data key="d4">0.8749999999462723</data>
+</edge>
+<edge source="3" target="4">
+  <data key="d4">0.7499999982864173</data>
+</edge>
+<edge source="4" target="16">
+  <data key="d4">0.7499999982864168</data>
+</edge>
+<edge source="4" target="7">
+  <data key="d4">0.7499999999580245</data>
+</edge>
+<edge source="4" target="9">
+  <data key="d4">0.7499999999856305</data>
+</edge>
+<edge source="5" target="8">
+  <data key="d4">0.5999999999641461</data>
+</edge>
+<edge source="5" target="12">
+  <data key="d4">0.5999999998543901</data>
+</edge>
+<edge source="5" target="13">
+  <data key="d4">0.799999999774319</data>
+</edge>
+<edge source="5" target="14">
+  <data key="d4">0.39999999911209216</data>
+</edge>
+<edge source="5" target="15">
+  <data key="d4">0.6666666662919575</data>
+</edge>
+<edge source="7" target="16">
+  <data key="d4">0.7499999990455224</data>
+</edge>
+<edge source="7" target="8">
+  <data key="d4">-0.9500000000328985</data>
+</edge>
+<edge source="7" target="9">
+  <data key="d4">0.7499999990455224</data>
+</edge>
+<edge source="8" target="13">
+  <data key="d4">0.5999999999641461</data>
+</edge>
+<edge source="8" target="15">
+  <data key="d4">0.4666666666171373</data>
+</edge>
+<edge source="8" target="12">
+  <data key="d4">0.5999999999356492</data>
+</edge>
+<edge source="9" target="16">
+  <data key="d4">0.8749999999462723</data>
+</edge>
+<edge source="9" target="10">
+  <data key="d4">0.30357142846568985</data>
+</edge>
+<edge source="10" target="16">
+  <data key="d4">0.3035714284656893</data>
+</edge>
+<edge source="10" target="20">
+  <data key="d4">-0.7619047619059645</data>
+</edge>
+<edge source="10" target="22">
+  <data key="d4">-0.6285714286003001</data>
+</edge>
+<edge source="12" target="21">
+  <data key="d4">-0.6285714286003001</data>
+</edge>
+<edge source="12" target="13">
+  <data key="d4">0.59999999985439</data>
+</edge>
+<edge source="12" target="15">
+  <data key="d4">0.666666666106762</data>
+</edge>
+<edge source="13" target="14">
+  <data key="d4">0.39999999987553236</data>
+</edge>
+<edge source="13" target="15">
+  <data key="d4">0.6666666662919574</data>
+</edge>
+<edge source="14" target="15">
+  <data key="d4">0.33333333332169646</data>
+</edge>
+<edge source="15" target="19">
+  <data key="d4">-0.7619047619059645</data>
+</edge>
 </graph></graphml>

@@ -50,6 +50,9 @@ button.btn-delete:hover {
   border-color: red;
 
 }
+svg {
+  float: right;
+}
 #btn-add-edge {
   display: inline-block;
 }

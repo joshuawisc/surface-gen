@@ -184,12 +184,17 @@ var clipPlane3 = new T.Plane(new T.Vector3(-1, 0, 0), 7) // 6
 var clipPlane4 = new T.Plane(new T.Vector3(0, 0, 1), 10) // 3.3
 var clipPlane5 = new T.Plane(new T.Vector3(0, 0, -1), 10) // 3.3
 
+var loader = new T.ImageLoader()
+var aMap = loader.load("images/grayscale.png")
+
 
 var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
-var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture, transparent: true, opacity: 1.0} )
+var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5],
+  vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0,
+  wireframe: false, map: texture, transparent: true, opacity: 1.0}) //, alphaMap: T.ImageUtils.loadTexture("images/grayscale.png")} )
 let transparentMat = new T.MeshLambertMaterial({visible: false})
 var transparentPlaneMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: texture, transparent: true, opacity: 0.5} )
 let mMat = [planeMat, transparentMat, transparentPlaneMat]
@@ -369,7 +374,7 @@ window.onload = function() {
   document.getElementById("heatmap-div").style.display = "none"
 
   let hideSurface = document.getElementById("hide-surface")
-  hideSurface.style.visibility = "hidden"
+  // hideSurface.style.visibility = "hidden"
   document.getElementById("hide-surface-label").style.visibility = "hidden"
   let chkCalcSurface = document.getElementById("use-calc-surface")
   let useTransp = document.getElementById("use-transparency")
@@ -404,6 +409,8 @@ window.onload = function() {
   controls.enableZoom = true
   controls.minZoom = 1
   controls.update()
+
+
 
   var animate = function () {
     if (showMap.checked) {
@@ -689,6 +696,12 @@ window.onload = function() {
 
     // Set up opacity map for hiding surface
     calcOpacityMap(opacityMap, vertices, current_edges)
+
+    // Createadn set alphaMap image for transparency from opacityMap
+    // aMap = createAlphaMap(opacityMap)
+    aMap = createAlphaMapD3(opacityMap)
+    plane.material[0].alphaMap = aMap
+    plane.material[0].needsUpdate = true
 
 
     texture.needsUpdate = true
@@ -1666,7 +1679,7 @@ function addVertex(obj, x, y, drawPoint, name, lat=null, long=null) {
   newPt.name = name
 
   let sprite = getNameSprite(name)
-  sprite.position.set(xPos.value, vertexHeight + 0.5 + Math.random()*0.2, yPos.value)
+  sprite.position.set(xPos.value, vertexHeight + 0.2 + Math.random()*0.2, yPos.value)
 
   if (drawPoint) {
     scene.add(sprite)
@@ -1992,6 +2005,7 @@ function edgeChange() {
   edge.start = vertices[startId]
   edge.end = vertices[endId]
   edge.weight = weight
+  edge.checkSplit()
 }
 
 function removeEdge() {
@@ -2067,9 +2081,42 @@ let EdgeObj = class {
     this.bearing = GreatCircle.bearing(start.lat, start.long, end.lat, end.long)
     this.split = false
     // console.log(`${start.long}, ${end.long}, ${this.bearing}`)
-    if (start.long > end.long && this.bearing <= 180)
+    if (start.long > end.long && this.bearing <= 180) {
       this.split = true
+      let p1 = [start.mesh.position.x, start.mesh.position.z]
+      // console.log(`${start.mesh.position.x}, ${start.mesh.position.z}`)
+      this.startSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z+20)], [10, 10], [-10, 10])
+      // console.log(`${this.startSplit[0]}, ${this.startSplit[1]}`)
+      this.endSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z-20)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)], [10, -10], [-10, -10])
+      // console.log(`${this.endSplit[0]}, ${this.endSplit[1]}`)
+      this.startSplit = [this.startSplit[0]*155/10, this.startSplit[1]*180/10]
+      this.endSplit = [this.endSplit[0]*155/10, this.endSplit[1]*180/10]
+      console.log(this.startSplit)
+      console.log(this.endSplit)
+    }
+
   }
+
+  checkSplit() {
+    let start = this.start
+    let end = this.end
+    console.log('checkSplit')
+    if (start.long > end.long && this.bearing <= 180) {
+      console.log('split exists')
+      this.split = true
+      console.log(start.mesh.position.x)
+      this.startSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z+20)], [7, 10], [-7, 10])
+      this.endSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z-20)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)], [7, -10], [-7, -10])
+      console.log(this.startSplit)
+      console.log(this.endSplit)
+    }
+  }
+}
+
+function getIntersection(p1, p2, p3, p4) {
+  // Get intersection formed by line p1-p2 and line p3-p4
+
+
 }
 
 let GraphObj = class {
@@ -2183,14 +2230,25 @@ function calcSurface() {
     let node = vertices[id]
     data.nodes.push({id: parseInt(id), city: String(node.name), lat: node.lat + 1E-10, long: node.long + 1E-10})
   }
-  data.nodes.push({id: length, city: "border1", lat: 0.001, long: 180.001})
-  data.nodes.push({id: length+2, city: "border2", lat: 0.001, long: -180.001})
-  data.nodes.push({id: length+3, city: "border3", lat: 155.001, long: 0.001}) // 138.5
-  data.nodes.push({id: length+4, city: "border4", lat: -155.001, long: 0.001})
+  data.nodes.push({id: data.nodes.length, city: "border1", lat: 155.001, long: 180.001})
+  data.nodes.push({id: data.nodes.length, city: "border2", lat: -155.001, long: -180.001})
+  // data.nodes.push({id: length+3, city: "border3", lat: 155.001, long: 0.001}) // 138.5
+  // data.nodes.push({id: length+4, city: "border4", lat: -155.001, long: 0.001})
 
+  let splitCount = 0
   for (let id in current_edges) {
     let edge = current_edges[id]
-    data.links.push({source: edge.start.id, target: edge.end.id, ricciCurvature: edge.weight})
+    if (edge.split) {
+      // continue
+      console.log("split")
+      data.nodes.push({id: data.nodes.length, city: "splitstart" + splitCount, lat: edge.startSplit[0], long: edge.startSplit[1]})
+      data.nodes.push({id: data.nodes.length, city: "splitend" + splitCount, lat: edge.endSplit[0], long: edge.endSplit[1]})
+      data.links.push({source: edge.start.id, target: data.nodes.length-2, ricciCurvature: edge.weight})
+      data.links.push({source: edge.end.id, target: data.nodes.length-1, ricciCurvature: edge.weight})
+      splitCount++
+    } else {
+      data.links.push({source: edge.start.id, target: edge.end.id, ricciCurvature: edge.weight})
+    }
   }
   // console.log(vertices)
   // $.ajax({
@@ -2245,6 +2303,117 @@ function calcSurface() {
   console.log("data sent")
   dataSent = true
   document.body.style.cursor = "progress"
+}
+
+function createAlphaMap(heightMap) {
+  var alphaCanv = document.getElementById('alpha-canvas')
+  if (alphaCanv == null) {
+    console.log('doesnt exist')
+    alphaCanv = document.createElement('canvas')
+    alphaCanv.id = 'alpha-canvas'
+    document.body.appendChild(alphaCanv)
+  }
+  let ctx = alphaCanv.getContext('2d')
+  let height = heightMap.length
+  let width = heightMap[0].length
+  let imgData = ctx.createImageData(height, width)
+  for (let i = 0, j = 0 ; i < height*width ; i += 1, j += 4) {
+    let i_int = Math.floor(i/width)
+    let r = Math.random()*255
+    let s = 100
+    imgData.data[j] = heightMap[i%width][width - i_int]*s
+    imgData.data[j+1] = heightMap[i%width][width - i_int]*s
+    imgData.data[j+2] = heightMap[i%width][width - i_int]*s
+    imgData.data[j+3] = 255
+  }
+  ctx.putImageData(imgData, 0, 0)
+  var aMap = new T.CanvasTexture(ctx.canvas)
+  return aMap
+}
+
+function createAlphaMapD3(map) {
+  var svg = d3.select('#alpha-svg')
+  var width = 256
+  var height = 256
+  if (d3.select('#alpha-svg').empty()) {
+    console.log('create svg')
+    var svg = d3.select('body')
+      .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('id', 'alpha-svg')
+        .attr('display', 'none')
+  }
+  svg.selectAll("*").remove()
+  svg.append('rect')
+    .attr('width', '100%')
+    .attr('height', '100%')
+    .attr('fill', '#333333')
+  svg.append('g')
+
+  // Add X axis
+  var x = d3.scaleLinear()
+    .domain([0, map.length])
+    .range([ 0, width ])
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+
+  // Add Y axis
+  var y = d3.scaleLinear()
+    .domain([0, map[0].length])
+    .range([ height, 0 ])
+  svg.append("g")
+    .call(d3.axisLeft(y))
+
+  var color = d3.scaleLinear()
+    .domain([0.0, 0.002]) // Points per square pixel.
+    .range(["#333333", "white"])
+  var data = []
+
+  for (let i = 0 ; i < map.length ; i++) {
+    for (let j = 0 ; j < map[i].length ; j++)
+      if (map[i][j] == 1)
+        data.push({x: i, y: j})
+  }
+
+  var densityData = d3.contourDensity()
+      .x(function(d) { return x(d.x); })
+      .y(function(d) { return y(d.y); })
+      .size([width, height])
+      .bandwidth(4)
+      (data)
+
+
+  svg.insert("g", "g")
+    .selectAll("path")
+    .data(densityData)
+    .enter().append("path")
+      .attr("d", d3.geoPath())
+      .attr("fill", function(d) { return color(d.value); })
+
+  var alphaCanv = document.getElementById('alpha-canvas')
+  if (alphaCanv == null) {
+    console.log('doesnt exist')
+    alphaCanv = document.createElement('canvas')
+    alphaCanv.id = 'alpha-canvas'
+    alphaCanv.height = height
+    alphaCanv.width = width
+    alphaCanv.style.display = 'none'
+
+    document.body.appendChild(alphaCanv)
+  }
+  var ctx = alphaCanv.getContext('2d')
+
+  var svgEle = document.getElementById('alpha-svg')
+  var img = document.createElement('img')
+  img.setAttribute('src', "data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent((new XMLSerializer()).serializeToString(svgEle)))))
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0)
+  }
+
+  return new T.CanvasTexture(alphaCanv)
+
 }
 
 function fileSelectEdges(evt) {
