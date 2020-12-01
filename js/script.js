@@ -2288,7 +2288,7 @@ function calcSurface() {
             for (let j = 0 ; j < divisions ; j++) {
               hm[j][49-i] = data[i*divisions + j]*2
               if (data[i*divisions + j] < -0.1) {
-                hm[j][49-i] = data[i*divisions + j]*10
+                hm[j][49-i] = data[i*divisions + j]*2
               }
             }
           }
