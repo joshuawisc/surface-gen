@@ -68,6 +68,8 @@ let planeH = planeYMax - planeYMin
 let divisions = 50 // Was 150
 let heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 let opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+let curvMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+
 let calcHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 
 let vertexHeight = 3
@@ -379,6 +381,21 @@ window.onload = function() {
   let chkCalcSurface = document.getElementById("use-calc-surface")
   let useTransp = document.getElementById("use-transparency")
   let showMap = document.getElementById("show-map")
+  let showGraph = document.getElementById("show-graph")
+
+  showGraph.onchange = function() {
+    if (vertices[0] != undefined) {
+      for (let id in vertices) {
+        if (!showGraph.checked) {
+          scene.remove(vertices[id].mesh)
+          scene.remove(vertices[id].label)
+        } else {
+          scene.add(vertices[id].mesh)
+          scene.add(vertices[id].label)
+        }
+      }
+    }
+  }
 
 
   let vertexControlDiv = document.getElementById("div-vertex")
@@ -423,7 +440,7 @@ window.onload = function() {
     plane.material[0].needsUpdate = true
     plane.material[2].needsUpdate = true
 
-    opacityMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+    curvMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 
   	requestAnimationFrame( animate )
 
@@ -471,6 +488,8 @@ window.onload = function() {
 
     // Draw physical graph edge, texture edge
     for (let id in current_edges) {
+      let lineWidth = 6  // 6
+      let borders = true
       let edge = current_edges[id]
       // console.log(`${edge.start.lat}, ${edge.start.long}, ${edge.end.lat}, ${edge.end.long}`)
       // console.log(edge.start)
@@ -480,45 +499,82 @@ window.onload = function() {
       if (edge.split) {
         // Create split edges
         let eSize = Object.keys(current_edges).length
-        let end1 = {mesh: {position: {x: parseFloat(edge.end.mesh.position.x), z: parseFloat(edge.end.mesh.position.z)+20}}}
+        let end1 = {mesh: {position: {x: parseFloat(edge.startSplit[0]*10/155), z: parseFloat(edge.startSplit[1]*10/180)}}}
         let edge1 = new EdgeObj(eSize, edge.start, end1, edge.weight)
-        drawEdge(edge1, lineMat)
+        if (showGraph.checked)
+          drawEdge(edge1, lineMat)
         let startPt = [parseFloat(edge1.start.mesh.position.x), parseFloat(edge1.start.mesh.position.z)]
         let endPt = [parseFloat(edge1.end.mesh.position.x), parseFloat(edge1.end.mesh.position.z)]
 
-        // Draw texture edge // TODO: undo
-        // startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        // endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        // ctx.beginPath();
-        // ctx.moveTo(startPt[0], startPt[1])
-        // ctx.lineTo(endPt[0], endPt[1])
-        // ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
-        // ctx.lineWidth = 12
-        // ctx.stroke()
+        startPt = [(1 - (startPt[0] - planeXMin) / planeW) * ctx.canvas.width, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        endPt = [(1 - (endPt[0] - planeXMin) / planeW) * ctx.canvas.width, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.save()
+        ctx.globalAlpha = 1
+        ctx.beginPath();
 
-        let start2 = {mesh: {position: {x: parseFloat(edge.start.mesh.position.x), z: parseFloat(edge.start.mesh.position.z)-20}}}
+        if (borders) {
+          ctx.moveTo(startPt[1], startPt[0])
+          ctx.lineTo(endPt[1], endPt[0])
+          ctx.strokeStyle = "#000000" // #2cacc9 // #40bad5
+          ctx.lineWidth = lineWidth+1
+          ctx.stroke()
+        }
+
+        ctx.moveTo(startPt[1], startPt[0])
+        ctx.lineTo(endPt[1], endPt[0])
+        let color = new T.Color()
+        if (edge.weight >= 0)
+          var endColor = new T.Color("hsl(145, 98%, 40%)")
+        else
+          var endColor = new T.Color("hsl(0, 76%, 43%)")
+        color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
+        ctx.strokeStyle = "#" + color.getHexString() // #2cacc9 // #40bad5
+        ctx.lineWidth = lineWidth
+        ctx.stroke()
+        ctx.restore()
+
+        let start2 = {mesh: {position: {x: parseFloat(edge.endSplit[0]*10/155), z: parseFloat(edge.endSplit[1]*10/180)}}}
         let edge2 = new EdgeObj(eSize+1, start2, edge.end, edge.weight)
-        drawEdge(edge2, lineMat)
+        if (showGraph.checked)
+          drawEdge(edge2, lineMat)
         startPt = [parseFloat(edge2.start.mesh.position.x), parseFloat(edge2.start.mesh.position.z)]
         endPt = [parseFloat(edge2.end.mesh.position.x), parseFloat(edge2.end.mesh.position.z)]
 
-        // Draw texture edge // TODO: undo
-        // startPt = [(startPt[0] - planeXMin) * ctx.canvas.width / planeW, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        // endPt = [(endPt[0] - planeXMin) * ctx.canvas.width / planeW, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
-        // ctx.beginPath();
-        // ctx.moveTo(startPt[0], startPt[1])
-        // ctx.lineTo(endPt[0], endPt[1])
-        // ctx.strokeStyle = "#1D84B5" // #2cacc9 // #40bad5
-        // ctx.lineWidth = 12
-        // ctx.stroke()
+        startPt = [(1 - (startPt[0] - planeXMin) / planeW) * ctx.canvas.width, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        endPt = [(1 - (endPt[0] - planeXMin) / planeW) * ctx.canvas.width, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+        ctx.save()
+        ctx.globalAlpha = 1
+        ctx.beginPath();
 
+        if (borders) {
+          ctx.moveTo(startPt[1], startPt[0])
+          ctx.lineTo(endPt[1], endPt[0])
+          ctx.strokeStyle = "#000000" // #2cacc9 // #40bad5
+          ctx.lineWidth = lineWidth+1
+          ctx.stroke()
+        }
+        ctx.moveTo(startPt[1], startPt[0])
+        ctx.lineTo(endPt[1], endPt[0])
+        color = new T.Color()
+        if (edge.weight >= 0)
+          var endColor = new T.Color("hsl(145, 98%, 40%)")
+        else
+          var endColor = new T.Color("hsl(0, 76%, 43%)")
+        color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
+        ctx.strokeStyle = "#" + color.getHexString() // #2cacc9 // #40bad5
+        ctx.lineWidth = lineWidth
+        ctx.stroke()
+        ctx.restore()
         current_edges[eSize] = edge1
         current_edges[eSize+1] = edge2
+
         continue
+
         // Add split edge to current edges
         // Skip split edges in setHeights
       }
-      drawEdge(edge, lineMat)
+      if (showGraph.checked)
+        drawEdge(edge, lineMat)
 
       let startPt = [parseFloat(edge.start.mesh.position.x), parseFloat(edge.start.mesh.position.z)]
       let endPt = [parseFloat(edge.end.mesh.position.x), parseFloat(edge.end.mesh.position.z)]
@@ -526,12 +582,31 @@ window.onload = function() {
       // Draw texture edge // TODO: undo
       startPt = [(1 - (startPt[0] - planeXMin) / planeW) * ctx.canvas.width, (startPt[1] - planeYMin) * ctx.canvas.height / planeH]
       endPt = [(1 - (endPt[0] - planeXMin) / planeW) * ctx.canvas.width, (endPt[1] - planeYMin) * ctx.canvas.height / planeH]
+      ctx.save()
+      ctx.globalAlpha = 1.0
+      // ctx.globalCompositeOperation = "color-dodge";
       ctx.beginPath();
+
+      if (borders) {
+        ctx.moveTo(startPt[1], startPt[0])
+        ctx.lineTo(endPt[1], endPt[0])
+        ctx.strokeStyle = "#000000" // #2cacc9 // #40bad5
+        ctx.lineWidth = lineWidth+1
+        ctx.stroke()
+      }
+
       ctx.moveTo(startPt[1], startPt[0])
       ctx.lineTo(endPt[1], endPt[0])
-      ctx.strokeStyle = "#660000" // #2cacc9 // #40bad5
-      ctx.lineWidth = 2
+      let color = new T.Color()
+      if (edge.weight >= 0)
+        var endColor = new T.Color("hsl(145, 98%, 40%)")
+      else
+        var endColor = new T.Color("hsl(0, 76%, 43%)")
+      color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
+      ctx.strokeStyle = "#" + color.getHexString() // #2cacc9 // #40bad5
+      ctx.lineWidth = lineWidth
       ctx.stroke()
+      ctx.restore()
     }
 
     // Draw logical edges into graph, Draw logical edges into texture
@@ -680,31 +755,24 @@ window.onload = function() {
     // smoothHeightMap()
     // smoothHeightMap()
 
-    // TODO: enable
+    // TODO: doesn't work / use BufferGeom?
+
 
     // Draw point on surface texture
     for (let id in vertices) {
+      let radius = 5
       let vertex = vertices[id]
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(1 - (point[0] - planeXMin) / planeW) * ctx.canvas.width, (point[1] - planeYMin) * ctx.canvas.height / planeH]
       ctx.fillStyle = "#FF5C5C" // #035aa6
 
       ctx.beginPath();
-      ctx.arc(point[1], point[0], 5, 0, 2 * Math.PI);
+      ctx.arc(point[1], point[0], radius, 0, 2 * Math.PI);
       ctx.fill();
     }
 
-    // Set up opacity map for hiding surface
-    calcOpacityMap(opacityMap, vertices, current_edges)
-
-    // Createadn set alphaMap image for transparency from opacityMap
-    // aMap = createAlphaMap(opacityMap)
-    aMap = createAlphaMapD3(opacityMap)
-    plane.material[0].alphaMap = aMap
-    plane.material[0].needsUpdate = true
 
 
-    texture.needsUpdate = true
 
     // Set plane vertices' height
     let map = heightMap
@@ -735,6 +803,22 @@ window.onload = function() {
       }
       p.plane.material.map.needsUpdate = true
     }
+
+    opacityMap = Array(100).fill().map(() => Array(100).fill(0.0));
+
+    calcOpacityMap(opacityMap, vertices, current_edges, map)
+    aMap = createAndUpdateAlphaMapD3(opacityMap)
+
+
+    // Createadn set alphaMap image for transparency from opacityMap
+    // aMap = createAlphaMap(opacityMap)
+    plane.material[0].alphaMap = aMap
+    plane.material[0].needsUpdate = true
+
+
+    texture.needsUpdate = true
+
+
 
 
     // Set materials for plane faces, to hide unwanted
@@ -840,7 +924,14 @@ window.onload = function() {
 
 
 
+
+
     olMap.render()
+    // Set up opacity map for hiding surface
+    // calcCurvMap(curvMap, vertices, current_edges)
+    // updateShading(curvMap)
+
+
 
     // matLine.resolution.set( window.innerWidth, window.innerHeight );
     // renderer.setViewport( 0, 0, window.innerWidth/2, window.innerHeight );
@@ -1025,33 +1116,36 @@ function wheelEvent(event) {
   mapdiv.style.display = "none"
 }
 
-function calcOpacityMap(opacityMap, vertices, edges) {
-  for (let id in vertices) {
-    newPt = convert3JStoHM([vertices[id].mesh.position.x, vertices[id].mesh.position.z])
-    opacityMap[newPt[1]][newPt[0]] = 1
-  }
-
+function calcOpacityMap(opacityMap, vertices, edges, heightMap) {
+  let divisions = 100
   for (let id in edges) {
+    if (edges[id].split)
+      continue
     let startPt = [edges[id].start.mesh.position.x, edges[id].start.mesh.position.z]
     let endPt = [edges[id].end.mesh.position.x, edges[id].end.mesh.position.z]
 
-    startPt = convert3JStoHM(startPt)
-    endPt = convert3JStoHM(endPt)
+    startPt = convert3JStoOM(startPt, divisions)
+    endPt = convert3JStoOM(endPt, divisions)
     for (let i = 0 ; i < divisions ; i++) {
       for (let j = 0 ; j < divisions ; j++) {
         // if (distanceToLine(startPt, endPt, [i, j]) < 0.3)
         //   opacityMap[j][i] = 1
         if (Math.abs(dist(startPt, [i, j]) + dist([i, j], endPt) - dist(startPt, endPt)) < 0.1)
           opacityMap[j][i] = 1
+        if (heightMap[Math.floor(j/2)][Math.floor(i/2)] > 0.3) {
+          opacityMap[j][i] = 1
+        }
       }
     }
   }
 }
 
+
+
 function subgraphSelect(selected) {
   console.log(selected.length)
   console.log(vertexCount + edgeCount + 1)
-  if (selected.length <= 1 || selected.length >= vertexCount + edgeCount + 1) {
+  if (selected.length <= 1) {
     console.log("return / empty select")
     return
   }
@@ -1085,6 +1179,15 @@ function subgraphSelect(selected) {
       data.links.push({source: ids[start], target: ids[end], ricciCurvature: weight})
     }
   }
+  let padding = 0.25
+  xRange[0] = Math.max(-7, xRange[0] - padding)
+  xRange[1] = Math.min(7, xRange[1] + padding)
+  yRange[0] = Math.max(-10, yRange[0] - padding)
+  yRange[1] = Math.min(10, yRange[1] + padding)
+
+  data.nodes.push({id: data.length, city: "edge1", lat: parseFloat(xRange[0]), long: parseFloat(yRange[0])})
+  data.nodes.push({id: data.length, city: "edge2", lat: parseFloat(xRange[1]), long: parseFloat(yRange[0])})
+
 
   let mid = [(xRange[0]+xRange[1])/2, (yRange[0]+yRange[1])/2]
   let width = xRange[1] - xRange[0]
@@ -1171,6 +1274,9 @@ function subgraphSelect(selected) {
 
   var xmlHttp = new XMLHttpRequest();
   xmlHttp.responseType = "text"
+  var smooth_pen = document.getElementById("input-smooth").value
+  var niter = document.getElementById("input-niter").value
+  var send_data = {graph: data, smooth_pen: smooth_pen, niter: niter}
 
   xmlHttp.onreadystatechange = function() {
     if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -1192,7 +1298,7 @@ function subgraphSelect(selected) {
   xmlHttp.open("post", "calc-surface");
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 
-  xmlHttp.send(JSON.stringify(data));
+  xmlHttp.send(JSON.stringify(send_data));
   console.log("data sent")
   dataSent = true
 }
@@ -1874,7 +1980,7 @@ function drawEdge(edge, lineMat) {
     var endColor = new T.Color("hsl(145, 98%, 40%)")
   else
     var endColor = new T.Color("hsl(0, 76%, 43%)")
-  color.lerpHSL(endColor, Math.abs(edge.weight))
+  color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
   line.material.color.set(color)
   line.name = edge.start.name + "/" + edge.end.name
   line.userData = {weight: edge.weight}
@@ -2084,11 +2190,23 @@ let EdgeObj = class {
     if (start.long > end.long && this.bearing <= 180) {
       this.split = true
       let p1 = [start.mesh.position.x, start.mesh.position.z]
+      // console.log(`${end.mesh.position.x}, ${end.mesh.position.z}`)
+      this.startSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)+20], [10, 10], [-10, 10])
+      // console.log([parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)+20])
+      this.endSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)-20], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)], [10, -10], [-10, -10])
+      // console.log([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z-20)])
+      this.startSplit = [this.startSplit[0]*155/10, this.startSplit[1]*180/10]
+      this.endSplit = [this.endSplit[0]*155/10, this.endSplit[1]*180/10]
+      console.log(this.startSplit)
+      console.log(this.endSplit)
+    } else if (start.long < end.long && this.bearing >= 180) {
+      this.split = true
+      let p1 = [start.mesh.position.x, start.mesh.position.z]
       // console.log(`${start.mesh.position.x}, ${start.mesh.position.z}`)
-      this.startSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z+20)], [10, 10], [-10, 10])
-      // console.log(`${this.startSplit[0]}, ${this.startSplit[1]}`)
-      this.endSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z-20)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)], [10, -10], [-10, -10])
-      // console.log(`${this.endSplit[0]}, ${this.endSplit[1]}`)
+      this.startSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)-20], [10, -10], [-10, -10])
+      // console.log([parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z-20)])
+      this.endSplit = math.intersect([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z)+20], [parseFloat(end.mesh.position.x), parseFloat(end.mesh.position.z)], [10, 10], [-10, 10])
+      // console.log([parseFloat(start.mesh.position.x), parseFloat(start.mesh.position.z+20)])
       this.startSplit = [this.startSplit[0]*155/10, this.startSplit[1]*180/10]
       this.endSplit = [this.endSplit[0]*155/10, this.endSplit[1]*180/10]
       console.log(this.startSplit)
@@ -2305,6 +2423,64 @@ function calcSurface() {
   document.body.style.cursor = "progress"
 }
 
+function calcCurvMap(curvMap, vertices, edges) {
+
+  for (let id in edges) {
+    let startPt = [edges[id].start.mesh.position.x, edges[id].start.mesh.position.z]
+    let endPt = [edges[id].end.mesh.position.x, edges[id].end.mesh.position.z]
+
+    startPt = convert3JStoHM(startPt)
+    endPt = convert3JStoHM(endPt)
+    for (let i = 0 ; i < divisions ; i++) {
+      for (let j = 0 ; j < divisions ; j++) {
+        // if (distanceToLine(startPt, endPt, [i, j]) < 0.3)
+        //   opacityMap[j][i] = 1
+        if (Math.abs(dist(startPt, [i, j]) + dist([i, j], endPt) - dist(startPt, endPt)) < 0.2)
+          curvMap[divisions-i][j] = edges[id].weight
+      }
+    }
+  }
+}
+
+function updateShading(curvMap) {
+  let ctx = document.getElementById('map').getElementsByTagName('canvas')[0].getContext('2d')
+  // console.log(ctx)
+  let scale = ctx.canvas.height/divisions
+  ctx.lineWidth = 0.005 / scale
+  ctx.strokeStyle = "#fff"
+  let data = {
+    width: 50,
+    height: 50,
+    values: curvMap.flat()
+  }
+  ctx.save()
+  ctx.globalAlpha = 1.0
+  ctx.scale(scale, scale)
+  let color = d3.scaleLinear().domain([d3.min(data.values), 0, d3.max(data.values)]).range(['#FF0000', '#FFFFFF', '#00FF00']).nice()
+  let contours = d3.contours().size([data.width, data.height])
+  let thresholds = color.ticks(10)
+  let path = d3.geoPath(null, ctx)
+  // console.log(ctx.canvas.width)
+  // console.log(thresholds)
+
+  for (const d of thresholds) {
+    // console.log(d)
+    if (d == 0) {
+      // console.log("skip")
+      // continue
+    }
+    ctx.beginPath();
+    path(contours.contour(data.values, d));
+    ctx.fillStyle = color(d);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.restore()
+
+
+}
+
 function createAlphaMap(heightMap) {
   var alphaCanv = document.getElementById('alpha-canvas')
   if (alphaCanv == null) {
@@ -2331,10 +2507,10 @@ function createAlphaMap(heightMap) {
   return aMap
 }
 
-function createAlphaMapD3(map) {
+function createAndUpdateAlphaMapD3(map) {
   var svg = d3.select('#alpha-svg')
-  var width = 256
-  var height = 256
+  var width = 512
+  var height = 512
   if (d3.select('#alpha-svg').empty()) {
     console.log('create svg')
     var svg = d3.select('body')
@@ -2367,7 +2543,7 @@ function createAlphaMapD3(map) {
     .call(d3.axisLeft(y))
 
   var color = d3.scaleLinear()
-    .domain([0.0, 0.002]) // Points per square pixel.
+    .domain([0.0, 0.002]) // Points per square pixel. .002
     .range(["#333333", "white"])
   var data = []
 
@@ -2410,6 +2586,9 @@ function createAlphaMapD3(map) {
   img.setAttribute('src', "data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent((new XMLSerializer()).serializeToString(svgEle)))))
   img.onload = function() {
     ctx.drawImage(img, 0, 0)
+    // let mapCtx = document.getElementById('map').getElementsByTagName('canvas')[0].getContext('2d')
+    // mapCtx.globalAlpha = 0.5
+    // mapCtx.drawImage(img, (mapCtx.canvas.width-1000)/2, (mapCtx.canvas.height-1000)/2, 1000, 1000)
   }
 
   return new T.CanvasTexture(alphaCanv)
@@ -2565,14 +2744,27 @@ function getRandomArbitrary(min, max) {
 }
 
 function convert3JStoHM(point) {
-  point[0] = (point[0] - planeXMin)// Change from (min,max) to (0, newmax)
-  point[1] = (point[1] - planeYMin)// Change from (min,max) to (0, newmax)
+  point[0] = (point[0] - planeXMin) // Change from (min,max) to (0, newmax)
+  point[1] = (point[1] - planeYMin) // Change from (min,max) to (0, newmax)
 
   point[0] = Math.round((point[0] / planeW) * (divisions-1)) // Change from (0, planeWidth) to (0, divisions)
   point[1] = Math.round((point[1] / planeH) * (divisions-1)) // Change from (0, planeHeight) to (0, divisions)
 
   return point;
+}
 
+function convert3JStoOM(point, divisions) {
+  point[0] = (point[0] - planeXMin) // Change from (min,max) to (0, newmax)
+  point[1] = (point[1] - planeYMin) // Change from (min,max) to (0, newmax)
+
+  point[0] = Math.round((point[0] / planeW) * (divisions-1)) // Change from (0, planeWidth) to (0, divisions)
+  point[1] = Math.round((point[1] / planeH) * (divisions-1)) // Change from (0, planeHeight) to (0, divisions)
+
+  return point;
+}
+
+function convert3JStoLatLong(x, y) {
+  return [x*155/10, y*180/10]
 }
 
 function distanceToLine(startPt, endPt, pt) {
