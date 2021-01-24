@@ -78,6 +78,10 @@ let time = Date.now()
 
 let dataSent = false
 
+// Cycle variables
+let cycle = false
+let last_cycle = Date.now()
+
 // ThreeJS Scene Setup
 
 var scene = new T.Scene()
@@ -417,6 +421,9 @@ window.onload = function() {
   let btnHelp = document.getElementById("btn-help")
   btnHelp.onclick = helpClick
 
+  document.getElementById("btn-cycle-thresholds").onclick = cycleThresholds
+
+
   document.getElementById("btn-calc-surface").onclick = calcSurface
 
 
@@ -446,6 +453,20 @@ window.onload = function() {
 
     controls.update()
     // controls.enabled = false
+
+    //Update thresholds if cycling
+    if (cycle && (Date.now()-last_cycle)/1000 > 2) {
+      let slider = document.getElementById("threshold-slider")
+      let value = parseInt(slider.value)
+      console.log("CYCLE " + slider.value + " " + slider.max)
+      value += 1
+      console.log(value)
+      value %= (parseInt(slider.max)+1)
+      console.log(value)
+      slider.value = value
+      console.log(slider.value)
+      last_cycle = Date.now()
+    }
 
 
 
@@ -488,7 +509,7 @@ window.onload = function() {
 
     // Draw physical graph edge, texture edge
     for (let id in current_edges) {
-      let lineWidth = 6  // 6
+      let lineWidth = 2  // 6
       let borders = true
       let edge = current_edges[id]
       // console.log(`${edge.start.lat}, ${edge.start.long}, ${edge.end.lat}, ${edge.end.long}`)
@@ -760,7 +781,7 @@ window.onload = function() {
 
     // Draw point on surface texture
     for (let id in vertices) {
-      let radius = 5
+      let radius = 3 // 5
       let vertex = vertices[id]
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(1 - (point[0] - planeXMin) / planeW) * ctx.canvas.width, (point[1] - planeYMin) * ctx.canvas.height / planeH]
@@ -1014,6 +1035,18 @@ document.addEventListener("keyup", function(event) {
     document.removeEventListener( 'pointerup', pointerUp )
   }
 })
+
+function cycleThresholds() {
+  let btnCycle = document.getElementById("btn-cycle-thresholds")
+  cycle = !cycle
+  if (!cycle) {
+    btnCycle.innerHTML = "Cycle Thresholds"
+  } else {
+    btnCycle.innerHTML = "Stop Cycle"
+  }
+  last_cycle = Date.now()
+
+}
 
 function helpClick(event) {
   let helpDiv = document.getElementById("div-help")
@@ -1292,6 +1325,7 @@ function subgraphSelect(selected) {
           newHeightMap[j][49-i] = data[i*divisions + j]*scale
         }
       }
+      console.log(newHeightMap)
       setPlaneHeights(subPlane, newHeightMap)
     }
   }
