@@ -56,7 +56,7 @@
           <button type="button" id="btn-calc-surface">Calculate Surface</button>
           <br>
           <label for="input-smooth">Smoothness</label>
-          <input type="text" value="5" id="input-smooth">
+          <input type="text" value="1" id="input-smooth">
           <br>
           <label for="input-niter">No. of iterations</label>
           <input type="text" value="20" id="input-niter">
@@ -92,15 +92,15 @@
         <p>Positive Amplitude:</p>
         <input type="range" min="1" max="3" value="3" class="slider" step="0.1" id="amp-slider">
         <p>Saddle X Spread:</p>
-        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xspread-slider">
+        <input type="range" min="0.001" max="2" value="0.5" class="slider" step="0.000001" id="xspread-slider">
         <p>Saddle Y Spread:</p>
-        <input type="range" min="0.1" max="2" value="0.3" class="slider" step="0.1" id="yspread-slider">
+        <input type="range" min="0.001" max="2" value="0.05" class="slider" step="0.000001" id="yspread-slider">
         <p>Saddle Width:</p>
-        <input type="range" min="0.1" max="2" value="1" class="slider" step="0.1" id="xlimit-slider">
+        <input type="range" min="0.001" max="2" value="0.75" class="slider" step="0.000001" id="xlimit-slider">
         <p>Saddle Narrowness:</p>
-        <input type="range" min="0.1" max="2" value="0.1" class="slider" step="0.1" id="ylimit-slider">
+        <input type="range" min="0.001" max="10" value="5" class="slider" step="0.000001" id="ylimit-slider">
         <p>Saddle Height:</p>
-        <input type="range" min="-2" max="2" value="0" class="slider" step="0.1" id="height-slider">
+        <input type="range" min="-2" max="2" value="1.8" class="slider" step="0.000001" id="height-slider">
         <!-- <p>Hide +X:</p>
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide+x-slider">
         <p>Hide -X:</p>

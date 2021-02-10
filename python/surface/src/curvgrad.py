@@ -45,7 +45,7 @@ def wz(a, b, c):
 
 def dq_dz(n, a, apos, b, bpos, c, cpos):
     return dh_dz(n, a, apos, b, bpos) / (2 * qz(a, b, c))
-    
+
 def dp_dz(n, a, apos, b, bpos, c, cpos):
     return dh_dz(n, c, cpos, b, bpos) / (2 * pz(a, b, c))
 
@@ -60,7 +60,7 @@ def dg_dz(n, a, apos, b, bpos, c, cpos):
     return gr
 
 def dw_dz(n, a, apos, b, bpos, c, cpos):
-    return ((gz(a, b, c) * df_dz(n, a, apos, b, bpos, c, cpos)) 
+    return ((gz(a, b, c) * df_dz(n, a, apos, b, bpos, c, cpos))
             - (fz(a, b, c) * dg_dz(n, a, apos, b, bpos, c, cpos))) / (gz(a, b, c) * gz(a, b, c))
 
 def dalpha_dz(n, a, apos, b, bpos, c, cpos):
@@ -95,6 +95,9 @@ def L_grad_indiv(n, kappa, c, v, t_of_v, vertices):
     elif np.isnan(kappa[v]):
         return np.zeros(n)
     else:
+        nda = net_dalpha_dz(n, v, t_of_v[v], vertices)
+        # if (kappa[v] < -0.1):
+        #     print("kappa[v]: {}, k-c: {}, nda: {}".format(kappa[v], kappa[v] - c[v], sum(nda)))
         return 2 * (kappa[v] - c[v]) * net_dalpha_dz(n, v, t_of_v[v], vertices)
 
 def L_grad(n, kappa, c, t_of_v, vertices):

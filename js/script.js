@@ -78,9 +78,12 @@ let time = Date.now()
 
 let dataSent = false
 
-// Cycle variables
+// Cycle variables for threshold cycle
 let cycle = false
 let last_cycle = Date.now()
+
+// Flag to indicate threshold change -> update heights when thresh changed
+let thresh_change = false
 
 // ThreeJS Scene Setup
 
@@ -221,8 +224,11 @@ controls.update();
 
 
 let light = new T.PointLight( 0xffffff, 0.5)
-light.position.set(-7, 10, 0)
+light.position.set(7, 3, -5)  // -7, 10, 0
 scene.add(light)
+
+// const pointLightHelper = new T.PointLightHelper( light, 1 );
+// scene.add( pointLightHelper );
 
 var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( alight );
@@ -401,6 +407,10 @@ window.onload = function() {
     }
   }
 
+  document.getElementById("threshold-slider").onchange = function() {
+    thresh_change = true
+  }
+
 
   let vertexControlDiv = document.getElementById("div-vertex")
   // vertexControlDiv.style.display = "none"
@@ -454,18 +464,15 @@ window.onload = function() {
     controls.update()
     // controls.enabled = false
 
-    //Update thresholds if cycling
+    // Update thresholds if cycling
     if (cycle && (Date.now()-last_cycle)/1000 > 2) {
       let slider = document.getElementById("threshold-slider")
       let value = parseInt(slider.value)
-      console.log("CYCLE " + slider.value + " " + slider.max)
       value += 1
-      console.log(value)
       value %= (parseInt(slider.max)+1)
-      console.log(value)
       slider.value = value
-      console.log(slider.value)
       last_cycle = Date.now()
+      thresh_change = true
     }
 
 
@@ -477,7 +484,6 @@ window.onload = function() {
     }
     linesDrawn = []
 
-    heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
 
 
     ctx.fillStyle = canvascolor
@@ -509,7 +515,7 @@ window.onload = function() {
 
     // Draw physical graph edge, texture edge
     for (let id in current_edges) {
-      let lineWidth = 2  // 6
+      let lineWidth =  2  // 6 / 2
       let borders = true
       let edge = current_edges[id]
       // console.log(`${edge.start.lat}, ${edge.start.long}, ${edge.end.lat}, ${edge.end.long}`)
@@ -674,6 +680,9 @@ window.onload = function() {
       // }
     }
 
+    // Set plane vertices' height
+    heightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.))
+
 
     // Set height map for +ve edges
     for (let id in current_edges) {
@@ -781,7 +790,7 @@ window.onload = function() {
 
     // Draw point on surface texture
     for (let id in vertices) {
-      let radius = 3 // 5
+      let radius = 3 // 5 / 3
       let vertex = vertices[id]
       let point = [parseFloat(vertex.mesh.position.x), parseFloat(vertex.mesh.position.z)]
       point = [(1 - (point[0] - planeXMin) / planeW) * ctx.canvas.width, (point[1] - planeYMin) * ctx.canvas.height / planeH]
@@ -795,26 +804,25 @@ window.onload = function() {
 
 
 
-    // Set plane vertices' height
     let map = heightMap
-    if (chkCalcSurface.checked)
+    let useTransp = document.getElementById("use-transparency")
+
+
+    if (document.getElementById("use-calc-surface").checked)
       if (graphs.length > 0)
         map = graphs[document.getElementById("threshold-slider").value].heightmap
       else
         map = calcHeightMap
-    let ex = 0.3
-    let direction = new T.Vector3(0, 1, 0)
-    for (let i=0; i<divisions ; i++) {
-      for (let j=0; j < divisions ; j++) {
-        if (i < 2) {
-          plane.geometry.vertices[i*divisions+j].z =  map[3][j]
-        } else if (i >= divisions-2) {
-          plane.geometry.vertices[i*divisions+j].z =  map[divisions-3][j]
-        } else {
-          plane.geometry.vertices[i*divisions+j].z =  map[i][j]
-        }
-      }
+    if (thresh_change) {
+      console.log("threshold changed")
+      thresh_change = false
+      updatePlaneHeights(map)
     }
+
+    if (map == heightMap)
+      updatePlaneHeights(map)
+
+
 
     for (let p of subPlanes) {
       for (let i=p.start[0]; i<p.end[0] ; i++) {
@@ -844,83 +852,9 @@ window.onload = function() {
 
     // Set materials for plane faces, to hide unwanted
 
-    for (let face of plane.geometry.faces) {
-      let z1 = plane.geometry.vertices[face.a].z
-      let z2 = plane.geometry.vertices[face.b].z
-      let z3 = plane.geometry.vertices[face.c].z
-      let hide = false
-      let v = face.a
-      let i = Math.floor(v/divisions)
-      let j = v%divisions
-      // if (z1 > 1)
-      //   face.vertexColors[0].setHSL( 1, 0, 0.5);
-      // if (z2 > 1)
-      //   face.vertexColors[1].setHSL( 1, 0, 0.5);
-      // if (z3 > 1)
-      //   face.vertexColors[2].setHSL( 1, 0, 0.5);
-      // face.vertexColors[0].setHSL( 1, 0, Math.floor(z1*10)/10);
-      // face.vertexColors[1].setHSL( 1, 0, Math.floor(z2*10)/10);
-      // face.vertexColors[2].setHSL( 1, 0, Math.floor(z3*10)/10);
-
-      // face.vertexColors[0].setHSL(Math.random(), 0.5, 0.5)
-      // face.vertexColors[0] = new T.Color( 0xff00ff )
-      // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
-      //   hide = true
-      let transparent = true
-      let points = []
-      points.push([Math.floor(i), Math.floor(j)])
-      points.push([Math.ceil(i), Math.ceil(j)])
-      points.push([Math.floor(i), Math.ceil(j)])
-      points.push([Math.ceil(i), Math.floor(j)])
-      // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
-      //   transparent = false
-      v = face.b
-      i = v/divisions
-      j = v%divisions
-      points.push([Math.floor(i), Math.floor(j)])
-      points.push([Math.ceil(i), Math.ceil(j)])
-      points.push([Math.floor(i), Math.ceil(j)])
-      points.push([Math.ceil(i), Math.floor(j)])
-      // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
-      //   transparent = false
-      // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
-      //   hide = true
-      v = face.c
-      i = v/divisions
-      j = v%divisions
-      points.push([Math.floor(i), Math.floor(j)])
-      points.push([Math.ceil(i), Math.ceil(j)])
-      points.push([Math.floor(i), Math.ceil(j)])
-      points.push([Math.ceil(i), Math.floor(j)])
-      // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
-      //   transparent = false
-      for (let p of points) {
-        if (0 <= p[0] && p[0] < divisions && 0 <= p[1] && p[1] < divisions)
-          if (opacityMap[p[0]][p[1]] == 1 || Math.abs(map[p[0]][p[1]]) > 0.5)
-            transparent = false
-      }
-      // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
-      //   hide = true
-      if (false && hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
-        face.materialIndex = 1 // Transparent
-      } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
-        face.materialIndex = 1
-      } else if (false && hideSurface.checked && (Math.abs(z2-z1) + Math.abs(z3-z1) + Math.abs(z3-z2) > 0.8)) { // Extra condition for tests
-        face.materialIndex = 1
-      } else if (false && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests // Was true
-        face.materialIndex = 1
-      } else if (false && hide && hideSurface.checked) {
-        face.materialIndex = 1
-      } else if (false && hideSurface.checked && (z1 < -2.4 || z2 < -2.4 || z3 < -2.4)) { // Inward edge
-        face.materialIndex = 1
-      } else if (transparent && useTransp.checked) {
-        face.materialIndex = 2
-      } else {
-        face.materialIndex = 0
-      }
 
 
-    }
+
 
     contourCount++
 
@@ -1046,6 +980,130 @@ function cycleThresholds() {
   }
   last_cycle = Date.now()
 
+}
+
+function updatePlaneHeights(map) {
+  let useTransp = document.getElementById("use-transparency")
+  console.log("updatePlaneHeights")
+
+  let ex = 0.3
+  let direction = new T.Vector3(0, 1, 0)
+  for (let i=0; i<divisions ; i++) {
+    for (let j=0; j < divisions ; j++) {
+      if (i < 2) {
+        // plane.geometry.vertices[i*divisions+j].z =  map[3][j]
+        gsap.to(plane.geometry.vertices[i*divisions+j],
+          { duration: 0.25,
+            z: map[3][j],
+          }
+        )
+      } else if (i >= divisions-2) {
+        // plane.geometry.vertices[i*divisions+j].z =  map[divisions-3][j]
+        gsap.to(plane.geometry.vertices[i*divisions+j],
+          { duration: 0.25,
+            z: map[divisions-3][j],
+          }
+        )
+      } else {
+        // plane.geometry.vertices[i*divisions+j].z =  0
+        gsap.to(plane.geometry.vertices[i*divisions+j],
+          { duration: 0.25,
+            z: map[i][j],
+          }
+        )
+      }
+    }
+  }
+  // for (let i = 0 ; i < divisions*divisions - 2 ; i++) {
+  //   gsap.to(plane.geometry.vertices[i],
+  //     { duration: 10,
+  //       z: 10+Math.random()*10,
+  //       // onUpdate: function() {
+  //       // //   plane.geometry.groupsNeedUpdate = true
+  //       //   plane.geometry.verticesNeedUpdate = true
+  //       //   // console.log("increase height" + plane.geometry.vertices[i].z)
+  //       // //   plane.geometry.colorsNeedUpdate = true
+  //       // //   plane.geometry.computeVertexNormals()
+  //       // }
+  //     }
+  //   )
+  // }
+
+  for (let face of plane.geometry.faces) {
+    let z1 = plane.geometry.vertices[face.a].z
+    let z2 = plane.geometry.vertices[face.b].z
+    let z3 = plane.geometry.vertices[face.c].z
+    let hide = false
+    let v = face.a
+    let i = Math.floor(v/divisions)
+    let j = v%divisions
+    // if (z1 > 1)
+    //   face.vertexColors[0].setHSL( 1, 0, 0.5);
+    // if (z2 > 1)
+    //   face.vertexColors[1].setHSL( 1, 0, 0.5);
+    // if (z3 > 1)
+    //   face.vertexColors[2].setHSL( 1, 0, 0.5);
+    // face.vertexColors[0].setHSL( 1, 0, Math.floor(z1*10)/10);
+    // face.vertexColors[1].setHSL( 1, 0, Math.floor(z2*10)/10);
+    // face.vertexColors[2].setHSL( 1, 0, Math.floor(z3*10)/10);
+
+    // face.vertexColors[0].setHSL(Math.random(), 0.5, 0.5)
+    // face.vertexColors[0] = new T.Color( 0xff00ff )
+    // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+    //   hide = true
+    let transparent = true
+    let points = []
+    points.push([Math.floor(i), Math.floor(j)])
+    points.push([Math.ceil(i), Math.ceil(j)])
+    points.push([Math.floor(i), Math.ceil(j)])
+    points.push([Math.ceil(i), Math.floor(j)])
+    // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
+    //   transparent = false
+    v = face.b
+    i = v/divisions
+    j = v%divisions
+    points.push([Math.floor(i), Math.floor(j)])
+    points.push([Math.ceil(i), Math.ceil(j)])
+    points.push([Math.floor(i), Math.ceil(j)])
+    points.push([Math.ceil(i), Math.floor(j)])
+    // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
+    //   transparent = false
+    // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+    //   hide = true
+    v = face.c
+    i = v/divisions
+    j = v%divisions
+    points.push([Math.floor(i), Math.floor(j)])
+    points.push([Math.ceil(i), Math.ceil(j)])
+    points.push([Math.floor(i), Math.ceil(j)])
+    points.push([Math.ceil(i), Math.floor(j)])
+    // if (opacityMap[Math.floor(i)][Math.floor(j)] == 1)
+    //   transparent = false
+    for (let p of points) {
+      if (0 <= p[0] && p[0] < divisions && 0 <= p[1] && p[1] < divisions)
+        if (opacityMap[p[0]][p[1]] == 1 || Math.abs(map[p[0]][p[1]]) > 0.5)
+          transparent = false
+    }
+    // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
+    //   hide = true
+    if (false && hideSurface.checked && Math.abs(z1) == 0 && Math.abs(z2) == 0 && Math.abs(z3) == 0) {
+      face.materialIndex = 1 // Transparent
+    } else if (false && hideSurface.checked && (Math.abs(z2-z1) > 0.5 || Math.abs(z3-z1) > 0.5)) { // Extra condition for tests
+      face.materialIndex = 1
+    } else if (false && hideSurface.checked && (Math.abs(z2-z1) + Math.abs(z3-z1) + Math.abs(z3-z2) > 0.8)) { // Extra condition for tests
+      face.materialIndex = 1
+    } else if (false && hideSurface.checked && (z1 == 0 || z2 == 0 || z3 == 0)) { // Extra condition for tests // Was true
+      face.materialIndex = 1
+    } else if (false && hide && hideSurface.checked) {
+      face.materialIndex = 1
+    } else if (false && hideSurface.checked && (z1 < -2.4 || z2 < -2.4 || z3 < -2.4)) { // Inward edge
+      face.materialIndex = 1
+    } else if (transparent && useTransp.checked) {
+      face.materialIndex = 2
+    } else {
+      face.materialIndex = 0
+    }
+  }
 }
 
 function helpClick(event) {
@@ -1219,7 +1277,7 @@ function subgraphSelect(selected) {
   yRange[1] = Math.min(10, yRange[1] + padding)
 
   data.nodes.push({id: data.length, city: "edge1", lat: parseFloat(xRange[0]), long: parseFloat(yRange[0])})
-  data.nodes.push({id: data.length, city: "edge2", lat: parseFloat(xRange[1]), long: parseFloat(yRange[0])})
+  data.nodes.push({id: data.length, city: "edge2", lat: parseFloat(xRange[1]), long: parseFloat(yRange[1])})
 
 
   let mid = [(xRange[0]+xRange[1])/2, (yRange[0]+yRange[1])/2]
@@ -1252,7 +1310,7 @@ function subgraphSelect(selected) {
   scene.add( subPlane )
   subPlanes.push(spObj)
   let scale = Math.min(width, height) / divisions
-  scale *= 10
+  scale *= 10 // 10
   console.log(scale)
 
   // plane.position.set(0, -10, 0)
@@ -1296,7 +1354,7 @@ function subgraphSelect(selected) {
   // btn.id = "zoom-out"
   // document.body.appendChild(btn)
   // plane.material.transparent = true
-  // plane.material.opacity = 0.5
+  // plane.material.opacity = 0.5f
 
 
   // controls.target = subPlane.position
@@ -1340,13 +1398,7 @@ function subgraphSelect(selected) {
 function setPlaneHeights(plane, map) {
   for (let i=0; i<divisions ; i++) {
     for (let j=0; j < divisions ; j++) {
-      if (i < 2) {
-        plane.geometry.vertices[i*divisions+j].z =  map[3][j]
-      } else if (i >= divisions-2) {
-        plane.geometry.vertices[i*divisions+j].z =  map[divisions-3][j]
-      } else {
-        plane.geometry.vertices[i*divisions+j].z =  map[i][j]
-      }
+      plane.geometry.vertices[i*divisions+j].z =  map[i][j]
     }
   }
   plane.geometry.groupsNeedUpdate = true
@@ -1510,6 +1562,7 @@ function smoothHeightMap() {
 function setHeights(start, mid, end, weight) {
 
   if (weight >= 0) {
+    return
     // --- Gaussian heights ---
     // TODO: Only iterate through local points for speedup instead of whole 2d array
     let x = mid.y
@@ -1578,29 +1631,29 @@ function setHeights(start, mid, end, weight) {
         if (x_pos >= heightMap.length || y_pos >= heightMap.length || x_pos < 0 || y_pos < 0)
           continue
         // Check closest to which pt
-        if (newHeight > heightMap[x_pos][y_pos]) {
-          if (heightMap[x_pos][y_pos] != 0)
-            continue
-          newHeight = 0.1
-        }
+        // if (newHeight > heightMap[x_pos][y_pos]) {
+        //   if (heightMap[x_pos][y_pos] != 0)
+        //     continue
+        //   newHeight = 0.1
+        // }
 
-        if (newHeight < heightMap[x_pos][y_pos] && heightMap[x_pos][y_pos] > 0.1) {
-          continue
-        }
+        // if (newHeight < heightMap[x_pos][y_pos] && heightMap[x_pos][y_pos] > 0.1) {
+        //   continue
+        // }
 
+        heightMap[x_pos][y_pos] = newHeight
 
-
-        if (heightMap[x_pos][y_pos] * newHeight >= 0) { // Both in same direction, then choose highest magnitude
-          if (newHeight >= 0) {
-            heightMap[x_pos][y_pos] = Math.max(heightMap[x_pos][y_pos], newHeight)
-          } else {
-            heightMap[x_pos][y_pos] = Math.min(heightMap[x_pos][y_pos], newHeight)
-          }
-        } else { // Else highest magnitude
-          if (Math.abs(heightMap[x_pos][y_pos]) < Math.abs(newHeight)) {
-            heightMap[x_pos][y_pos] = newHeight
-          }
-        }
+        // if (heightMap[x_pos][y_pos] * newHeight > 0) { // Both in same direction, then choose highest magnitude
+        //   if (newHeight >= 0) {
+        //     heightMap[x_pos][y_pos] = Math.max(heightMap[x_pos][y_pos], newHeight)
+        //   } else {
+        //     heightMap[x_pos][y_pos] = Math.min(heightMap[x_pos][y_pos], newHeight)
+        //   }
+        // } else { // Else highest magnitude
+        //   if (Math.abs(heightMap[x_pos][y_pos]) < Math.abs(newHeight)) {
+        //     heightMap[x_pos][y_pos] = newHeight
+        //   }
+        // }
 
         // distStart = calcDist(start, {x: i, y: j})
         // distEnd = calcDist(end, {x: i, y: j})
@@ -2402,6 +2455,7 @@ function calcSurface() {
       data.links.push({source: edge.start.id, target: edge.end.id, ricciCurvature: edge.weight})
     }
   }
+  console.log()
   // console.log(vertices)
   // $.ajax({
   // type: "POST",
@@ -2415,7 +2469,7 @@ function calcSurface() {
   xmlHttp.responseType = "text"
   var smooth_pen = document.getElementById("input-smooth").value
   var niter = document.getElementById("input-niter").value
-  var send_data = {graph: data, smooth_pen: smooth_pen, niter: niter}
+  var send_data = {graph: data, smooth_pen: smooth_pen, niter: niter, map: heightMap}
 
   xmlHttp.onreadystatechange = function()
   {
@@ -2423,6 +2477,7 @@ function calcSurface() {
 
       {
           // document.getElementById("heatmap-img").setAttribute('src', 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(xmlHttp.response))))
+          let scale = 2
           dataSent = false
           document.body.style.cursor = "auto"
           // data = JSON.parse(xmlHttp.responseText)
@@ -2438,9 +2493,9 @@ function calcSurface() {
             hm = calcHeightMap
           for (let i = 0 ; i < divisions ; i++) {
             for (let j = 0 ; j < divisions ; j++) {
-              hm[j][49-i] = data[i*divisions + j]*2
+              hm[j][49-i] = data[i*divisions + j]*scale
               if (data[i*divisions + j] < -0.1) {
-                hm[j][49-i] = data[i*divisions + j]*2
+                hm[j][49-i] = data[i*divisions + j]*scale
               }
             }
           }

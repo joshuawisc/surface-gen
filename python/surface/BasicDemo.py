@@ -283,7 +283,7 @@ def single_step_with_momentum(prev_step, momentum, smooth_pen, rate, vertices, k
 # In[20]:
 
 
-def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 1000, verbose = False):
+def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 1000, verbose = False, hmap=[0]):
     '''
     generate the surface that matches the curvature given by kappa
         kappa: desired curvature at each point of the mesh - 1D array
@@ -297,11 +297,32 @@ def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 
     '''
     # we initialize the z coordinate to be equal to the curvature
     # this is explained above under "symmetry breaking: initialization"
+    global gridsize
     zf = kappa.copy()
     zf[np.isnan(zf)] = 0
-    zf[zf<0] = 0
-    #
+
+    # hmap = np.array(hmap).flatten()
+
+    # zf[zf<0] = 0
+    # zf[zf<-0.85] = 0.5
+
+    # print(zf[zf<0])
+    # give each negative edge progressively lower number
+
+    for i in range(len(zf)):
+        if (zf[i] < 0):
+            zf[i] = hmap[int(49-i%50)][int(i/50)]
+
+
+        # Set large negative curved areas with random height between 0.3 and 0.2
+        # if (zf[i] < -0.8):
+        #     zf[i] = 0.3 + np.random.random()*0.2
+        # elif (zf[i] < 0):
+        #     zf[i] = (np.random.random() + 0.1)*0.1
     # initialize variables that will be used in gradient descent
+    plt.ion()
+    plt.show()
+
     vertices = get_vertices(xf, yf, zf)
     cv = get_curvature(vertices, t_of_v)
     of = objfn(kappa, cv)
@@ -310,6 +331,11 @@ def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 
     old_cof = cof
     errvals = []
     c_errvals = []
+
+    print("pre plot")
+    generate_plots('python/surface/Output/sp{:d}i{:d}'.format(smooth_pen, niter), gridsize, xf, yf, zf, kappa, 'Data/map_points.csv')
+    plt.draw()
+    plt.pause(0.001)
     #
     # initial rate - decrease rate until a single step does not increase the objective
     if verbose:
@@ -329,19 +355,26 @@ def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 
         print('finished rate setting: rate: {} obj fn: {} complete obj fn: {}'.format(rate, old_of, old_cof))
     #
     # main loop
+    cur_smooth_pen = smooth_pen
     for i in range(niter):
         #
         # perform a single step of gradient descent, with momentum
+        # if (i == 150):
+        #     old_cof = np.inf
+        #     old_of = np.inf
+        #     cur_smooth_pen = smooth_pen
         new_zf, new_cv, new_vertices, prev_step = single_step_with_momentum(prev_step, momentum,
-            smooth_pen, rate, vertices, kappa, cv, t_of_v, xf, yf, zf)
+            cur_smooth_pen, rate, vertices, kappa, cv, t_of_v, xf, yf, zf)
         of = objfn(kappa, new_cv)
-        cof = complete_objfn(kappa, new_cv, smooth_pen, new_zf.T @ L3 @ new_zf)
+        cof = complete_objfn(kappa, new_cv, cur_smooth_pen, new_zf.T @ L3 @ new_zf)
         #
         # if this step increased the objective function, decrease the learning rate
+
         if (cof > old_cof):
             rate = rate / 1.1
             if verbose:
                 print('step: {} -- lowering rate to {}'.format(i, rate))
+
         #
         # if rate has gone so low that no progress at all is being made, increase it
         elif (cof == old_cof):
@@ -360,11 +393,21 @@ def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 
             cv = new_cv
             vertices = new_vertices
             # yield zf, cv, errvals, c_errvals
-            if (0 == i % 100):
+            if (0 == i % 5):
                 if verbose:
                     print('step: {}, obj fn: {}'.format(i, of))
+            if (0 == i % 10):
+                    plt.figure()
+                    sns.heatmap(np.reshape(cv, (gridsize, gridsize)), cmap = cm.bwr, vmin = -1, vmax = 1, center = 0)
+                    plt.suptitle('Output Curvature Map')
+                    plt.draw()
+                    plt.pause(0.001)
+
     if verbose:
         print('Done: final error: {}'.format(of))
+    # for i in range(len(zf)):
+    #     if (kappa[i]<0):
+    #         zf[i] *= 2
     return zf, cv, errvals, c_errvals
 
 
@@ -403,7 +446,7 @@ def document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize):
 # In[22]:
 
 
-def generate_plots(runname, gridsize, xf, yf, zf, cv, locnamefile, refc):
+def generate_plots(runname, gridsize, xf, yf, zf, cv, locnamefile, refc=0):
     # first visualize colored with curvature
     fig = plt.figure(figsize = (12, 12))
     ax = fig.add_subplot(111, projection='3d')
@@ -533,9 +576,10 @@ def get_heatmap(data):
     return fig
     # return plt.scatter(xf, yf, color = [cmap(rmap(p, -maxscale, 0, maxscale, 1, 0.5)) for p in curvatures.flatten()])
 
-def main(data, smooth_pen=5, niter=20):
+def main(data, smooth_pen=5, niter=20, hmap=[0]):
     global L3
     global cmap
+    global gridsize
 
     # print("\n\ndata")
     # print(data)
@@ -610,7 +654,7 @@ def main(data, smooth_pen=5, niter=20):
 
 
 
-    zf, cv, errvals, c_errvals = generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = niter, verbose = True)
+    zf, cv, errvals, c_errvals = generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = niter, verbose = True, hmap = hmap)
 
     ## Yielding
     # for zf, cv, errvals, c_errvals in generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = niter, verbose = True):
@@ -621,6 +665,6 @@ def main(data, smooth_pen=5, niter=20):
         os.mkdir(runname)
     except FileExistsError:
         pass
-    # document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize)
-    # generate_plots(runname, gridsize, xf, yf, zf, cv, 'Data/map_points.csv', refc)
+    document_run(runname, zf, cv, errvals, c_errvals, kappa, gridsize)
+    generate_plots(runname, gridsize, xf, yf, zf, cv, 'Data/map_points.csv', refc)
     return zf

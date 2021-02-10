@@ -17,6 +17,7 @@ import time
 sys.path.append(r'python/surface/src')
 
 app = flask.Flask(__name__, static_folder='')
+retval = None
 
 @app.route('/dummy', methods=['POST'])
 def dummy():
@@ -37,6 +38,7 @@ def calc_curvature():
 
 @app.route('/calc-surface', methods=['POST'])
 def calc_surface():
+    global retval
     print('start')
     data = request.json
     print(data)
@@ -44,6 +46,8 @@ def calc_surface():
 
     smooth_pen = int(data['smooth_pen'])
     niter = int(data['niter'])
+    hmap = data['map']
+    print(hmap)
     G = json_graph.node_link_graph(data['graph'])
     H = nx.Graph(G)
     # print(type(H))
@@ -51,12 +55,16 @@ def calc_surface():
     # print("\n\n")
     print("Output graph")
     nx.write_graphml(H, "newgraph.graphml")
-    ret = generating_tessalation_2(H)
+    if (retval == None):
+        ret = generating_tessalation_2(H)
+        retval = ret
+    else:
+        ret = retval
 
     def generate():
         cur_time = time.time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(bd.main, ret, smooth_pen, niter)
+            future = executor.submit(bd.main, ret, smooth_pen, niter, hmap)
             while future.running():
                 time.sleep(5)
                 if time.time() - cur_time > 10:

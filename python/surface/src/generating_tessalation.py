@@ -164,7 +164,11 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
             if len(coordinates[t])==0:
                 coordinates[t] = 0
             else:
-                coordinates[t] = np.mean(coordinates[t])
+                if np.amin(coordinates[t]) < -0.8:
+                    coordinates[t] = np.amin(coordinates[t])
+                else:
+                    coordinates[t] = np.mean(coordinates[t])
+
         except:
             continue
     indexation_x = []
@@ -182,8 +186,8 @@ def generating_tessalation_2(graphml_graph,precision=0.05,tessalation_grid=0.02)
     for t in coordinates.keys():
         if t[0] in df.index and t[1] in df.columns:
             df[t[0]][t[1]] = coordinates[t]
-            if coordinates[t]<0:
-                print('success',df[t[0]][t[1]],coordinates[t])
+            # if coordinates[t]<0:
+            #     print('success',df[t[0]][t[1]],coordinates[t])
     # print(df.to_csv())
     df.to_csv(name_of_output+'.csv')
     ## DO SOMETHING ELSE
