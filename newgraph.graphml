@@ -1,67 +1,29 @@
 <?xml version='1.0' encoding='utf-8'?>
-<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="ricciCurvature" attr.type="double" for="edge" id="d3"/>
-<key attr.name="lat" attr.type="double" for="node" id="d2"/>
-<key attr.name="city" attr.type="string" for="node" id="d1"/>
-<key attr.name="long" attr.type="double" for="node" id="d0"/>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key attr.name="ricciCurvature" attr.type="long" for="edge" id="d3"/>
+<key attr.name="city" attr.type="string" for="node" id="d2"/>
+<key attr.name="long" attr.type="double" for="node" id="d1"/>
+<key attr.name="lat" attr.type="double" for="node" id="d0"/>
 <graph edgedefault="undirected"><node id="0">
-  <data key="d0">1e-10</data>
-  <data key="d1">0</data>
-  <data key="d2">-77.4999999999</data>
+  <data key="d0">64.2857142858143</data>
+  <data key="d1">90.0000000001</data>
+  <data key="d2">0</data>
 </node>
 <node id="1">
-  <data key="d0">-31.1399999999</data>
-  <data key="d1">1</data>
-  <data key="d2">-61.9999999999</data>
+  <data key="d0">-64.28571428561429</data>
+  <data key="d1">-89.9999999999</data>
+  <data key="d2">1</data>
 </node>
 <node id="2">
-  <data key="d0">-8.9999999999</data>
-  <data key="d1">2</data>
-  <data key="d2">-46.4999999999</data>
+  <data key="d0">155.001</data>
+  <data key="d1">180.001</data>
+  <data key="d2">border1</data>
 </node>
 <node id="3">
-  <data key="d0">-8.9999999999</data>
-  <data key="d1">3</data>
-  <data key="d2">46.5000000001</data>
-</node>
-<node id="4">
-  <data key="d0">31.140000000099995</data>
-  <data key="d1">4</data>
-  <data key="d2">62.0000000001</data>
-</node>
-<node id="5">
-  <data key="d0">1e-10</data>
-  <data key="d1">5</data>
-  <data key="d2">77.5000000001</data>
-</node>
-<node id="6">
-  <data key="d0">180.001</data>
-  <data key="d1">border1</data>
-  <data key="d2">155.001</data>
-</node>
-<node id="7">
-  <data key="d0">-180.001</data>
-  <data key="d1">border2</data>
-  <data key="d2">-155.001</data>
+  <data key="d0">-155.001</data>
+  <data key="d1">-180.001</data>
+  <data key="d2">border2</data>
 </node>
 <edge source="0" target="1">
-  <data key="d3">0.8</data>
-</edge>
-<edge source="0" target="2">
-  <data key="d3">0.7</data>
-</edge>
-<edge source="1" target="2">
-  <data key="d3">0.9</data>
-</edge>
-<edge source="2" target="3">
-  <data key="d3">-0.5</data>
-</edge>
-<edge source="3" target="4">
-  <data key="d3">0.6</data>
-</edge>
-<edge source="3" target="5">
-  <data key="d3">0.5</data>
-</edge>
-<edge source="4" target="5">
-  <data key="d3">0.4</data>
+  <data key="d3">-1</data>
 </edge>
 </graph></graphml>

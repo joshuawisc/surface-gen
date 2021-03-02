@@ -447,6 +447,8 @@ window.onload = function() {
 
 
   var animate = function () {
+    updateSliderVals()
+
     if (showMap.checked) {
       plane.material[0].map = mapTexture
       texture = mapTexture
@@ -730,8 +732,8 @@ window.onload = function() {
     }
 
 
-    // smoothHeightMap()
-    // smoothHeightMap()
+    smoothHeightMap()
+    smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
 
@@ -780,7 +782,7 @@ window.onload = function() {
     }
 
 
-    // smoothHeightMap()
+    smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
@@ -969,6 +971,10 @@ document.addEventListener("keyup", function(event) {
     document.removeEventListener( 'pointerup', pointerUp )
   }
 })
+
+function updateSliderVals() {
+  document.getElementById("xspread-slider-val").innerHTML = parseFloat(document.getElementById("xspread-slider").value).toFixed(2)
+}
 
 function cycleThresholds() {
   let btnCycle = document.getElementById("btn-cycle-thresholds")
@@ -1562,7 +1568,6 @@ function smoothHeightMap() {
 function setHeights(start, mid, end, weight) {
 
   if (weight >= 0) {
-    return
     // --- Gaussian heights ---
     // TODO: Only iterate through local points for speedup instead of whole 2d array
     let x = mid.y
@@ -1607,7 +1612,9 @@ function setHeights(start, mid, end, weight) {
     let angle = Math.atan(slope)
     let dist = calcDist(start, end)
 
-    let xSpread = Math.max(20, dist*0.56)*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26
+    let xSpread = Math.max(20, dist*0.56)*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
+    xSpread = dist*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
+
     let ySpread = 10*1.5*2.5*parseFloat(document.getElementById("yspread-slider").value) // 2.5 // width TODO: Multiply with edge length
     let xLimit = ((1.25*weight*2)/(xSpread)) * parseFloat(document.getElementById("xlimit-slider").value) // Def 1000// height along length Def 0.05
     let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) // 0.7 // 0.55 // depth along width TODO: Change based on edge length
@@ -1791,19 +1798,25 @@ function vertexPositionChange() {
 function addVertex(obj, x, y, drawPoint, name, lat=null, long=null) {
   if (typeof drawPoint == 'undefined')
     drawPoint = true
-
+  if (x == undefined) {
+    if (lat != null)
+      x = lat*10/155
+    else
+      x = getRandomArbitrary(-6, 6).toFixed(2)
+  }
+  if (y == undefined) {
+    if (long != null)
+      y = long*10/180
+    else
+      y = getRandomArbitrary(-9, 9).toFixed(2)
+  }
   if (lat == null) {
     lat = x*155/10
   }
   if (long == null) {
     long = y*180/10
   }
-  if (typeof x == 'undefined') {
-    x = getRandomArbitrary(-6, 6).toFixed(2)
-  }
-  if (typeof y == 'undefined') {
-    y = getRandomArbitrary(-9, 9).toFixed(2)
-  }
+
 
   let vDiv = document.createElement("div")
   vDiv.id = "vertex" + vertexCount
@@ -1871,6 +1884,8 @@ function addVertex(obj, x, y, drawPoint, name, lat=null, long=null) {
   newPt.position.z = yPos.value
   newPt.name = name
 
+  console.log(newPt.position.y)
+
   let sprite = getNameSprite(name)
   sprite.position.set(xPos.value, vertexHeight + 0.2 + Math.random()*0.2, yPos.value)
 
@@ -1930,6 +1945,7 @@ function removeVertex() {
 
 function generateGraph() {
   // Graph 1 & 2
+  /*
   {
     // Graph 1
     addVertex(null, -5, 0)
@@ -1987,6 +2003,55 @@ function generateGraph() {
     addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
     addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
     addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
+  }
+  */
+  {
+
+    addVertex(null, -5, 0, true, "A")
+    addVertex(null, -4, 1, true, "B")
+    addVertex(null, -3, 0, true, "E")
+    addVertex(null, -4, -1, true, "C")
+    addVertex(null, -2, 0, true, "F")
+    addVertex(null, 2.4, 1.5, true, "G")
+    addVertex(null, 2.4, 0.3, true, "H")
+    addVertex(null, 3.7, 1.5, true, "I")
+    addVertex(null, 5, 2.5, true, "J")
+
+    // addVertex(null, null, null, true, "A", 0, 0)
+    // addVertex(null, null, null, true, "B", 1, 2)
+    // addVertex(null, null, null, true, "E", 3, -3)
+    // addVertex(null, null, null, true, "C", 3, 0)
+    // addVertex(null, null, null, true, "F", 8, 2)
+    // addVertex(null, null, null, true, "G", 34, 7)
+    // addVertex(null, null, null, true, "H", 37, 5)
+    // addVertex(null, null, null, true, "I", 43, 8)
+    // addVertex(null, null, null, true, "J", 40, 9)
+
+    //A - 0
+    //B - 1
+    //E - 2
+    //C - 3
+    //F - 4
+    //G - 5
+    //H - 6
+    //I - 7
+    //J - 8
+
+
+    addEdge(null, 0, 1, 0.3)
+    addEdge(null, 0, 2, 0.2)
+    addEdge(null, 0, 3, 0.3)
+    addEdge(null, 1, 4, 0.8)
+    addEdge(null, 1, 2, 0.12)
+    addEdge(null, 2, 3, 0.12)
+    addEdge(null, 2, 4, 0.67)
+    addEdge(null, 3, 4, 0.8)
+    addEdge(null, 4, 6, -1)
+    addEdge(null, 5, 6, -0.5)
+    addEdge(null, 5, 8, -0.5)
+    addEdge(null, 6, 7, -0.5)
+    addEdge(null, 7, 8, -0.5)
+
   }
 }
 

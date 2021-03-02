@@ -310,9 +310,10 @@ def generate_surface(smooth_pen, rate, momentum, kappa, xf, yf, t_of_v, niter = 
     # give each negative edge progressively lower number
 
     for i in range(len(zf)):
-        if (zf[i] < 0):
-            zf[i] = hmap[int(49-i%50)][int(i/50)]
+        zf[i] = (np.random.random() + 0.1)*0.2
 
+        # if (zf[i] < 0):
+        #     zf[i] = hmap[int(49-i%50)][int(i/50)]
 
         # Set large negative curved areas with random height between 0.3 and 0.2
         # if (zf[i] < -0.8):
