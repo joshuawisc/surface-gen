@@ -224,7 +224,7 @@ controls.update();
 
 
 let light = new T.PointLight( 0xffffff, 0.5)
-light.position.set(7, 3, -5)  // -7, 10, 0
+light.position.set( -7, 5, 0)  // -7, 10, 0 // 7 3 -5
 scene.add(light)
 
 // const pointLightHelper = new T.PointLightHelper( light, 1 );
@@ -732,8 +732,8 @@ window.onload = function() {
     }
 
 
-    smoothHeightMap()
-    smoothHeightMap()
+    // smoothHeightMap()
+    // smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
 
@@ -782,7 +782,7 @@ window.onload = function() {
     }
 
 
-    smoothHeightMap()
+    // smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
@@ -974,6 +974,15 @@ document.addEventListener("keyup", function(event) {
 
 function updateSliderVals() {
   document.getElementById("xspread-slider-val").innerHTML = parseFloat(document.getElementById("xspread-slider").value).toFixed(2)
+  document.getElementById("yspread-slider-val").innerHTML = parseFloat(document.getElementById("yspread-slider").value).toFixed(2)
+  document.getElementById("xlimit-slider-val").innerHTML = parseFloat(document.getElementById("xlimit-slider").value).toFixed(2)
+  document.getElementById("ylimit-slider-val").innerHTML = parseFloat(document.getElementById("ylimit-slider").value).toFixed(2)
+  document.getElementById("height-slider-val").innerHTML = parseFloat(document.getElementById("height-slider").value).toFixed(2)
+  document.getElementById("posrange-slider-val").innerHTML = parseFloat(document.getElementById("posrange-slider").value).toFixed(2)
+  document.getElementById("posheight-slider-val").innerHTML = parseFloat(document.getElementById("posheight-slider").value).toFixed(2)
+  document.getElementById("amp-slider-val").innerHTML = parseFloat(document.getElementById("amp-slider").value).toFixed(2)
+  document.getElementById("rotation-slider-val").innerHTML = parseFloat(document.getElementById("rotation-slider").value).toFixed(2)
+
 }
 
 function cycleThresholds() {
@@ -1574,16 +1583,16 @@ function setHeights(start, mid, end, weight) {
     let y = mid.x
     let amp = document.getElementById("amp-slider").value // Def 1000
     weight = 2.5*weight
-    let spread = (divisions/10)*(0.4*weight)*document.getElementById("posrange-slider").value
+    let spread = document.getElementById("posrange-slider").value
     let xSpread =  spread // Use divisions variable instead of hard coding spread
     let ySpread = spread
     for (let i = 0 ; i < heightMap.length ; i++) {
       for (let j = 0 ; j < heightMap[0].length ; j++) {
-        if ((i-x)**2 + (j-y)**2 > 250*(0.4*weight))
+        if ((i-x)**2 + (j-y)**2 > spread*1000)
           continue
         let xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
         let yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
-        let newHeight = weight*Math.pow(amp, -1.0*(xTerm + yTerm))*document.getElementById("posheight-slider").value
+        let newHeight = weight*amp*Math.exp(-1.0*(xTerm + yTerm))
         // if (Math.abs(newHeight) <= 0.01) {
         //   newHeight = 0
         // }
@@ -1609,13 +1618,13 @@ function setHeights(start, mid, end, weight) {
     // TODO: Left and right sides of curve have different yLimits to line up with heights
     // --- Saddle Heights ---
     let slope = (start.y - end.y) / (start.x - end.x)
-    let angle = Math.atan(slope)
+    let angle = Math.atan(slope) + parseFloat(document.getElementById("rotation-slider").value)
     let dist = calcDist(start, end)
 
     let xSpread = Math.max(20, dist*0.56)*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
-    xSpread = dist*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
+    xSpread = (0.58*dist) + parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
 
-    let ySpread = 10*1.5*2.5*parseFloat(document.getElementById("yspread-slider").value) // 2.5 // width TODO: Multiply with edge length
+    let ySpread = (1.875) + parseFloat(document.getElementById("yspread-slider").value) // 2.5 // width TODO: Multiply with edge length
     let xLimit = ((1.25*weight*2)/(xSpread)) * parseFloat(document.getElementById("xlimit-slider").value) // Def 1000// height along length Def 0.05
     let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) // 0.7 // 0.55 // depth along width TODO: Change based on edge length
     let addHeight = (-0.5 + weight) + parseFloat(document.getElementById("height-slider").value)
@@ -1798,17 +1807,24 @@ function vertexPositionChange() {
 function addVertex(obj, x, y, drawPoint, name, lat=null, long=null) {
   if (typeof drawPoint == 'undefined')
     drawPoint = true
+
   if (x == undefined) {
     if (lat != null)
       x = lat*10/155
     else
-      x = getRandomArbitrary(-6, 6).toFixed(2)
+      // x = getRandomArbitrary(-6, 6).toFixed(2)
+      x = 0
+
   }
   if (y == undefined) {
     if (long != null)
       y = long*10/180
     else
-      y = getRandomArbitrary(-9, 9).toFixed(2)
+      // y = getRandomArbitrary(-9, 9).toFixed(2)
+      if (vertexCount == 0)
+        y = 5
+      else
+        y = -5
   }
   if (lat == null) {
     lat = x*155/10
@@ -1945,7 +1961,7 @@ function removeVertex() {
 
 function generateGraph() {
   // Graph 1 & 2
-  /*
+  // /*
   {
     // Graph 1
     addVertex(null, -5, 0)
@@ -2004,55 +2020,60 @@ function generateGraph() {
     addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
     addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
   }
-  */
-  {
-
-    addVertex(null, -5, 0, true, "A")
-    addVertex(null, -4, 1, true, "B")
-    addVertex(null, -3, 0, true, "E")
-    addVertex(null, -4, -1, true, "C")
-    addVertex(null, -2, 0, true, "F")
-    addVertex(null, 2.4, 1.5, true, "G")
-    addVertex(null, 2.4, 0.3, true, "H")
-    addVertex(null, 3.7, 1.5, true, "I")
-    addVertex(null, 5, 2.5, true, "J")
-
-    // addVertex(null, null, null, true, "A", 0, 0)
-    // addVertex(null, null, null, true, "B", 1, 2)
-    // addVertex(null, null, null, true, "E", 3, -3)
-    // addVertex(null, null, null, true, "C", 3, 0)
-    // addVertex(null, null, null, true, "F", 8, 2)
-    // addVertex(null, null, null, true, "G", 34, 7)
-    // addVertex(null, null, null, true, "H", 37, 5)
-    // addVertex(null, null, null, true, "I", 43, 8)
-    // addVertex(null, null, null, true, "J", 40, 9)
-
-    //A - 0
-    //B - 1
-    //E - 2
-    //C - 3
-    //F - 4
-    //G - 5
-    //H - 6
-    //I - 7
-    //J - 8
-
-
-    addEdge(null, 0, 1, 0.3)
-    addEdge(null, 0, 2, 0.2)
-    addEdge(null, 0, 3, 0.3)
-    addEdge(null, 1, 4, 0.8)
-    addEdge(null, 1, 2, 0.12)
-    addEdge(null, 2, 3, 0.12)
-    addEdge(null, 2, 4, 0.67)
-    addEdge(null, 3, 4, 0.8)
-    addEdge(null, 4, 6, -1)
-    addEdge(null, 5, 6, -0.5)
-    addEdge(null, 5, 8, -0.5)
-    addEdge(null, 6, 7, -0.5)
-    addEdge(null, 7, 8, -0.5)
-
-  }
+  // */
+  // {
+  //
+  //   addVertex(null, -5, 0, true, "A")
+  //   addVertex(null, -4, 1, true, "B")
+  //   addVertex(null, -3, 0, true, "E")
+  //   addVertex(null, -4, -1, true, "C")
+  //   addVertex(null, -2, 0, true, "F")
+  //   addVertex(null, 2.4, 1.5, true, "G")
+  //   addVertex(null, 2.4, 0.3, true, "H")
+  //   addVertex(null, 3.7, 1.5, true, "I")
+  //   addVertex(null, 5, 2.5, true, "J")
+  //
+  //   // addVertex(null, 0, 5, true, "A")
+  //   // addVertex(null, 0, -5, true, "B")
+  //
+  //
+  //   // addVertex(null, null, null, true, "A", 0, 0)
+  //   // addVertex(null, null, null, true, "B", 1, 2)
+  //   // addVertex(null, null, null, true, "E", 3, -3)
+  //   // addVertex(null, null, null, true, "C", 3, 0)
+  //   // addVertex(null, null, null, true, "F", 8, 2)
+  //   // addVertex(null, null, null, true, "G", 34, 7)
+  //   // addVertex(null, null, null, true, "H", 37, 5)
+  //   // addVertex(null, null, null, true, "I", 43, 8)
+  //   // addVertex(null, null, null, true, "J", 40, 9)
+  //
+  //   //A - 0
+  //   //B - 1
+  //   //E - 2
+  //   //C - 3
+  //   //F - 4
+  //   //G - 5
+  //   //H - 6
+  //   //I - 7
+  //   //J - 8
+  //
+  //   // addEdge(null, 0, 1, 1)
+  //
+  //   addEdge(null, 0, 1, 0.3)
+  //   addEdge(null, 0, 2, 0.2)
+  //   addEdge(null, 0, 3, 0.3)
+  //   addEdge(null, 1, 4, 0.8)
+  //   addEdge(null, 1, 2, 0.12)
+  //   addEdge(null, 2, 3, 0.12)
+  //   addEdge(null, 2, 4, 0.67)
+  //   addEdge(null, 3, 4, 0.8)
+  //   addEdge(null, 4, 6, -1)
+  //   addEdge(null, 5, 6, -0.5)
+  //   addEdge(null, 5, 8, -0.5)
+  //   addEdge(null, 6, 7, -0.5)
+  //   addEdge(null, 7, 8, -0.5)
+  //
+  // }
 }
 
 function generateGraphNoWeights() {

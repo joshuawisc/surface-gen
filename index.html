@@ -85,21 +85,26 @@
         <label for="hide-surface" id="hide-surface-label"> Hide extra surface</label><br>
         <input type="checkbox" id="use-calc-surface" name="use-calc-surface">
         <label for="use-calc-surface"> Use calculated surface</label><br>
-        <p>Positive Range:</p>
-        <input type="range" min="0.01" max="1.5" value="0.2" class="slider" step="0.01" id="posrange-slider">
-        <p>Positive Height:</p>
-        <input type="range" min="0.01" max="20" value="2" class="slider" step="0.01" id="posheight-slider">
-        <p>Positive Amplitude:</p>
-        <input type="range" min="1" max="3" value="3" class="slider" step="0.01" id="amp-slider">
 
-        <p>Saddle Y Spread:</p>
-        <input type="range" min="0.001" max="2" value="0.05" class="slider" step="0.000001" id="yspread-slider">
-        <p>Saddle Width:</p>
+        <p>Positive Height: <span id="posheight-slider-val"></span></p>
+        <input type="range" min="0.01" max="20" value="2" class="slider" step="0.01" id="posheight-slider">
+
+        <p>Positive Range: <span id="posrange-slider-val"></span></p>
+        <input type="range" min="0" max="10" value="2.5" class="slider" step="0.01" id="posrange-slider">
+        <p>Saddle X Range (Along Edge): <span id="xspread-slider-val" color="#4CAF50"></span></p>
+        <input type="range" min="-20" max="20" value="0" class="slider" step="0.000001" id="xspread-slider">
+        <p>Saddle Y Range (Across Edge): <span id="yspread-slider-val"></span></p>
+        <input type="range" min="-10" max="10" value="3.5" class="slider" step="0.000001" id="yspread-slider">
+        <p>Saddle Steepness: <span id="xlimit-slider-val"></span></p>
         <input type="range" min="0.001" max="2" value="0.75" class="slider" step="0.000001" id="xlimit-slider">
-        <p>Saddle Narrowness:</p>
+        <p>Saddle Narrowness: <span id="ylimit-slider-val"></span></p>
         <input type="range" min="0.001" max="10" value="5" class="slider" step="0.000001" id="ylimit-slider">
-        <p>Saddle Height:</p>
-        <input type="range" min="-2" max="2" value="1.8" class="slider" step="0.000001" id="height-slider">
+        <p>Saddle Height: <span id="height-slider-val"></span></p>
+        <input type="range" min="-2" max="4" value="1.8" class="slider" step="0.000001" id="height-slider">
+        <p>Saddle Rotation: <span id="rotation-slider-val"></span></p>
+        <input type="range" min="-3.14" max="3.14" value="0" class="slider" step="0.000001" id="rotation-slider">
+
+
         <!-- <p>Hide +X:</p>
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide+x-slider">
         <p>Hide -X:</p>
@@ -110,11 +115,12 @@
         <p>Hide -Y:</p>
         <input type="range" min="0" max="5" value="10" class="slider" step="0.1" id="hide-y-slider"> -->
       </div>
-    <div id="display slider">
-      <p>Saddle X Spread: <span id="xspread-slider-val"></span></p>
-      <input type="range" min="0.001" max="2" value="0.584" class="slider" step="0.000001" id="xspread-slider">
-    </div>
 
+
+    </div>
+    <div id="display-slider">
+      <p>Positive Amplitude: <span id="amp-slider-val"></span></p>
+      <input type="range" min="0.01" max="3" value="1" class="slider" step="0.01" id="amp-slider">
     </div>
     <button type="button" id="btn-help"><b>?</b></button>
     <div id="div-help" style="display: none;">
