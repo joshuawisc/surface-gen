@@ -224,7 +224,7 @@ controls.update();
 
 
 let light = new T.PointLight( 0xffffff, 0.5)
-light.position.set( -7, 5, 0)  // -7, 10, 0 // 7 3 -5
+light.position.set( -7, 8, 0)  // -7, 10, 0 // 7 3 -5
 scene.add(light)
 
 // const pointLightHelper = new T.PointLightHelper( light, 1 );
@@ -344,6 +344,7 @@ for (let i = 0 ; i < heightMap.length ; i++) {
 window.onload = function() {
 
 
+
   var mapCanvas = document.getElementById('map').getElementsByTagName('canvas')[0]
 
   // mapCanvas.style.transform = "rotate(90deg)"
@@ -447,6 +448,7 @@ window.onload = function() {
 
 
   var animate = function () {
+
     updateSliderVals()
 
     if (showMap.checked) {
@@ -782,7 +784,7 @@ window.onload = function() {
     }
 
 
-    // smoothHeightMap()
+    smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
@@ -835,16 +837,20 @@ window.onload = function() {
       p.plane.material.map.needsUpdate = true
     }
 
-    opacityMap = Array(100).fill().map(() => Array(100).fill(0.0));
+    if (showMap.checked) {
 
-    calcOpacityMap(opacityMap, vertices, current_edges, map)
-    aMap = createAndUpdateAlphaMapD3(opacityMap)
+      opacityMap = Array(100).fill().map(() => Array(100).fill(0.0));
+
+      calcOpacityMap(opacityMap, vertices, current_edges, map)
+      aMap = createAndUpdateAlphaMapD3(opacityMap)
+      // colorCurvature()
 
 
-    // Createadn set alphaMap image for transparency from opacityMap
-    // aMap = createAlphaMap(opacityMap)
-    plane.material[0].alphaMap = aMap
-    plane.material[0].needsUpdate = true
+      // Createadn set alphaMap image for transparency from opacityMap
+      // aMap = createAlphaMap(opacityMap)
+      plane.material[0].alphaMap = aMap
+      plane.material[0].needsUpdate = true
+    }
 
 
     texture.needsUpdate = true
@@ -997,9 +1003,77 @@ function cycleThresholds() {
 
 }
 
+function colorCurvature() {
+  // CURVATURE calc
+  for (let i = 1 ; i < 49 ; i++) {
+    for (let j = 1 ; j < 49 ; j++) {
+      // console.log(plane.geometry.vertices[i].x + " " + plane.geometry.vertices[i].y)
+      let o = [plane.geometry.vertices[i*50 + j].x, plane.geometry.vertices[i*50 + j].y, plane.geometry.vertices[i*50 + j].z]
+      let a = [plane.geometry.vertices[(i-1)*50 + j-1].x, plane.geometry.vertices[(i-1)*50 + j-1].y, plane.geometry.vertices[(i-1)*50 + j-1].z]
+      let b = [plane.geometry.vertices[(i-1)*50 + j].x, plane.geometry.vertices[(i-1)*50 + j].y, plane.geometry.vertices[(i-1)*50 + j].z]
+      let c = [plane.geometry.vertices[i*50 + j-1].x, plane.geometry.vertices[i*50 + j-1].y, plane.geometry.vertices[i*50 + j-1].z]
+      let d = [plane.geometry.vertices[i*50 + j+1].x, plane.geometry.vertices[i*50 + j+1].y, plane.geometry.vertices[i*50 + j+1].z]
+      let e = [plane.geometry.vertices[(i+1)*50 + j].x, plane.geometry.vertices[(i+1)*50 + j].y, plane.geometry.vertices[(i+1)*50 + j].z]
+      let f = [plane.geometry.vertices[(i+1)*50 + j+1].x, plane.geometry.vertices[(i+1)*50 + j+1].y, plane.geometry.vertices[(i+1)*50 + j+1].z]
+      let vxs = [a, b, d, f, e, c]
+      let angles = []
+
+      for (let k = 0 ; k < vxs.length; k++) {
+        let posB = vxs[k]
+        let posC = vxs[(k+1)%vxs.length]
+        let vec1 = [posB[0] - o[0], posB[1] - o[1], posB[2] - o[2]]
+        let vec2 = [posC[0] - o[0], posC[1] - o[1], posC[2] - o[2]]
+        let dot = vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2]
+        let norm_v1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[1], 2) + Math.pow(vec1[2], 2))
+        let norm_v2 = Math.sqrt(Math.pow(vec2[0], 2) + Math.pow(vec2[1], 2) + Math.pow(vec2[2], 2))
+        let angle1 = Math.acos(dot/(norm_v1*norm_v2))
+        angles.push(angle1)
+      }
+      let curvature = 2*Math.PI - angles.reduce((a,b) => a+b)
+      plane.geometry.vertices[i*50 + j].curvature = curvature
+
+      // if (Math.random() > 0.99999) {
+      //   console.log(curvature)
+      //   console.log(plane.geometry.vertices[i*50 + j])
+      // }
+      // let face = plane.geometry.faces[i*50 + Math.floor(j/2)]
+      // face.vertexColors[0].setHSL(Math.random(), 0.5, 0.5)
+      // face.vertexColors[1].setHSL(Math.random(), 0.5, 0.5)
+      // face.vertexColors[2].setHSL(Math.random(), 0.5, 0.5)
+    }
+  }
+  for (let face of plane.geometry.faces) {
+    if (Math.random() > 0.99999) {
+      // if (plane.geometry.vertices[face.a].curvature != 0)
+        // console.log(plane.geometry.vertices[face.a].curvature)
+    }
+    const red = new THREE.Color("red");
+    const blue = new THREE.Color("blue");
+    let curv = plane.geometry.vertices[face.a].curvature
+    face.vertexColors[0].setRGB( 1, 1, 1);
+    if (curv > 0.01)
+      face.vertexColors[0].lerp(blue, 1.0)
+    else if (curv < -0.01)
+      face.vertexColors[0].lerp(red, 1.0)
+
+    curv = plane.geometry.vertices[face.b].curvature
+    face.vertexColors[1].setRGB( 1, 1, 1);
+    if (curv > 0.01)
+      face.vertexColors[1].lerp(blue, 1.0)
+    else if (curv < -0.01)
+      face.vertexColors[1].lerp(red, 1.0)
+
+    curv = plane.geometry.vertices[face.c].curvature
+    face.vertexColors[2].setRGB( 1, 1, 1);
+    if (curv > 0.01)
+      face.vertexColors[2].lerp(blue, 1.0)
+    else if (curv < -0.01)
+      face.vertexColors[2].lerp(red, 1.0)
+  }
+}
+
 function updatePlaneHeights(map) {
   let useTransp = document.getElementById("use-transparency")
-  console.log("updatePlaneHeights")
 
   let ex = 0.3
   let direction = new T.Vector3(0, 1, 0)
@@ -1044,6 +1118,44 @@ function updatePlaneHeights(map) {
   //   )
   // }
 
+
+
+  // for (let i = 0 ; i < plane.geometry.faces.length ; i++) {
+  //   let face = plane.geometry.faces[i]
+  //   let posA = [plane.geometry.vertices[face.a].x, plane.geometry.vertices[face.a].y, plane.geometry.vertices[face.a].z]
+  //   let posB = [plane.geometry.vertices[face.b].x, plane.geometry.vertices[face.b].y, plane.geometry.vertices[face.b].z]
+  //   let posC = [plane.geometry.vertices[face.c].x, plane.geometry.vertices[face.c].y, plane.geometry.vertices[face.c].z]
+  //
+  //   let vec1 = [posB[0] - posA[0], posB[1] - posA[1], posB[2] - posA[2]]
+  //   let vec2 = [posC[0] - posA[0], posC[1] - posA[1], posC[2] - posA[2]]
+  //   let dot = vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2]
+  //   let norm_v1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[1], 2) + Math.pow(vec1[2], 2))
+  //   let norm_v2 = Math.sqrt(Math.pow(vec2[0], 2) + Math.pow(vec2[1], 2) + Math.pow(vec2[2], 2))
+  //   let angle1 = Math.acos(dot/norm_v1*norm_v2)
+  //
+  //   vec1 = [-1*vec1[0], -1*vec1[1], -1*vec1[2]]
+  //   vec2 = [posC[0] - posB[0], posC[1] - posB[1], posC[2] - posB[2]]
+  //   dot = vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2]
+  //   norm_v1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[1], 2) + Math.pow(vec1[2], 2))
+  //   norm_v2 = Math.sqrt(Math.pow(vec2[0], 2) + Math.pow(vec2[1], 2) + Math.pow(vec2[2], 2))
+  //   let angle2 = Math.acos(dot/norm_v1*norm_v2)
+  //
+  //   vec1 = [-1*vec2[0], -1*vec2[1], -1*vec2[2]]
+  //   vec2 = [posA[0] - posC[0], posA[1] - posC[1], posA[2] - posC[2]]
+  //   dot = vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2]
+  //   norm_v1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[1], 2) + Math.pow(vec1[2], 2))
+  //   norm_v2 = Math.sqrt(Math.pow(vec2[0], 2) + Math.pow(vec2[1], 2) + Math.pow(vec2[2], 2))
+  //   let angle3 = Math.acos(dot/norm_v1*norm_v2)
+  //
+  //   if (Math.random() > 0.99999) {
+  //     console.log(angle1)
+  //     console.log(angle2)
+  //     console.log(angle3)
+  //     console.log("c = " + (Math.PI - angle1 - angle2 - angle3))
+  //   }
+  // }
+
+
   for (let face of plane.geometry.faces) {
     let z1 = plane.geometry.vertices[face.a].z
     let z2 = plane.geometry.vertices[face.b].z
@@ -1052,6 +1164,11 @@ function updatePlaneHeights(map) {
     let v = face.a
     let i = Math.floor(v/divisions)
     let j = v%divisions
+
+    if (Math.random() > 0.99999) {
+      // if (plane.geometry.vertices[face.a].curvature != 0)
+        // console.log(plane.geometry.vertices[face.a].curvature)
+    }
     // if (z1 > 1)
     //   face.vertexColors[0].setHSL( 1, 0, 0.5);
     // if (z2 > 1)
@@ -1062,7 +1179,11 @@ function updatePlaneHeights(map) {
     // face.vertexColors[1].setHSL( 1, 0, Math.floor(z2*10)/10);
     // face.vertexColors[2].setHSL( 1, 0, Math.floor(z3*10)/10);
 
+
     // face.vertexColors[0].setHSL(Math.random(), 0.5, 0.5)
+    // face.vertexColors[1].setHSL(Math.random(), 0.5, 0.5)
+    // face.vertexColors[2].setHSL(Math.random(), 0.5, 0.5)
+
     // face.vertexColors[0] = new T.Color( 0xff00ff )
     // if ((i < xlimit || i > heightMap.length - xlimit) || (j < ylimit || j > heightMap[0].length - ylimit))
     //   hide = true
@@ -1619,23 +1740,28 @@ function setHeights(start, mid, end, weight) {
     // --- Saddle Heights ---
     let slope = (start.y - end.y) / (start.x - end.x)
     let angle = Math.atan(slope) + parseFloat(document.getElementById("rotation-slider").value)
-    let dist = calcDist(start, end)
+    let calcdist = calcDist(start, end)
 
-    let xSpread = Math.max(20, dist*0.56)*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
-    xSpread = (0.58*dist) + parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
+    let xSpread = Math.max(20, calcdist*0.56)*parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
+    xSpread = (0.58*calcdist) + parseFloat(document.getElementById("xspread-slider").value) // length // Def 26 // Slider def 0.5
 
     let ySpread = (1.875) + parseFloat(document.getElementById("yspread-slider").value) // 2.5 // width TODO: Multiply with edge length
     let xLimit = ((1.25*weight*2)/(xSpread)) * parseFloat(document.getElementById("xlimit-slider").value) // Def 1000// height along length Def 0.05
+    let xLimit2 = ((1.25*weight*2)/(xSpread)) * parseFloat(document.getElementById("xlimit2-slider").value)
     let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) // 0.7 // 0.55 // depth along width TODO: Change based on edge length
     let addHeight = (-0.5 + weight) + parseFloat(document.getElementById("height-slider").value)
     // console.log(addHeight)
     // console.log(document.getElementById("height-slider").value)
     // addHeight += document.getElementById("height-slider").value
-    // console.log(addHeight)
+    // console.log(distanceToLine([0,0], [1,1]))
 
     for (let i = mid.x - xSpread ; i <= mid.x + xSpread ; i++) {
       for (let j = mid.y - ySpread; j <= mid.y + ySpread ; j++) {
-        let newHeight = ((i-mid.x)*xLimit)**2 - ((j-mid.y)*yLimit)**2
+        let newHeight = 0
+        if (dist([start.x, start.y], [i, j]) > dist([end.x, end.y], [i, j]))
+          newHeight = ((i-mid.x)*xLimit)**2 - ((j-mid.y)*yLimit)**2
+        else
+          newHeight = ((i-mid.x)*xLimit2)**2 - ((j-mid.y)*yLimit)**2
         // newHeight *= -1
         newHeight += addHeight
         let x_pos = j
@@ -1962,23 +2088,65 @@ function removeVertex() {
 function generateGraph() {
   // Graph 1 & 2
   // /*
+  // {
+  //   // Graph 1
+  //   addVertex(null, -5, 0)
+  //   addVertex(null, -4, -1.73)
+  //   addVertex(null, -3, -0.5)
+  //   addVertex(null, 3, -0.5)
+  //   addVertex(null, 4, 1.73)
+  //   addVertex(null, 5, 0)
+  //
+  //   addEdge(null, 2, 3, -.5)
+  //   addEdge(null, 0, 1, .8)
+  //   addEdge(null, 0, 2, .7)
+  //   addEdge(null, 1, 2, .9)
+  //   addEdge(null, 3, 4, .6)
+  //   addEdge(null, 3, 5, .5)
+  //   addEdge(null, 4, 5, .4)
+  //
+  //   // Graph 2
+  //   // 0-A - -5, 0
+  //   // 1-B - -4.5, -1
+  //   // 2-C - -3.5, 0.5
+  //   // 3-E - -3, 0 // Skip D
+  //   // 4-F - -1.5, 0
+  //   // 5-G - 2.4, 0.5
+  //   // 6-H - 2.4, -0.5
+  //   // 7-I - 3.5, 0.8
+  //   // 8-J - 4, 3
+  //   var vertices2 = {}
+  //   var edges2 = {}
+  //   addVertexSec(null, -5.5, -0.5, vertices2) // A
+  //   addVertexSec(null, -4.7, -1.2, vertices2) //B
+  //   addVertexSec(null, -4.3, 0, vertices2) //C
+  //   addVertexSec(null, -4, -0.5, vertices2) //E
+  //   addVertexSec(null, -2.5, -0.5, vertices2) //F
+  //   addVertexSec(null, 3.4, 1, vertices2) //G
+  //   addVertexSec(null, 3.4, 0, vertices2) //H
+  //   addVertexSec(null, 4.5, 1.1, vertices2) //I
+  //   addVertexSec(null, 5.7, 2.7, vertices2) //J
+  //   //
+  //   //
+  //
+  //   addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
+  //
+  //   addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
+  //   addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
+  //   addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
+  //   addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
+  //   addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
+  //   addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
+  //   addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
+  //   addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
+  //
+  //   addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
+  //   addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
+  //   addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
+  //   addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
+  //   addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
+  // }
   {
-    // Graph 1
-    addVertex(null, -5, 0)
-    addVertex(null, -4, -1.73)
-    addVertex(null, -3, -0.5)
-    addVertex(null, 3, -0.5)
-    addVertex(null, 4, 1.73)
-    addVertex(null, 5, 0)
-
-    addEdge(null, 2, 3, -.5)
-    addEdge(null, 0, 1, .8)
-    addEdge(null, 0, 2, .7)
-    addEdge(null, 1, 2, .9)
-    addEdge(null, 3, 4, .6)
-    addEdge(null, 3, 5, .5)
-    addEdge(null, 4, 5, .4)
-
     // Graph 2
     // 0-A - -5, 0
     // 1-B - -4.5, -1
@@ -1989,38 +2157,35 @@ function generateGraph() {
     // 6-H - 2.4, -0.5
     // 7-I - 3.5, 0.8
     // 8-J - 4, 3
-    var vertices2 = {}
-    var edges2 = {}
-    addVertexSec(null, -5.5, -0.5, vertices2) // A
-    addVertexSec(null, -4.7, -1.2, vertices2) //B
-    addVertexSec(null, -4.3, 0, vertices2) //C
-    addVertexSec(null, -4, -0.5, vertices2) //E
-    addVertexSec(null, -2.5, -0.5, vertices2) //F
-    addVertexSec(null, 3.4, 1, vertices2) //G
-    addVertexSec(null, 3.4, 0, vertices2) //H
-    addVertexSec(null, 4.5, 1.1, vertices2) //I
-    addVertexSec(null, 5.7, 2.7, vertices2) //J
+    addVertex(null, -5.5, -0.5) // A
+    addVertex(null, -4.7, -1.2) //B
+    addVertex(null, -4.3, 0) //C
+    addVertex(null, -4, -0.5) //E
+    addVertex(null, -2.5, -0.5) //F
+    addVertex(null, 3.4, 1) //G
+    addVertex(null, 3.4, 0) //H
+    addVertex(null, 4.5, 1.1) //I
+    addVertex(null, 5.7, 2.7) //J
     //
     //
 
-    addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
+    addEdge(null, 4, 6, -.5)
 
-    addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
-    addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
-    addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
-    addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
-    addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
-    addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
-    addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
-    addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
+    addEdge(null, 0, 1, .8) // A - B
+    addEdge(null, 0, 2, .7) // A - C
+    addEdge(null, 0, 3, .7) // A - E
+    addEdge(null, 1, 4, .8) // B - F
+    addEdge(null, 1, 3, .8) // B - E
+    addEdge(null, 2, 3, .8) // C - E
+    addEdge(null, 2, 4, .7) // C - F
+    addEdge(null, 3, 4, .7) // E - F
 
-    addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
-    addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
-    addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
-    addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
-    addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
+    addEdge(null, 6, 5, .7) // H - G
+    addEdge(null, 6, 7, .7) // H - I
+    addEdge(null, 5, 7, .8) // G - I
+    addEdge(null, 5, 8, .7) // G - J
+    addEdge(null, 7, 8, .7) // I - J
   }
-  // */
   // {
   //
   //   addVertex(null, -5, 0, true, "A")
@@ -2728,11 +2893,13 @@ function createAndUpdateAlphaMapD3(map) {
         data.push({x: i, y: j})
   }
 
+  // Modify bandwidth / 4
+
   var densityData = d3.contourDensity()
       .x(function(d) { return x(d.x); })
       .y(function(d) { return y(d.y); })
       .size([width, height])
-      .bandwidth(4)
+      .bandwidth(100)
       (data)
 
 
