@@ -112,13 +112,16 @@ var controls = new T.OrbitControls( camera, renderer.domElement );
 const olMap = createMap()
 const canv = document.createElement('canvas')
 canv.id = "canvas-texture"
-const ctx = canv.getContext('2d');
+let ctx = canv.getContext('2d');
 ctx.canvas.width = 2000;
 ctx.canvas.height = 2000;
 ctx.fillStyle = canvascolor;
 ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 var texture = new T.CanvasTexture(ctx.canvas);
 texture.minFilter = THREE.LinearFilter;
+texture.center = new T.Vector2(0.5, 0.5)
+texture.rotation = -Math.PI/2
+drawGrid(canv)
 
 // let background = new Image()
 // background.src = "./images/grayworld2.jpg"
@@ -232,6 +235,7 @@ scene.add(light)
 
 var alight = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( alight );
+
 
 // Extra lights
 /**
@@ -348,7 +352,7 @@ window.onload = function() {
   var mapCanvas = document.getElementById('map').getElementsByTagName('canvas')[0]
 
   // mapCanvas.style.transform = "rotate(90deg)"
-  const ctx = mapCanvas.getContext('2d')
+  let ctx = mapCanvas.getContext('2d')
   // ctx.canvas.width = 2000;
   // ctx.canvas.height = 2000;
   // ctx.fillStyle = canvascolor;
@@ -454,9 +458,11 @@ window.onload = function() {
     if (showMap.checked) {
       plane.material[0].map = mapTexture
       texture = mapTexture
+      ctx = mapCanvas.getContext("2d")
     } else {
       plane.material[0].map = customTexture
       texture = customTexture
+      ctx = canv.getContext("2d")
     }
     plane.material[0].needsUpdate = true
     plane.material[2].needsUpdate = true
@@ -491,7 +497,7 @@ window.onload = function() {
 
 
     ctx.fillStyle = canvascolor
-    // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
     // if (!showMap.checked) {
     //   ctx.drawImage(background,0,0,697,998,250,-10,1650,2080) // 696x995
     // }
@@ -513,6 +519,10 @@ window.onload = function() {
     // let logical_edges = [[1, 6, null, null], [4, 7, 1.2, -0.3], [0, 8, 1.6, -0.3], [2, 8, 1.6, -0.3], [2, 5, 1.2, -0.3]]
     // let logical_edges = [[1, 6, null, null], [4, 7, 0.2, -0.3], [0, 8, 0.6, -0.3], [2, 8, 0.6, -0.3], [2, 5, 0.2, -0.3]]
     let logical_edges = []
+
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    drawGrid(canv)
+
 
 
     ctx.setLineDash([])
@@ -785,7 +795,7 @@ window.onload = function() {
 
 
     smoothHeightMap()
-    // smoothHeightMap()
+    smoothHeightMap()
     // smoothHeightMap()
     // smoothHeightMap()
 
@@ -849,10 +859,9 @@ window.onload = function() {
       // Createadn set alphaMap image for transparency from opacityMap
       // aMap = createAlphaMap(opacityMap)
       plane.material[0].alphaMap = aMap
-      plane.material[0].needsUpdate = true
     }
 
-
+    plane.material[0].needsUpdate = true
     texture.needsUpdate = true
 
 
@@ -1070,6 +1079,23 @@ function colorCurvature() {
     else if (curv < -0.01)
       face.vertexColors[2].lerp(red, 1.0)
   }
+}
+
+function drawGrid(canvas) {
+  let ctx = canvas.getContext("2d")
+  let cols = 49
+  let rows = 49
+  for (let i = 0 ; i <= canvas.width; i += (canvas.width)/cols) {
+    ctx.moveTo(i, 0)
+    ctx.lineTo(i, canvas.height)
+  }
+  for (let j = 0 ; j <= canvas.height ; j += (canvas.height)/rows) {
+    ctx.moveTo(0, j)
+    ctx.lineTo(canvas.width, j)
+  }
+  ctx.lineWidth = 2.0
+  ctx.strokyStyle = "black"
+  ctx.stroke()
 }
 
 function updatePlaneHeights(map) {
