@@ -63,6 +63,7 @@
         </div>
 
         <button type="button" id="btn-gen-graph">Generate sample graph</button>
+        <button type="button" id="btn-calc-dist">Calculate Distance</button>
         <button type="button" id="btn-gen-graph-empty">Generate graph (No Weights)</button>
 
 
@@ -75,7 +76,7 @@
         <p>Threshold:</p>
         <input type="range" min="0" max="5" value="0" class="slider" step="1" id="threshold-slider">
         <button type="button" id="btn-cycle-thresholds">Cycle Thresholds</button>
-        <input type="checkbox" id="show-map" name="show-map">
+        <input type="checkbox" id="show-map" name="show-map" checked>
         <label for="show-map"> Show map</label><br>
         <input type="checkbox" id="use-transparency" name="use-transparency">
         <label for="use-transparency"> Use transparent surface</label><br>
@@ -94,15 +95,15 @@
         <p>Saddle X Range (Along Edge): <span id="xspread-slider-val" color="#4CAF50"></span></p>
         <input type="range" min="-20" max="20" value="0" class="slider" step="0.000001" id="xspread-slider">
         <p>Saddle Y Range (Across Edge): <span id="yspread-slider-val"></span></p>
-        <input type="range" min="-10" max="10" value="3.5" class="slider" step="0.000001" id="yspread-slider">
+        <input type="range" min="-10" max="10" value="0" class="slider" step="0.000001" id="yspread-slider">
         <p>Saddle Steepness: <span id="xlimit-slider-val"></span></p>
         <input type="range" min="0.001" max="2" value="0.75" class="slider" step="0.000001" id="xlimit-slider">
         <p>Saddle Steepness 2: <span id="xlimit2-slider-val"></span></p>
         <input type="range" min="0.001" max="2" value="0.75" class="slider" step="0.000001" id="xlimit2-slider">
         <p>Saddle Narrowness: <span id="ylimit-slider-val"></span></p>
-        <input type="range" min="0.001" max="10" value="5" class="slider" step="0.000001" id="ylimit-slider">
+        <input type="range" min="0.001" max="10" value="2" class="slider" step="0.000001" id="ylimit-slider">
         <p>Saddle Height: <span id="height-slider-val"></span></p>
-        <input type="range" min="-2" max="4" value="1.8" class="slider" step="0.000001" id="height-slider">
+        <input type="range" min="-2" max="4" value="1.5" class="slider" step="0.000001" id="height-slider">
         <p>Saddle Rotation: <span id="rotation-slider-val"></span></p>
         <input type="range" min="-3.14" max="3.14" value="0" class="slider" step="0.000001" id="rotation-slider">
 

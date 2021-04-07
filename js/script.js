@@ -130,7 +130,7 @@ drawGrid(canv)
 //
 // }
 
-let ptGeom = new T.SphereGeometry(0.15, 32, 32)
+let ptGeom = new T.SphereGeometry(0.04, 32, 32) // 0.15
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
 
@@ -192,7 +192,7 @@ var clipPlane2 = new T.Plane().setFromCoplanarPoints(p6, p5, p4)
 
 var clipPlane = new T.Plane(new T.Vector3(0, 2, 0), 2)
 var clipPlane2 = new T.Plane(new T.Vector3(1, 0, 0), 7) // 5.5
-var clipPlane3 = new T.Plane(new T.Vector3(-1, 0, 0), 7) // 6
+var clipPlane3 = new T.Plane(new T.Vector3(-1, 0, 0), 7) // 6 // 7
 var clipPlane4 = new T.Plane(new T.Vector3(0, 0, 1), 10) // 3.3
 var clipPlane5 = new T.Plane(new T.Vector3(0, 0, -1), 10) // 3.3
 
@@ -287,6 +287,7 @@ let graphs = []
 let names = {}
 let linesDrawn = []
 let subPlanes = []
+let current_edges = {}
 
 // edgecolor_sec = 0x6decaf
 edgecolor_sec = 0x2cc57c
@@ -387,6 +388,13 @@ window.onload = function() {
 
   let btnAddEdge  = document.getElementById("btn-add-edge")
   btnAddEdge.onclick = addEdge
+
+  document.getElementById("btn-calc-dist").onclick = function() {
+    if (subPlanes.length != 0)
+      calcDistanceOnSurface(subPlanes[0].plane, vertices, current_edges)
+    else
+      calcDistanceOnSurface(plane, vertices, current_edges)
+  }
 
   document.getElementById("heatmap-div").style.display = "none"
 
@@ -511,7 +519,7 @@ window.onload = function() {
     //   vertices_visual = vertices2
     //   edges_visual = edges2
     // }
-    let current_edges = {...edges}
+    current_edges = {...edges}
     if (graphs.length > 0)
       current_edges = {...graphs[document.getElementById("threshold-slider").value].edges}
 
@@ -520,8 +528,10 @@ window.onload = function() {
     // let logical_edges = [[1, 6, null, null], [4, 7, 0.2, -0.3], [0, 8, 0.6, -0.3], [2, 8, 0.6, -0.3], [2, 5, 0.2, -0.3]]
     let logical_edges = []
 
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-    drawGrid(canv)
+    if (!showMap.checked) {
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    }
+    drawGrid(ctx.canvas)
 
 
 
@@ -739,7 +749,7 @@ window.onload = function() {
 
       // Set heightmap
       if (!chkCalcSurface.checked) {
-        setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+        setHeights(newStartPt, newMidPt, newEndPt, edge.weight, heightMap)
       }
     }
 
@@ -789,15 +799,16 @@ window.onload = function() {
       newStartPt.y = Math.round((newStartPt.y / planeH) * divisions) // Change from (0, planeHeight) to (0, divisions)
 
       if (!chkCalcSurface.checked) {
-        setHeights(newStartPt, newMidPt, newEndPt, edge.weight)
+        setHeights(newStartPt, newMidPt, newEndPt, edge.weight, heightMap)
       }
     }
 
 
-    smoothHeightMap()
-    smoothHeightMap()
-    // smoothHeightMap()
-    // smoothHeightMap()
+
+    smoothHeightMap(heightMap)
+    smoothHeightMap(heightMap)
+    // smoothHeightMap(heightMap)
+    // smoothHeightMap(heightMap)
 
     // TODO: doesn't work / use BufferGeom?
 
@@ -844,7 +855,10 @@ window.onload = function() {
           plane.geometry.vertices[j*divisions+i].z = 0
         }
       }
+      colorCurvature(p.plane)
       p.plane.material.map.needsUpdate = true
+      p.plane.geometry.colorsNeedUpdate = true
+
     }
 
     if (showMap.checked) {
@@ -853,13 +867,13 @@ window.onload = function() {
 
       calcOpacityMap(opacityMap, vertices, current_edges, map)
       aMap = createAndUpdateAlphaMapD3(opacityMap)
-      // colorCurvature()
 
 
       // Createadn set alphaMap image for transparency from opacityMap
       // aMap = createAlphaMap(opacityMap)
       plane.material[0].alphaMap = aMap
     }
+    colorCurvature(plane)
 
     plane.material[0].needsUpdate = true
     texture.needsUpdate = true
@@ -883,7 +897,6 @@ window.onload = function() {
     //     calcContours(100, 100, calcHeightMap)
     // else
     //   calcContours(100, 100, heightmap)
-
 
     plane.geometry.groupsNeedUpdate = true
     plane.geometry.verticesNeedUpdate = true
@@ -1012,10 +1025,12 @@ function cycleThresholds() {
 
 }
 
-function colorCurvature() {
+function colorCurvature(plane) {
   // CURVATURE calc
-  for (let i = 1 ; i < 49 ; i++) {
-    for (let j = 1 ; j < 49 ; j++) {
+  let max_curv = 0
+  let min_curv = 1
+  for (let i = 1 ; i < 48 ; i++) {
+    for (let j = 9 ; j < 39 ; j++) {
       // console.log(plane.geometry.vertices[i].x + " " + plane.geometry.vertices[i].y)
       let o = [plane.geometry.vertices[i*50 + j].x, plane.geometry.vertices[i*50 + j].y, plane.geometry.vertices[i*50 + j].z]
       let a = [plane.geometry.vertices[(i-1)*50 + j-1].x, plane.geometry.vertices[(i-1)*50 + j-1].y, plane.geometry.vertices[(i-1)*50 + j-1].z]
@@ -1040,6 +1055,8 @@ function colorCurvature() {
       }
       let curvature = 2*Math.PI - angles.reduce((a,b) => a+b)
       plane.geometry.vertices[i*50 + j].curvature = curvature
+      max_curv = Math.max(max_curv, curvature)
+      min_curv = Math.min(min_curv, curvature)
 
       // if (Math.random() > 0.99999) {
       //   console.log(curvature)
@@ -1051,40 +1068,49 @@ function colorCurvature() {
       // face.vertexColors[2].setHSL(Math.random(), 0.5, 0.5)
     }
   }
+
   for (let face of plane.geometry.faces) {
     if (Math.random() > 0.99999) {
+      // console.log(min_curv, max_curv)
       // if (plane.geometry.vertices[face.a].curvature != 0)
         // console.log(plane.geometry.vertices[face.a].curvature)
     }
     const red = new THREE.Color("red");
     const blue = new THREE.Color("blue");
     let curv = plane.geometry.vertices[face.a].curvature
+    let scale = 2
+    if (face.vertexColors[0] == undefined) {
+      face.vertexColors[0] = new THREE.Color( 1, 1, 1 );
+      face.vertexColors[1] = new THREE.Color( 1, 1, 1 );
+      face.vertexColors[2] = new THREE.Color( 1, 1, 1 );
+    }
     face.vertexColors[0].setRGB( 1, 1, 1);
-    if (curv > 0.01)
-      face.vertexColors[0].lerp(blue, 1.0)
-    else if (curv < -0.01)
-      face.vertexColors[0].lerp(red, 1.0)
+    if (curv > 0.001) {
+      face.vertexColors[0].lerp(blue, Math.ceil(scale*curv/max_curv)/scale)
+    }
+    else if (curv < -0.001)
+      face.vertexColors[0].lerp(red, Math.ceil(scale*curv/min_curv)/scale)
 
     curv = plane.geometry.vertices[face.b].curvature
     face.vertexColors[1].setRGB( 1, 1, 1);
-    if (curv > 0.01)
-      face.vertexColors[1].lerp(blue, 1.0)
-    else if (curv < -0.01)
-      face.vertexColors[1].lerp(red, 1.0)
+    if (curv > 0.001)
+      face.vertexColors[1].lerp(blue, Math.ceil(scale*curv/max_curv)/scale)
+    else if (curv < -0.001)
+      face.vertexColors[1].lerp(red, Math.ceil(scale*curv/min_curv)/scale)
 
     curv = plane.geometry.vertices[face.c].curvature
     face.vertexColors[2].setRGB( 1, 1, 1);
-    if (curv > 0.01)
-      face.vertexColors[2].lerp(blue, 1.0)
-    else if (curv < -0.01)
-      face.vertexColors[2].lerp(red, 1.0)
+    if (curv > 0.001)
+      face.vertexColors[2].lerp(blue, Math.ceil(scale*curv/max_curv)/scale)
+    else if (curv < -0.001)
+      face.vertexColors[2].lerp(red, Math.ceil(scale*curv/min_curv)/scale)
   }
 }
 
 function drawGrid(canvas) {
   let ctx = canvas.getContext("2d")
-  let cols = 49
-  let rows = 49
+  let cols = 49*3
+  let rows = 49*3
   for (let i = 0 ; i <= canvas.width; i += (canvas.width)/cols) {
     ctx.moveTo(i, 0)
     ctx.lineTo(i, canvas.height)
@@ -1093,7 +1119,7 @@ function drawGrid(canvas) {
     ctx.moveTo(0, j)
     ctx.lineTo(canvas.width, j)
   }
-  ctx.lineWidth = 2.0
+  ctx.lineWidth = 0.75 // 2
   ctx.strokyStyle = "black"
   ctx.stroke()
 }
@@ -1393,7 +1419,64 @@ function calcOpacityMap(opacityMap, vertices, edges, heightMap) {
   }
 }
 
+function calcDistanceOnSurface(plane, vertices, edges) {
+  console.log("Calc distance")
+  let verts = []
+  let faces = []
+  let nodes = []
+  for (let vert of plane.geometry.vertices) {
+    verts.push([vert.x, vert.y, vert.z])
+  }
+  for (let face of plane.geometry.faces) {
+    faces.push([face.a, face.b, face.c])
+  }
+  for (let vert in vertices) {
+    // Convert Graph node position to specific vertex
+    // Get path?
+    let cur_node = vertices[vert]
+    nodes.push(convert3JStoVerts(cur_node.mesh.position.x, cur_node.mesh.position.z))
+  }
+  let send_data = {verts: verts, faces: faces, nodes: nodes}
+  var xmlHttp = new XMLHttpRequest();
+  // xmlHttp.responseType = "arraybuffer"
+  xmlHttp.responseType = "text"
 
+  xmlHttp.onreadystatechange = function()
+  {
+      if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
+
+      {
+          let data = xmlHttp.responseText
+          // data = data.substring(data.indexOf('['))
+          data = JSON.parse(data)
+          console.log("data recv")
+          // console.log(data)
+          for (let id in edges) {
+            if (edges[id].split)
+              continue
+            let start = edges[id].start.id
+            let end = edges[id].end.id
+            console.log(start + " to " + end + ": " + data[start][nodes[end]])
+          }
+          // for (let i = 0 ; i < data.length ; i++) {
+          //   for (let j = 0 ; j < data.length ; j++) {
+          //     // console.log(i)
+          //     // console.log(j)
+          //     // console.log(data[i][nodes[j]])
+          //     console.log(i + " to " + j + ": " + data[i][nodes[j]])
+          //   }
+          //   console.log(" ")
+          // }
+
+      }
+  }
+  xmlHttp.open("post", "calc-distance");
+  xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xmlHttp.send(JSON.stringify(send_data));
+  console.log("data sent")
+  // console.log(send_data)
+  dataSent = true
+}
 
 function subgraphSelect(selected) {
   console.log(selected.length)
@@ -1403,6 +1486,8 @@ function subgraphSelect(selected) {
     return
   }
   var data = {nodes: [], links: []}
+  var nodes = {}
+  var edges = []
   let ids = {}
   let xRange = [10, -10]
   let yRange = [10, -10]
@@ -1417,6 +1502,7 @@ function subgraphSelect(selected) {
 
       data.nodes.push({id: parseInt(id), city: selected[id].name, lat: parseFloat(selected[id].position.x), long: parseFloat(selected[id].position.z)})
       ids[selected[id].name] = parseInt(id)
+      nodes[selected[id].name] = {lat: parseFloat(selected[id].position.x), long: parseFloat(selected[id].position.z)}
 
     } else if (selected[id].geometry.type == "BufferGeometry") {
       // console.log(ids)
@@ -1430,6 +1516,7 @@ function subgraphSelect(selected) {
       if (ids[start] == undefined || ids[end] == undefined)
         continue
       data.links.push({source: ids[start], target: ids[end], ricciCurvature: weight})
+      edges.push({start: nodes[start], end: nodes[end], weight: weight})
     }
   }
   let padding = 0.25
@@ -1462,7 +1549,7 @@ function subgraphSelect(selected) {
   var subMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: subTexture} )
   var subPlane = new T.Mesh( subGeom, subMat )
 
-  subPlane.position.set(mid[0], 1, mid[1])
+  subPlane.position.set(mid[0], 2, mid[1])
   subPlane.rotation.set(-Math.PI/2, 0., 0.)
   let spObj = {}
   spObj.start = [Math.floor((xRange[0] + 10) * divisions / 20), Math.floor((yRange[0] + 10) * divisions / 20)]
@@ -1503,7 +1590,6 @@ function subgraphSelect(selected) {
           plane.visible = false
         }
   })
-
   gsap.to( subPlane.scale, {
         duration: 1,
         x: 1,
@@ -1524,6 +1610,43 @@ function subgraphSelect(selected) {
   // controls.update()
   // camera.updateProjectionMatrix()
   // ---GENERATE SURFACE
+  let chkCalcSurface = document.getElementById("use-calc-surface")
+
+  if (!chkCalcSurface.checked) {
+    let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+    let planeXMin = xRange[0]
+    let planeWidth = xRange[1] - xRange[0]
+    let planeYMin = yRange[0]
+    let planeHeight = yRange[1] - yRange[0]
+    for (let edge of edges) {
+      if (edge.weight < 0)
+        continue
+      let startPt = convert3JStoHMgeneric([edge.start.lat, edge.start.long], planeXMin, planeYMin, planeWidth, planeHeight)
+      let endPt = convert3JStoHMgeneric([edge.end.lat, edge.end.long], planeXMin, planeYMin, planeWidth, planeHeight)
+      let start = {x: startPt[0], y: startPt[1]}
+      let end = {x: endPt[0], y: endPt[1]}
+      let mid = {x: Math.floor((startPt[0] + endPt[0])/2), y: Math.floor((startPt[1] + endPt[1])/2)}
+      setHeights(start, mid, end, edge.weight, newHeightMap, 0.4)
+    }
+    for (let edge of edges) {
+      if (edge.weight > 0)
+        continue
+      let startPt = convert3JStoHMgeneric([edge.start.lat, edge.start.long], planeXMin, planeYMin, planeWidth, planeHeight)
+      let endPt = convert3JStoHMgeneric([edge.end.lat, edge.end.long], planeXMin, planeYMin, planeWidth, planeHeight)
+      let start = {x: startPt[0], y: startPt[1]}
+      let end = {x: endPt[0], y: endPt[1]}
+      let mid = {x: Math.floor((startPt[0] + endPt[0])/2), y: Math.floor((startPt[1] + endPt[1])/2)}
+      setHeights(start, mid, end, edge.weight, newHeightMap, 0.4)
+    }
+    smoothHeightMap(newHeightMap)
+    // smoothHeightMap(newHeightMap)
+    // smoothHeightMap(newHeightMap)
+    // smoothHeightMap(newHeightMap)
+    setPlaneHeights(subPlane, newHeightMap)
+
+
+    return
+  }
 
   var xmlHttp = new XMLHttpRequest();
   xmlHttp.responseType = "text"
@@ -1662,7 +1785,7 @@ function raiseHeightMap() {
   return 0
 }
 
-function smoothHeightMap() {
+function smoothHeightMap(heightMap) {
   for (let j = 0 ; j < heightMap[0].length ; j++) {
     heightMap[0][j] = heightMap[2][j]
     heightMap[1][j] = heightMap[2][j]
@@ -1721,7 +1844,7 @@ function smoothHeightMap() {
 // TODO: Make the percent dropoff more quadratic
 // TODO: Deal with clashing heights - Add heights of multiple edges together -> Deal with huge towers
 
-function setHeights(start, mid, end, weight) {
+function setHeights(start, mid, end, weight, heightMap, modifier = 1) {
 
   if (weight >= 0) {
     // --- Gaussian heights ---
@@ -1729,7 +1852,7 @@ function setHeights(start, mid, end, weight) {
     let x = mid.y
     let y = mid.x
     let amp = document.getElementById("amp-slider").value // Def 1000
-    weight = 2.5*weight
+    // weight = 2.5*weight
     let spread = document.getElementById("posrange-slider").value
     let xSpread =  spread // Use divisions variable instead of hard coding spread
     let ySpread = spread
@@ -1739,7 +1862,7 @@ function setHeights(start, mid, end, weight) {
           continue
         let xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
         let yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
-        let newHeight = weight*amp*Math.exp(-1.0*(xTerm + yTerm))
+        let newHeight = weight*amp*Math.exp(-1.0*(xTerm + yTerm))*modifier
         // if (Math.abs(newHeight) <= 0.01) {
         //   newHeight = 0
         // }
@@ -1790,13 +1913,14 @@ function setHeights(start, mid, end, weight) {
           newHeight = ((i-mid.x)*xLimit2)**2 - ((j-mid.y)*yLimit)**2
         // newHeight *= -1
         newHeight += addHeight
+        newHeight *= modifier
         let x_pos = j
         let y_pos = i
 
         // X and Y coordinate calculations are switched
         x_pos = Math.round((i-mid.x)*Math.sin(angle) + (j-mid.y)*Math.cos(angle)) + mid.y
         y_pos = Math.round((i-mid.x)*Math.cos(angle) - (j-mid.y)*Math.sin(angle)) + mid.x
-        if (x_pos >= heightMap.length || y_pos >= heightMap.length || x_pos < 0 || y_pos < 0)
+        if (x_pos >= heightMap.length || y_pos >= heightMap.length || x_pos < 0 || y_pos < 0 || isNaN(x_pos) || isNaN(y_pos))
           continue
         // Check closest to which pt
         // if (newHeight > heightMap[x_pos][y_pos]) {
@@ -1808,7 +1932,6 @@ function setHeights(start, mid, end, weight) {
         // if (newHeight < heightMap[x_pos][y_pos] && heightMap[x_pos][y_pos] > 0.1) {
         //   continue
         // }
-
         heightMap[x_pos][y_pos] = newHeight
 
         // if (heightMap[x_pos][y_pos] * newHeight > 0) { // Both in same direction, then choose highest magnitude
@@ -2052,7 +2175,7 @@ function addVertex(obj, x, y, drawPoint, name, lat=null, long=null) {
   newPt.position.z = yPos.value
   newPt.name = name
 
-  console.log(newPt.position.y)
+  // console.log(newPt.position.y)
 
   let sprite = getNameSprite(name)
   sprite.position.set(xPos.value, vertexHeight + 0.2 + Math.random()*0.2, yPos.value)
@@ -2115,22 +2238,6 @@ function generateGraph() {
   // Graph 1 & 2
   // /*
   // {
-  //   // Graph 1
-  //   addVertex(null, -5, 0)
-  //   addVertex(null, -4, -1.73)
-  //   addVertex(null, -3, -0.5)
-  //   addVertex(null, 3, -0.5)
-  //   addVertex(null, 4, 1.73)
-  //   addVertex(null, 5, 0)
-  //
-  //   addEdge(null, 2, 3, -.5)
-  //   addEdge(null, 0, 1, .8)
-  //   addEdge(null, 0, 2, .7)
-  //   addEdge(null, 1, 2, .9)
-  //   addEdge(null, 3, 4, .6)
-  //   addEdge(null, 3, 5, .5)
-  //   addEdge(null, 4, 5, .4)
-  //
   //   // Graph 2
   //   // 0-A - -5, 0
   //   // 1-B - -4.5, -1
@@ -2141,38 +2248,36 @@ function generateGraph() {
   //   // 6-H - 2.4, -0.5
   //   // 7-I - 3.5, 0.8
   //   // 8-J - 4, 3
-  //   var vertices2 = {}
-  //   var edges2 = {}
-  //   addVertexSec(null, -5.5, -0.5, vertices2) // A
-  //   addVertexSec(null, -4.7, -1.2, vertices2) //B
-  //   addVertexSec(null, -4.3, 0, vertices2) //C
-  //   addVertexSec(null, -4, -0.5, vertices2) //E
-  //   addVertexSec(null, -2.5, -0.5, vertices2) //F
-  //   addVertexSec(null, 3.4, 1, vertices2) //G
-  //   addVertexSec(null, 3.4, 0, vertices2) //H
-  //   addVertexSec(null, 4.5, 1.1, vertices2) //I
-  //   addVertexSec(null, 5.7, 2.7, vertices2) //J
-  //   //
-  //   //
+  //   addVertex(null, 0, 0) // A
+  //   addVertex(null, 0, 10) //B
+  //   addVertex(null, 0, 2) //C
+  //   addVertex(null, -6, 2) //E
+  //   addVertex(null, -10, 7) //F
+  //   addVertex(null, 0, 8) //G
   //
-  //   addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
   //
-  //   addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
-  //   addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
-  //   addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
-  //   addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
-  //   addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
-  //   addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
-  //   addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
-  //   addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
+  //   addEdge(null, 2, 3, -1) // A - B
+  //   addEdge(null, 4, 5, -0.9) // A - C
+  //   addEdge(null, 0, 1, -1)
   //
-  //   addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
-  //   addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
-  //   addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
-  //   addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
-  //   addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
   // }
   {
+    // Graph 1
+    addVertex(null, -5, 0)
+    addVertex(null, -4, -1.73)
+    addVertex(null, -3, -0.5)
+    addVertex(null, 3, -0.5)
+    addVertex(null, 4, 1.73)
+    addVertex(null, 5, 0)
+
+    addEdge(null, 2, 3, -.5)
+    addEdge(null, 0, 1, .8)
+    addEdge(null, 0, 2, .7)
+    addEdge(null, 1, 2, .9)
+    addEdge(null, 3, 4, .6)
+    addEdge(null, 3, 5, .5)
+    addEdge(null, 4, 5, .4)
+
     // Graph 2
     // 0-A - -5, 0
     // 1-B - -4.5, -1
@@ -2183,35 +2288,77 @@ function generateGraph() {
     // 6-H - 2.4, -0.5
     // 7-I - 3.5, 0.8
     // 8-J - 4, 3
-    addVertex(null, -5.5, -0.5) // A
-    addVertex(null, -4.7, -1.2) //B
-    addVertex(null, -4.3, 0) //C
-    addVertex(null, -4, -0.5) //E
-    addVertex(null, -2.5, -0.5) //F
-    addVertex(null, 3.4, 1) //G
-    addVertex(null, 3.4, 0) //H
-    addVertex(null, 4.5, 1.1) //I
-    addVertex(null, 5.7, 2.7) //J
+    var vertices2 = {}
+    var edges2 = {}
+    addVertexSec(null, -5.5, -0.5, vertices2) // A
+    addVertexSec(null, -4.7, -1.2, vertices2) //B
+    addVertexSec(null, -4.3, 0, vertices2) //C
+    addVertexSec(null, -4, -0.5, vertices2) //E
+    addVertexSec(null, -2.5, -0.5, vertices2) //F
+    addVertexSec(null, 3.4, 1, vertices2) //G
+    addVertexSec(null, 3.4, 0, vertices2) //H
+    addVertexSec(null, 4.5, 1.1, vertices2) //I
+    addVertexSec(null, 5.7, 2.7, vertices2) //J
     //
     //
 
-    addEdge(null, 4, 6, -.5)
+    addEdgeSec(null, 4, 6, -.5, vertices2, edges2)
 
-    addEdge(null, 0, 1, .8) // A - B
-    addEdge(null, 0, 2, .7) // A - C
-    addEdge(null, 0, 3, .7) // A - E
-    addEdge(null, 1, 4, .8) // B - F
-    addEdge(null, 1, 3, .8) // B - E
-    addEdge(null, 2, 3, .8) // C - E
-    addEdge(null, 2, 4, .7) // C - F
-    addEdge(null, 3, 4, .7) // E - F
+    addEdgeSec(null, 0, 1, .8, vertices2, edges2) // A - B
+    addEdgeSec(null, 0, 2, .7, vertices2, edges2) // A - C
+    addEdgeSec(null, 0, 3, .7, vertices2, edges2) // A - E
+    addEdgeSec(null, 1, 4, .8, vertices2, edges2) // B - F
+    addEdgeSec(null, 1, 3, .8, vertices2, edges2) // B - E
+    addEdgeSec(null, 2, 3, .8, vertices2, edges2) // C - E
+    addEdgeSec(null, 2, 4, .7, vertices2, edges2) // C - F
+    addEdgeSec(null, 3, 4, .7, vertices2, edges2) // E - F
 
-    addEdge(null, 6, 5, .7) // H - G
-    addEdge(null, 6, 7, .7) // H - I
-    addEdge(null, 5, 7, .8) // G - I
-    addEdge(null, 5, 8, .7) // G - J
-    addEdge(null, 7, 8, .7) // I - J
+    addEdgeSec(null, 6, 5, .7, vertices2, edges2) // H - G
+    addEdgeSec(null, 6, 7, .7, vertices2, edges2) // H - I
+    addEdgeSec(null, 5, 7, .8, vertices2, edges2) // G - I
+    addEdgeSec(null, 5, 8, .7, vertices2, edges2) // G - J
+    addEdgeSec(null, 7, 8, .7, vertices2, edges2) // I - J
   }
+  // {
+  //   // Graph 2
+  //   // 0-A - -5, 0
+  //   // 1-B - -4.5, -1
+  //   // 2-C - -3.5, 0.5
+  //   // 3-E - -3, 0 // Skip D
+  //   // 4-F - -1.5, 0
+  //   // 5-G - 2.4, 0.5
+  //   // 6-H - 2.4, -0.5
+  //   // 7-I - 3.5, 0.8
+  //   // 8-J - 4, 3
+  //   addVertex(null, -5.5, -0.5) // A
+  //   addVertex(null, -4.7, -1.2) //B
+  //   addVertex(null, -4.3, 0) //C
+  //   addVertex(null, -4, -0.5) //E
+  //   addVertex(null, -2.5, -0.5) //F
+  //   addVertex(null, 3.4, 1) //G
+  //   addVertex(null, 3.4, 0) //H
+  //   addVertex(null, 4.5, 1.1) //I
+  //   addVertex(null, 5.7, 2.7) //J
+  //   //
+  //   //
+  //
+  //   addEdge(null, 4, 6, -.5)
+  //
+  //   addEdge(null, 0, 1, .8) // A - B
+  //   addEdge(null, 0, 2, .7) // A - C
+  //   addEdge(null, 0, 3, .7) // A - E
+  //   addEdge(null, 1, 4, .8) // B - F
+  //   addEdge(null, 1, 3, .8) // B - E
+  //   addEdge(null, 2, 3, .8) // C - E
+  //   addEdge(null, 2, 4, .7) // C - F
+  //   addEdge(null, 3, 4, .7) // E - F
+  //
+  //   addEdge(null, 6, 5, .7) // H - G
+  //   addEdge(null, 6, 7, .7) // H - I
+  //   addEdge(null, 5, 7, .8) // G - I
+  //   addEdge(null, 5, 8, .7) // G - J
+  //   addEdge(null, 7, 8, .7) // I - J
+  // }
   // {
   //
   //   addVertex(null, -5, 0, true, "A")
@@ -2507,7 +2654,7 @@ function getNameSprite(name) {
   ctx.canvas.width = textWidth*30+30;
   ctx.canvas.height = textWidth*30+10;
 
-  ctx.font="120px Roboto Mono"
+  ctx.font="120px Roboto Mono" // 120px
   ctx.fillStyle = "#000000"
 
 
@@ -3111,6 +3258,21 @@ function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+function convert3JStoVerts(x, y) {
+  // Depends on plane geometry
+  // Change from -10,10 to 0,49
+  x = parseFloat(x)
+  y = parseFloat(y)
+  x += 10
+  x /= 20
+  x *= 49
+  y += 10
+  y /= 20
+  y *= 49
+  let retval = Math.round(y)*50 + Math.round(x)
+  return retval
+}
+
 function convert3JStoHM(point) {
   point[0] = (point[0] - planeXMin) // Change from (min,max) to (0, newmax)
   point[1] = (point[1] - planeYMin) // Change from (min,max) to (0, newmax)
@@ -3118,6 +3280,14 @@ function convert3JStoHM(point) {
   point[0] = Math.round((point[0] / planeW) * (divisions-1)) // Change from (0, planeWidth) to (0, divisions)
   point[1] = Math.round((point[1] / planeH) * (divisions-1)) // Change from (0, planeHeight) to (0, divisions)
 
+  return point;
+}
+
+function convert3JStoHMgeneric(point, planeXMin, planeYMin, planeWidth, planeHeight) {
+  point[0] = (point[0] - planeXMin) // Change from (min,max) to (0, newmax)
+  point[1] = (point[1] - planeYMin) // Change from (min,max) to (0, newmax)
+  point[0] = Math.round((point[0] / planeWidth) * (divisions-1)) // Change from (0, planeWidth) to (0, divisions)
+  point[1] = Math.round((point[1] / planeHeight) * (divisions-1)) // Change from (0, planeHeight) to (0, divisions)
   return point;
 }
 

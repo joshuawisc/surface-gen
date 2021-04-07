@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import json
 import flask
+import numpy as np
 from flask import request
 from flask import Response
 import networkx as nx
@@ -13,6 +14,7 @@ import concurrent.futures
 import sys
 import io
 import time
+from python.geodesic import GeodesicDistanceComputation
 
 sys.path.append(r'python/surface/src')
 
@@ -36,12 +38,30 @@ def calc_curvature():
 
     return Gr
 
+@app.route('/calc-distance', methods=['POST'])
+def calc_distance():
+    data = request.json
+    # print(data)
+    verts = np.array(data['verts'])
+    tris = np.array(data['faces'])
+    nodes = np.array(data['nodes'])
+    print(verts.shape)
+    compute_distance = GeodesicDistanceComputation(verts, tris)
+    distances = []
+    for node in nodes:
+        distances.append(compute_distance(node).tolist())
+    dist = np.trunc(distances[0]).reshape((50, 50))
+    print(dist.size)
+    with np.printoptions(threshold=np.inf):
+        print(dist)
+    return json.dumps(distances)
+
 @app.route('/calc-surface', methods=['POST'])
 def calc_surface():
     global retval
     print('start')
     data = request.json
-    print(data)
+    # print(data)
     # print("\n\n")
 
     smooth_pen = int(data['smooth_pen'])
