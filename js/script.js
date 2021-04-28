@@ -531,7 +531,7 @@ window.onload = function() {
     if (!showMap.checked) {
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     }
-    drawGrid(ctx.canvas)
+    // drawGrid(ctx.canvas)
 
 
 
@@ -575,9 +575,9 @@ window.onload = function() {
         ctx.lineTo(endPt[1], endPt[0])
         let color = new T.Color()
         if (edge.weight >= 0)
-          var endColor = new T.Color("hsl(145, 98%, 40%)")
+          var endColor = new T.Color("hsl(145, 98%, 40%)") // "hsl(145, 98%, 40%)"
         else
-          var endColor = new T.Color("hsl(0, 76%, 43%)")
+          var endColor = new T.Color("hsl(0, 76%, 43%)") // "hsl(0, 76%, 43%)"
         color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
         ctx.strokeStyle = "#" + color.getHexString() // #2cacc9 // #40bad5
         ctx.lineWidth = lineWidth
@@ -650,10 +650,10 @@ window.onload = function() {
       ctx.lineTo(endPt[1], endPt[0])
       let color = new T.Color()
       if (edge.weight >= 0)
-        var endColor = new T.Color("hsl(145, 98%, 40%)")
+        var endColor = new T.Color("hsl(222, 100%, 61%)")
       else
-        var endColor = new T.Color("hsl(0, 76%, 43%)")
-      color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
+        var endColor = new T.Color("hsl(356, 74%, 52%)")
+      color.lerp(endColor, Math.min(Math.abs(edge.weight), 1))
       ctx.strokeStyle = "#" + color.getHexString() // #2cacc9 // #40bad5
       ctx.lineWidth = lineWidth
       ctx.stroke()
@@ -806,7 +806,7 @@ window.onload = function() {
 
 
     smoothHeightMap(heightMap)
-    smoothHeightMap(heightMap)
+    // smoothHeightMap(heightMap)
     // smoothHeightMap(heightMap)
     // smoothHeightMap(heightMap)
 
@@ -855,7 +855,7 @@ window.onload = function() {
           plane.geometry.vertices[j*divisions+i].z = 0
         }
       }
-      colorCurvature(p.plane)
+      // colorCurvature(p.plane)
       p.plane.material.map.needsUpdate = true
       p.plane.geometry.colorsNeedUpdate = true
 
@@ -912,6 +912,7 @@ window.onload = function() {
 
 
     olMap.render()
+
     // Set up opacity map for hiding surface
     // calcCurvMap(curvMap, vertices, current_edges)
     // updateShading(curvMap)
@@ -1029,7 +1030,7 @@ function colorCurvature(plane) {
   // CURVATURE calc
   let max_curv = 0
   let min_curv = 1
-  for (let i = 1 ; i < 48 ; i++) {
+  for (let i = 9 ; i < 39 ; i++) {
     for (let j = 9 ; j < 39 ; j++) {
       // console.log(plane.geometry.vertices[i].x + " " + plane.geometry.vertices[i].y)
       let o = [plane.geometry.vertices[i*50 + j].x, plane.geometry.vertices[i*50 + j].y, plane.geometry.vertices[i*50 + j].z]
@@ -1075,8 +1076,8 @@ function colorCurvature(plane) {
       // if (plane.geometry.vertices[face.a].curvature != 0)
         // console.log(plane.geometry.vertices[face.a].curvature)
     }
-    const red = new THREE.Color("red");
-    const blue = new THREE.Color("blue");
+    const red = new THREE.Color(0xdf2935) // 0xef626c
+    const blue = new THREE.Color(0x3772ff) // 0x118ab2
     let curv = plane.geometry.vertices[face.a].curvature
     let scale = 2
     if (face.vertexColors[0] == undefined) {
@@ -1085,24 +1086,24 @@ function colorCurvature(plane) {
       face.vertexColors[2] = new THREE.Color( 1, 1, 1 );
     }
     face.vertexColors[0].setRGB( 1, 1, 1);
-    if (curv > 0.001) {
+    if (curv > 0.01) {
       face.vertexColors[0].lerp(blue, Math.ceil(scale*curv/max_curv)/scale)
     }
-    else if (curv < -0.001)
+    else if (curv < -0.01)
       face.vertexColors[0].lerp(red, Math.ceil(scale*curv/min_curv)/scale)
 
     curv = plane.geometry.vertices[face.b].curvature
     face.vertexColors[1].setRGB( 1, 1, 1);
-    if (curv > 0.001)
+    if (curv > 0.01)
       face.vertexColors[1].lerp(blue, Math.ceil(scale*curv/max_curv)/scale)
-    else if (curv < -0.001)
+    else if (curv < -0.01)
       face.vertexColors[1].lerp(red, Math.ceil(scale*curv/min_curv)/scale)
 
     curv = plane.geometry.vertices[face.c].curvature
     face.vertexColors[2].setRGB( 1, 1, 1);
-    if (curv > 0.001)
+    if (curv > 0.01)
       face.vertexColors[2].lerp(blue, Math.ceil(scale*curv/max_curv)/scale)
-    else if (curv < -0.001)
+    else if (curv < -0.01)
       face.vertexColors[2].lerp(red, Math.ceil(scale*curv/min_curv)/scale)
   }
 }
@@ -1379,6 +1380,7 @@ function wheelEvent(event) {
 
     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
   } else { // zoom in
+
     zoomWidths.push(mapdiv.offsetWidth)
     zoomHeights.push(mapdiv.offsetHeight)
     zoomLevels.push(olMap.getView().getZoom())
@@ -1389,6 +1391,7 @@ function wheelEvent(event) {
     let p1 = ol.proj.fromLonLat([0, 0])
     let p2 = ol.proj.fromLonLat([100/(2**zoomLevels.length), 100/(2**zoomLevels.length)])
     let extents = [p1[0], p1[1], p2[0], p2[1]]
+    // console.log(olMap.getView().getResolution())
     // olMap.getLayers().array_[0].setExtent(extents)
     // olMap.getView().setCenter(ol.proj.fromLonLat([87.6, 41.8]))
   }
@@ -1423,7 +1426,8 @@ function calcDistanceOnSurface(plane, vertices, edges) {
   console.log("Calc distance")
   let verts = []
   let faces = []
-  let nodes = []
+  let nodes = [] // Array of mesh positions of nodes/vertices of graphs
+  let send_edges = []
   for (let vert of plane.geometry.vertices) {
     verts.push([vert.x, vert.y, vert.z])
   }
@@ -1432,11 +1436,19 @@ function calcDistanceOnSurface(plane, vertices, edges) {
   }
   for (let vert in vertices) {
     // Convert Graph node position to specific vertex
-    // Get path?
     let cur_node = vertices[vert]
     nodes.push(convert3JStoVerts(cur_node.mesh.position.x, cur_node.mesh.position.z))
   }
-  let send_data = {verts: verts, faces: faces, nodes: nodes}
+  for (let id in edges) {
+    if (edges[id].split)
+      continue
+    let start = edges[id].start
+    let end = edges[id].end
+    let startNode = convert3JStoVerts(start.mesh.position.x, start.mesh.position.z)
+    let endNode = convert3JStoVerts(end.mesh.position.x, end.mesh.position.z)
+    send_edges.push([startNode, endNode])
+  }
+  let send_data = {verts: verts, faces: faces, nodes: nodes, edges: send_edges}
   var xmlHttp = new XMLHttpRequest();
   // xmlHttp.responseType = "arraybuffer"
   xmlHttp.responseType = "text"
@@ -1450,14 +1462,51 @@ function calcDistanceOnSurface(plane, vertices, edges) {
           // data = data.substring(data.indexOf('['))
           data = JSON.parse(data)
           console.log("data recv")
-          // console.log(data)
-          for (let id in edges) {
-            if (edges[id].split)
-              continue
-            let start = edges[id].start.id
-            let end = edges[id].end.id
-            console.log(start + " to " + end + ": " + data[start][nodes[end]])
-          }
+          console.log(data)
+          let distances = data.distances
+          let grads = data.grads
+          let paths = data.paths
+          drawSurfacePathsFlip(paths, edges)
+
+          // const rows = [
+          //     ["name1", "city1", "some other info"],
+          //     ["name2", "city2", "more info"]
+          // ];
+          // let csv_data = []
+          // let csv_header = [""]
+          // for (let vert in vertices) {
+          //   csv_header.push(vertices[vert].name)
+          // }
+          // csv_data.push(csv_header)
+          // for (let vert in vertices) {
+          //   // csv_header.push(vertices[vert].name)
+          //   let csv_row = [vertices[vert].name]
+          //   for (let vert2 in vertices) {
+          //     if (nodes[vert] < nodes[vert2])
+          //       csv_row.push(distances[vert][nodes[vert2]])
+          //     else
+          //       csv_row.push(distances[vert2][nodes[vert]])
+          //   }
+          //   csv_data.push(csv_row)
+          // }
+          // console.log(csv_data)
+          // let csvContent = "data:text/csv;charset=utf-8,"
+          //     + csv_data.map(e => e.join(",")).join("\n")
+          // var encodedUri = encodeURI(csvContent)
+          // console.log("DOWNLOAD")
+          // window.open(encodedUri)
+
+          // for (let id in edges) {
+          //   if (edges[id].split)
+          //     continue
+          //   let start = edges[id].start.id
+          //   let end = edges[id].end.id
+          //   // console.log(vertices[start].name + "," + vertices[end].name + "," + distances[start][nodes[end]])
+          //   setTimeout (console.log.bind (console, vertices[start].name + "," + vertices[end].name + "," + distances[start][nodes[end]]))
+          //   drawSurfacePath(distances[start], nodes[end])
+          //   // drawSurfacePathGrads(grads[start], distances[start], nodes[end])
+          //
+          // }
           // for (let i = 0 ; i < data.length ; i++) {
           //   for (let j = 0 ; j < data.length ; j++) {
           //     // console.log(i)
@@ -1474,8 +1523,158 @@ function calcDistanceOnSurface(plane, vertices, edges) {
   xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
   xmlHttp.send(JSON.stringify(send_data));
   console.log("data sent")
-  // console.log(send_data)
+  console.log(send_data)
   dataSent = true
+}
+
+function drawSurfacePathsFlip(paths, edges) {
+
+  for (let i=0, j=0 ; i < paths.length ; i++, j++) {
+    if (edges[j].split) {
+      i--
+      continue
+    }
+    let points = []
+    let color = new T.Color("hsl(0, 0%, 100%)")
+    if (edges[j].weight >= 0)
+      var endColor = new T.Color("hsl(222, 100%, 61%)")
+    else
+      var endColor = new T.Color("hsl(356, 74%, 52%)")
+    color.lerp(endColor, Math.min(Math.abs(edges[j].weight), 1))
+    const material = new T.LineBasicMaterial({
+  	   color: color, linewidth: 4, linecap: 'round'
+    })
+    for (let pt of paths[i]) {
+      if (subPlanes.length != 0) {
+        pt[2] += subPlanes[0].plane.position.y + 0.01
+        pt[0] += subPlanes[0].plane.position.x
+        pt[1] -= subPlanes[0].plane.position.z
+      }
+      points.push(new T.Vector3(pt[0], pt[2], -pt[1]))
+    }
+    const geometry = new T.BufferGeometry().setFromPoints( points )
+    const line = new T.Line( geometry, material )
+    scene.add( line )
+  }
+
+}
+
+function drawSurfacePath(distances, start) {
+  let dist = distances[start]
+  let i = Math.floor(start/50)
+  let j = start%50
+  let min_i = -1
+  let min_j = -1
+
+  let distCopy = [...distances]
+  let distMat = []
+  while(distCopy.length)
+    distMat.push(distCopy.splice(0, 50))
+ // 3a86ff
+  const material = new T.LineBasicMaterial({
+	   color: 0xFDCA40, linewidth: 4, linecap: 'round'
+  })
+
+  let heightmap = heightMap
+
+  if (subPlanes.length != 0)
+    heightmap = subPlanes[0].heightmap
+
+  let converted = convertVertsto3JS(i, j)
+  const points = [new T.Vector3(converted[0], 2.01 + heightmap[i][j], converted[1])]
+
+  let t = 0
+  while(dist && t < 50) {
+    t++
+    for (let k = -1 ; k <= 1 ; k++)
+      for (let l = -1 ; l <= 1 ; l++) {
+        if (typeof distMat[i+k] != 'undefined' && typeof distMat[i+k][j+l] != 'undefined' && distMat[i+k][j+l] < dist) {
+          dist = distMat[i+k][j+l]
+          min_i = i+k
+          min_j = j+l
+        }
+      }
+
+    i = min_i
+    j = min_j
+    converted = convertVertsto3JS(i, j)
+    points.push( new T.Vector3(converted[0], 2.01 + heightmap[i][j], converted[1]))
+  }
+
+  const geometry = new T.BufferGeometry().setFromPoints( points )
+  const line = new T.Line( geometry, material )
+
+  // const geom = new T.BufferGeometry()
+  // geom.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( 4 * 3 ), 3 ) );
+  // let curve = new THREE.CatmullRomCurve3( points )
+	// curve.curveType = 'catmullrom'
+	// curve.mesh = new THREE.Line( geom.clone(), new THREE.LineBasicMaterial( {
+	// 	color: 0xff0000
+	// } ) );
+  //
+  // scene.add(curve.mesh)
+  scene.add( line )
+}
+
+function drawSurfacePathGrads(grads, distances, start) {
+  // Doesn't work yet
+  let grad = grads[start]
+  let dist = distances[start]
+  let i = Math.floor(start/50)
+  let j = start%50
+  let min_i = -1
+  let min_j = -1
+
+  let distCopy = [...distances]
+  let distMat = []
+  while(distCopy.length)
+    distMat.push(distCopy.splice(0, 50))
+
+  let gradCopy = [...grads]
+  let gradMat = []
+  while(gradCopy.length)
+    gradMat.push(gradCopy.splice(0, 50))
+
+  const material = new T.LineBasicMaterial({
+	   color: 0x0000ff, linewidth: 2, linecap: 'round'
+  })
+
+  let converted = convertVertsto3JS(i, j)
+  const points = [new T.Vector3(converted[1], 0.05 + heightMap[i][j], converted[0])]
+
+  let t = 0
+  while(dist && t < 50) {
+    t++
+    for (let k = -1 ; k <= 1 ; k++)
+      for (let l = -1 ; l <= 1 ; l++) {
+        if (typeof gradMat[i+k] != 'undefined' && typeof gradMat[i+k][j+l] != 'undefined' && gradMat[i+k][j+l] < grad) {
+          dist = distMat[i+k][j+l]
+          grad = gradMat[i+k][j+l]
+          min_i = i+k
+          min_j = j+l
+        }
+      }
+
+    i = min_i
+    j = min_j
+    converted = convertVertsto3JS(i, j)
+    points.push( new T.Vector3(converted[1], 0.05 + heightMap[i][j], converted[0]))
+  }
+  console.log(dist)
+
+  const geometry = new T.BufferGeometry().setFromPoints( points )
+  const line = new T.Line( geometry, material )
+
+  // const geom = new T.BufferGeometry()
+  // geom.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( 4 * 3 ), 3 ) );
+  // let curve = new THREE.CatmullRomCurve3( points )
+	// curve.curveType = 'catmullrom'
+	// curve.mesh = new THREE.Line( geom.clone(), new THREE.LineBasicMaterial( {
+	// 	color: 0xff0000
+	// } ) );
+  //
+  // scene.add(curve.mesh)
+  scene.add( line )
 }
 
 function subgraphSelect(selected) {
@@ -1552,6 +1751,10 @@ function subgraphSelect(selected) {
   subPlane.position.set(mid[0], 2, mid[1])
   subPlane.rotation.set(-Math.PI/2, 0., 0.)
   let spObj = {}
+  spObj.xstart3JS = xRange[0]
+  spObj.width = width
+  spObj.ystart3JS = yRange[0]
+  spObj.height = height
   spObj.start = [Math.floor((xRange[0] + 10) * divisions / 20), Math.floor((yRange[0] + 10) * divisions / 20)]
   spObj.end = [Math.ceil((xRange[1] + 10) * divisions / 20), Math.ceil((yRange[1] + 10) * divisions / 20)]
   spObj.plane = subPlane
@@ -1611,9 +1814,10 @@ function subgraphSelect(selected) {
   // camera.updateProjectionMatrix()
   // ---GENERATE SURFACE
   let chkCalcSurface = document.getElementById("use-calc-surface")
+  let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
+
 
   if (!chkCalcSurface.checked) {
-    let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
     let planeXMin = xRange[0]
     let planeWidth = xRange[1] - xRange[0]
     let planeYMin = yRange[0]
@@ -1638,11 +1842,12 @@ function subgraphSelect(selected) {
       let mid = {x: Math.floor((startPt[0] + endPt[0])/2), y: Math.floor((startPt[1] + endPt[1])/2)}
       setHeights(start, mid, end, edge.weight, newHeightMap, 0.4)
     }
+    // smoothHeightMap(newHeightMap)
+    // smoothHeightMap(newHeightMap)
+    // smoothHeightMap(newHeightMap)
     smoothHeightMap(newHeightMap)
-    // smoothHeightMap(newHeightMap)
-    // smoothHeightMap(newHeightMap)
-    // smoothHeightMap(newHeightMap)
     setPlaneHeights(subPlane, newHeightMap)
+    spObj.heightmap = newHeightMap
 
 
     return
@@ -1858,7 +2063,7 @@ function setHeights(start, mid, end, weight, heightMap, modifier = 1) {
     let ySpread = spread
     for (let i = 0 ; i < heightMap.length ; i++) {
       for (let j = 0 ; j < heightMap[0].length ; j++) {
-        if ((i-x)**2 + (j-y)**2 > spread*1000)
+        if ((i-x)**2 + (j-y)**2 > spread)
           continue
         let xTerm = Math.pow(i - x, 2) / (2.0*Math.pow(xSpread, 2))
         let yTerm = Math.pow(j - y, 2) / (2.0*Math.pow(ySpread, 2))
@@ -2486,12 +2691,12 @@ function drawEdge(edge, lineMat) {
   let mat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
   mat = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane5, ] })
   let line = new T.Line(geom, mat)
-  let color = new T.Color()
+  let color = new T.Color("hsl(0, 0%, 100%)")
   if (edge.weight >= 0)
-    var endColor = new T.Color("hsl(145, 98%, 40%)")
+    var endColor = new T.Color("hsl(222, 100%, 61%)")
   else
-    var endColor = new T.Color("hsl(0, 76%, 43%)")
-  color.lerpHSL(endColor, Math.min(Math.abs(edge.weight), 1))
+    var endColor = new T.Color("hsl(356, 74%, 52%)")
+  color.lerp(endColor, Math.min(Math.abs(edge.weight), 1))
   line.material.color.set(color)
   line.name = edge.start.name + "/" + edge.end.name
   line.userData = {weight: edge.weight}
@@ -2654,7 +2859,7 @@ function getNameSprite(name) {
   ctx.canvas.width = textWidth*30+30;
   ctx.canvas.height = textWidth*30+10;
 
-  ctx.font="120px Roboto Mono" // 120px
+  ctx.font="40px Roboto Mono" // 120px
   ctx.fillStyle = "#000000"
 
 
@@ -2763,6 +2968,12 @@ function createMap() {
   // mapdiv.style.width = '400px'
   // mapdiv.style.height = '400px'
   let p1 = ol.proj.fromLonLat([0, 0])
+  console.log("1.93 -5.37")
+  let p = ol.proj.fromLonLat([-96.5, 32.7])
+  console.log(p)
+  // console.log(ol.proj.fromLonLat([32.4, -5.37]))
+  console.log(32.7/155*10, -96.5/180*10)
+  console.log(p[1]/20048966.10*10, p[0]/20026376.39*10)
   let p2 = ol.proj.fromLonLat([.1, .1])
   let extents = [p1[0], p1[1], p2[0], p2[1]]
   document.body.appendChild(mapdiv)
@@ -2787,7 +2998,9 @@ function createMap() {
           // projection: 'EPSG:9823',
           center: ol.proj.fromLonLat([0, 0]),
           zoom: 0,
-          zoomFactor: 2
+          zoomFactor: 2,
+          // resolution: 2,
+          // maxResolution: 2
         })
   });
   // console.log(map.getView().getResolution())
@@ -3234,7 +3447,11 @@ function fileSelectNodes(evt) {
         let data = line.split(',')
         if (data[1] == '' || isNaN(data[1]))
           continue
-        addVertex(null, (parseFloat(data[1])/155)*10, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
+        let projected = ol.proj.fromLonLat([data[2], data[1]])
+        // p[1]/20048966.10*10, p[0]/20026376.39*10
+        addVertex(null, projected[1]/20048966.10*10, projected[0]/20026376.39*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
+
+        // addVertex(null, (parseFloat(data[1])/167)*10, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
         // addVertex(null, (parseFloat(data[1])/180)*10, (parseFloat(data[2])/180)*10, true, data[0], parseFloat(data[1]), parseFloat(data[2]))
       }
     }
@@ -3261,6 +3478,8 @@ function getRandomArbitrary(min, max) {
 function convert3JStoVerts(x, y) {
   // Depends on plane geometry
   // Change from -10,10 to 0,49
+  if (subPlanes.length != 0)
+    return convert3JStoVertsSubgraph(x, y)
   x = parseFloat(x)
   y = parseFloat(y)
   x += 10
@@ -3271,6 +3490,47 @@ function convert3JStoVerts(x, y) {
   y *= 49
   let retval = Math.round(y)*50 + Math.round(x)
   return retval
+}
+
+function convert3JStoVertsSubgraph(x, y) {
+  let spObj = subPlanes[0]
+  x = parseFloat(x)
+  y = parseFloat(y)
+  x -= spObj.xstart3JS
+  x /= spObj.width
+  x *= 49
+  y -= spObj.ystart3JS
+  y /= spObj.height
+  y *= 49
+  let retval = Math.round(y)*50 + Math.round(x)
+  return retval
+}
+
+function convertVertsto3JS(x, y) {
+  if (subPlanes.length != 0)
+    return convertVertsto3JSSubgraph(x, y)
+  x = parseFloat(x)
+  y = parseFloat(y)
+  x /= 49
+  x *= 20
+  x -= 10
+  y /= 49
+  y *= 20
+  y -= 10
+  return [y, x]
+}
+
+function convertVertsto3JSSubgraph(x, y) {
+  let spObj = subPlanes[0]
+  x = parseFloat(x)
+  y = parseFloat(y)
+  x /= 49
+  x *= spObj.height
+  x += spObj.ystart3JS
+  y /= 49
+  y *= spObj.width
+  y += spObj.xstart3JS
+  return [y, x]
 }
 
 function convert3JStoHM(point) {

@@ -2,6 +2,7 @@
 import json
 import flask
 import numpy as np
+import potpourri3d as pp3d
 from flask import request
 from flask import Response
 import networkx as nx
@@ -45,16 +46,36 @@ def calc_distance():
     verts = np.array(data['verts'])
     tris = np.array(data['faces'])
     nodes = np.array(data['nodes'])
-    print(verts.shape)
+    edges = np.array(data['edges'])
+    # print(verts.shape)
     compute_distance = GeodesicDistanceComputation(verts, tris)
     distances = []
+    grads = []
+    paths = []
     for node in nodes:
-        distances.append(compute_distance(node).tolist())
-    dist = np.trunc(distances[0]).reshape((50, 50))
-    print(dist.size)
-    with np.printoptions(threshold=np.inf):
-        print(dist)
-    return json.dumps(distances)
+        dist = compute_distance(node)
+        # print(dist.shape)
+        distances.append(dist.tolist())
+        grad = np.gradient(dist.reshape(50, 50))
+        grad = np.gradient(dist)
+        grads.append(grad.tolist())
+    path_solver = pp3d.EdgeFlipGeodesicSolver(verts, tris)
+    for edge in edges:
+        if edge[0] != edge[1]:
+            paths.append(path_solver.find_geodesic_path(v_start=edge[0], v_end=edge[1]).tolist())
+    # print(path_pts)
+    ret = {}
+    ret['distances'] = distances
+    ret['grads'] = grads
+    ret['paths'] = paths
+    # dist = np.trunc(distances[0]).reshape((50, 50))
+    # dist = compute_distance(0)
+    # dist = dist.reshape(50, 50)
+    # print(np.gradient(dist))
+    # print(dist.size)
+    # with np.printoptions(threshold=np.inf):
+    #     print(dist)
+    return json.dumps(ret)
 
 @app.route('/calc-surface', methods=['POST'])
 def calc_surface():
