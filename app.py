@@ -3,6 +3,7 @@ import json
 import flask
 import numpy as np
 import potpourri3d as pp3d
+import csv
 from flask import request
 from flask import Response
 import networkx as nx
@@ -63,6 +64,8 @@ def calc_distance():
     for edge in edges:
         if edge[0] != edge[1]:
             paths.append(path_solver.find_geodesic_path(v_start=edge[0], v_end=edge[1]).tolist())
+        else:
+            paths.append([[0, 0, 0]])
     # print(path_pts)
     ret = {}
     ret['distances'] = distances
@@ -76,6 +79,28 @@ def calc_distance():
     # with np.printoptions(threshold=np.inf):
     #     print(dist)
     return json.dumps(ret)
+
+@app.route('/refine', methods=["GET"])
+def refine():
+    send_data = {}
+    with open("FinalResult.csv", mode='r') as csv_file:
+        csv_reader = csv.DictReader(csv_file)
+        for index, row in enumerate(csv_reader):
+            if index > 0:
+                cities = row['Cities'].strip("()").split(',')
+                cities[0] = cities[0].strip('\'')
+                cities[1] = cities[1].strip(' \'')
+                if row['Latency'] == "":
+                    continue
+                diff = float(row['Latency']) - float(row['GeodesicPredic'])
+                # print(cities[0] + " to " + cities[1] + ": " + str(diff))
+                if cities[0] < cities[1]:
+                    if not cities[0] in send_data:
+                        send_data[cities[0]] = {}
+                    send_data[cities[0]][cities[1]] = diff
+
+    print(send_data.keys())
+    return json.dumps(send_data)
 
 @app.route('/calc-surface', methods=['POST'])
 def calc_surface():

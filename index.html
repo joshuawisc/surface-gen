@@ -62,9 +62,12 @@
           <input type="text" value="20" id="input-niter">
         </div>
 
+        <button type="button" id="btn-update">Update surface</button>
+        <button type="button" id="btn-refine">Refine surface</button>
         <button type="button" id="btn-gen-graph">Generate sample graph</button>
         <button type="button" id="btn-calc-dist">Calculate Distance</button>
         <button type="button" id="btn-gen-graph-empty">Generate graph (No Weights)</button>
+
 
 
         <div id="dropzone">
@@ -92,6 +95,8 @@
 
         <p>Positive Range: <span id="posrange-slider-val"></span></p>
         <input type="range" min="0" max="10" value="2.5" class="slider" step="0.01" id="posrange-slider">
+        <p>Positive Amplitude: <span id="amp-slider-val"></span></p>
+        <input type="range" min="0.01" max="3" value="2.5" class="slider" step="0.01" id="amp-slider">
         <p>Saddle X Range (Along Edge): <span id="xspread-slider-val" color="#4CAF50"></span></p>
         <input type="range" min="-20" max="20" value="0" class="slider" step="0.000001" id="xspread-slider">
         <p>Saddle Y Range (Across Edge): <span id="yspread-slider-val"></span></p>
@@ -122,8 +127,7 @@
 
     </div>
     <div id="display-slider">
-      <p>Positive Amplitude: <span id="amp-slider-val"></span></p>
-      <input type="range" min="0.01" max="3" value="1" class="slider" step="0.01" id="amp-slider">
+
     </div>
     <button type="button" id="btn-help"><b>?</b></button>
     <div id="div-help" style="display: none;">
