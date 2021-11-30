@@ -130,7 +130,7 @@ texture.rotation = -Math.PI/2
 //
 // }
 
-let ptGeom = new T.SphereGeometry(0.10, 32, 32) // 0.15 // 0.04 // 0.10
+let ptGeom = new T.SphereGeometry(0.02, 32, 32) // 0.15 // 0.04 // 0.10
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
 
@@ -302,11 +302,18 @@ var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, 
 var contourMeshLines = []
 var contourCount = -1
 
-drawGrid(canv)
+// drawGrid(canv)
 
 
 
 plane.geometry.dynamic = true
+
+// Extended plane for wraparound distance calculation
+var extendGeom = new T.PlaneGeometry(planeW, planeH*2, (divisions-1), (divisions*2)-1)
+var ePlane = new T.Mesh( extendGeom, new THREE.MeshPhongMaterial( {color: 0x00ff00} ))
+ePlane.rotation.set(-Math.PI/2, 0, 0.)
+ePlane.position.z += 10
+// scene.add( ePlane )
 
 for (let face of plane.geometry.faces) {
   face.vertexColors[0] = new T.Color(0xffffff)
@@ -395,10 +402,12 @@ window.onload = function() {
   document.getElementById("btn-refine").onclick = refine
 
   document.getElementById("btn-calc-dist").onclick = function() {
+
+
     if (subPlanes.length != 0)
       calcDistanceOnSurface(subPlanes[0].plane, vertices, current_edges)
     else
-      calcDistanceOnSurface(plane, vertices, current_edges)
+      calcDistanceOnSurface(ePlane, vertices, current_edges)
   }
 
   document.getElementById("heatmap-div").style.display = "none"
@@ -537,7 +546,10 @@ window.onload = function() {
     if (!showMap.checked) {
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     }
-    drawGrid(ctx.canvas)
+
+
+    // Draws grid lines
+    // drawGrid(ctx.canvas)
 
 
 
@@ -545,7 +557,7 @@ window.onload = function() {
 
     // Draw physical graph edge, texture edge
     for (let id in current_edges) {
-      let lineWidth =  12  // 6 / 2 /
+      let lineWidth =  2  //12 / 6 / 2 /
       let borders = true
       let edge = current_edges[id]
       // console.log(`${edge.start.lat}, ${edge.start.long}, ${edge.end.lat}, ${edge.end.long}`)
@@ -888,25 +900,6 @@ window.onload = function() {
     if (map == heightMap)
       updatePlaneHeights(map)
 
-
-
-    for (let p of subPlanes) {
-      for (let i=p.start[0]; i<p.end[0] ; i++) {
-        for (let j=p.start[1]; j<p.end[1] ; j++) {
-          plane.geometry.vertices[j*divisions+i].z = 0
-        }
-      }
-      // if (showMap.checked) {
-        // p.plane.material.map = mapTexture
-      // } else {
-      //   p.plane.material.map = customTexture
-      // }
-      // colorCurvature(p.plane)
-      p.plane.material.map.needsUpdate = true
-      p.plane.geometry.colorsNeedUpdate = true
-
-    }
-
     if (showMap.checked) {
 
       opacityMap = Array(100).fill().map(() => Array(100).fill(0.0));
@@ -919,6 +912,48 @@ window.onload = function() {
       // aMap = createAlphaMap(opacityMap)
       plane.material[0].alphaMap = aMap
     }
+
+    for (let p of subPlanes) {
+      for (let i=p.start[0]; i<p.end[0] ; i++) {
+        for (let j=p.start[1]; j<p.end[1] ; j++) {
+          plane.geometry.vertices[j*divisions+i].z = 0
+        }
+      }
+
+      for (let face of p.plane.geometry.faces) {
+        const black = new THREE.Color(0x000000) // 0xef626c
+        let z1 = Math.abs(p.plane.geometry.vertices[face.a].z) < 0.001
+        let z2 = Math.abs(p.plane.geometry.vertices[face.b].z) < 0.001
+        let z3 = Math.abs(p.plane.geometry.vertices[face.c].z) < 0.001
+        // console.log(z1)
+        // console.log(z2)
+        // console.log(z3)
+
+        // if (face.vertexColors[0] == undefined) {
+        //   face.vertexColors[0] = new THREE.Color( 1, 1, 1 );
+        //   face.vertexColors[1] = new THREE.Color( 1, 1, 1 );
+        //   face.vertexColors[2] = new THREE.Color( 1, 1, 1 );
+        // }
+
+        if (z1 && z2 && z3) {
+          face.vertexColors[0] = new THREE.Color( 0, 0, 0 );
+          face.vertexColors[1] = new THREE.Color( 0, 0, 0 );
+          face.vertexColors[2] = new THREE.Color( 0, 0, 0 );
+        }
+      }
+      // if (showMap.checked) {
+        // p.plane.material.map = mapTexture
+      // } else {
+      //   p.plane.material.map = customTexture
+      // }
+      // colorCurvature(p.plane)
+      p.plane.material.alphaMap = aMap
+      p.plane.material.map.needsUpdate = true
+      p.plane.geometry.colorsNeedUpdate = true
+
+    }
+
+
     // colorCurvature(plane)
 
     plane.material[0].needsUpdate = true
@@ -1248,6 +1283,29 @@ function updatePlaneHeights(map) {
       }
     }
   }
+
+  // Set extended plane
+
+
+  for (let i=0; i<divisions ; i++) {
+    for (let j=0; j < divisions ; j++) {
+      if (i < 2) {
+        ePlane.geometry.vertices[(i+divisions)*divisions+j].z = map[3][j]
+        ePlane.geometry.vertices[i*divisions+j*divisions].z = map[3][j]
+      } else if (i >= divisions-2) {
+        ePlane.geometry.vertices[(i+divisions)*divisions+j].z = map[divisions-3][j]
+        ePlane.geometry.vertices[i*divisions+j].z = map[divisions-3][j]
+      } else {
+        ePlane.geometry.vertices[(i+divisions)*divisions+j].z = map[i][j]
+        ePlane.geometry.vertices[i*divisions+j].z =  map[i][j]
+      }
+    }
+  }
+
+  ePlane.geometry.groupsNeedUpdate = true
+  ePlane.geometry.verticesNeedUpdate = true
+  ePlane.geometry.colorsNeedUpdate = true
+  ePlane.geometry.computeVertexNormals()
   // for (let i = 0 ; i < divisions*divisions - 2 ; i++) {
   //   gsap.to(plane.geometry.vertices[i],
   //     { duration: 10,
@@ -1520,28 +1578,25 @@ function calcDistanceOnSurface(plane, vertices, edges) {
   let faces = []
   let nodes = [] // Array of mesh positions of nodes/vertices of graphs
   let send_edges = []
-  var plane2 = plane.clone()
-  plane2.position.z += 20
-  plane2.material = new THREE.MeshBasicMaterial( {color: 0xff0000} )
-  plane2.updateMatrix()
-  // scene.add(plane2)
-  let newGeom = new T.Geometry()
-  newGeom.merge(plane.geometry, plane.matrix)
-  newGeom.merge(plane2.geometry, plane2.matrix)
-  let newMesh = new T.Mesh( newGeom, new THREE.MeshBasicMaterial( {color: 0x0000ff} ) );
-  scene.add(newMesh)
   for (let vert of plane.geometry.vertices) {
     verts.push([vert.x, vert.y, vert.z])
   }
   for (let face of plane.geometry.faces) {
     faces.push([face.a, face.b, face.c])
   }
+  console.log(verts)
+  console.log(faces)
   for (let vert in vertices) {
     // Convert Graph node position to specific vertex
     let cur_node = vertices[vert]
-    nodes.push(convert3JStoVerts(cur_node.mesh.position.x, cur_node.mesh.position.z))
+    let converted = convert3JStoVertsExtended(cur_node.mesh.position.x, cur_node.mesh.position.z)
+    // TODO push
+    nodes.push(converted[0])
+    nodes.push(converted[1])
+    console.log(converted)
     console.log(cur_node.name + " " + convert3JStoLatLong(cur_node.mesh.position.x, cur_node.mesh.position.z))
   }
+  plane.geometry.verticesNeedUpdate = true
   for (let id in edges) {
     if (edges[id].split)
       continue
@@ -1551,10 +1606,12 @@ function calcDistanceOnSurface(plane, vertices, edges) {
     let endNode = convert3JStoVerts(end.mesh.position.x, end.mesh.position.z)
     send_edges.push([startNode, endNode])
   }
+
   let send_data = {verts: verts, faces: faces, nodes: nodes, edges: send_edges}
   var xmlHttp = new XMLHttpRequest();
   // xmlHttp.responseType = "arraybuffer"
   xmlHttp.responseType = "text"
+
 
   xmlHttp.onreadystatechange = function()
   {
@@ -1581,18 +1638,30 @@ function calcDistanceOnSurface(plane, vertices, edges) {
             csv_header.push(vertices[vert].name)
           }
           csv_data.push(csv_header)
-          for (let vert in vertices) {
+          let length = Object.keys(vertices).length
+          for (let i = 0 ; i < length ; i++) {
             // csv_header.push(vertices[vert].name)
-            let csv_row = [vertices[vert].name]
-            for (let vert2 in vertices) {
-              if (nodes[vert] < nodes[vert2])
-                csv_row.push(distances[vert][nodes[vert2]])
-              else
-                csv_row.push(distances[vert2][nodes[vert]])
+            let csv_row = [vertices[i].name]
+            console.log(csv_row)
+            for (let j = 0 ; j < length ; j++) {
+              // if (nodes[vert] < nodes[vert2])
+              //   csv_row.push(distances[vert][nodes[vert2]])
+              // else
+              //   csv_row.push(distances[vert2][nodes[vert]])
+              // Min of dist b/w (A and B) and (A and alt B)
+              let min_dist = Math.min(distances[2*i][nodes[2*j]], distances[2*i][nodes[2*j+1]])
+
+              // Min of current min and dist(B and A)
+              min_dist = Math.min(min_dist, distances[2*j][nodes[2*i]])
+
+              // Min of current min and dist(B and alt A)
+              min_dist = Math.jcmamin(min_dist, distances[2*j][nodes[2*i+1]])
+              csv_row.push(min_dist)
+              console.log(csv_row)
             }
             csv_data.push(csv_row)
           }
-          // console.log(csv_data)
+          console.log(csv_data)
           let csvContent = "data:text/csv;charset=utf-8,"
               + csv_data.map(e => e.join(",")).join("\n")
           var encodedUri = encodeURI(csvContent)
@@ -3148,7 +3217,7 @@ function getNameSprite(name) {
   ctx.canvas.width = textWidth*30+30;
   ctx.canvas.height = textWidth*30+10;
 
-  ctx.font="120px Roboto Mono" // 120px // 40px
+  ctx.font="20px Roboto Mono" // 120px // 40px // 20px
   ctx.fillStyle = "#000000"
 
 
@@ -3583,7 +3652,7 @@ function createAndUpdateAlphaMapD3(map) {
       .x(function(d) { return x(d.x); })
       .y(function(d) { return y(d.y); })
       .size([width, height])
-      .bandwidth(200)
+      .bandwidth(4)
       (data)
 
 
@@ -3811,6 +3880,29 @@ function convert3JStoVerts(x, y) {
   y *= 49
   let retval = Math.round(y)*50 + Math.round(x)
   return retval
+}
+
+
+/**
+  Convert 3JS coords to vertex coords on plane with duplicate plane attached
+  to account for wrap around
+**/
+function convert3JStoVertsExtended(x, y) {
+  // Depends on plane geometry
+  // Change from -10,10 to 0,49
+  if (subPlanes.length != 0)
+    return convert3JStoVertsSubgraph(x, y)
+  x = parseFloat(x)
+  y = parseFloat(y)
+  x += 10
+  x /= 20
+  x *= 49
+  y += 10
+  y /= 20
+  y *= 49
+  let retval = Math.round(y)*50 + Math.round(x)
+  let retval2 =  (Math.round(y)+50)*50 + Math.round(x)
+  return [retval, retval2]
 }
 
 function convert3JStoVertsSubgraph(x, y) {
