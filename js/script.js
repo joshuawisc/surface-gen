@@ -920,27 +920,29 @@ window.onload = function() {
         }
       }
 
-      for (let face of p.plane.geometry.faces) {
-        const black = new THREE.Color(0x000000) // 0xef626c
-        let z1 = Math.abs(p.plane.geometry.vertices[face.a].z) < 0.001
-        let z2 = Math.abs(p.plane.geometry.vertices[face.b].z) < 0.001
-        let z3 = Math.abs(p.plane.geometry.vertices[face.c].z) < 0.001
-        // console.log(z1)
-        // console.log(z2)
-        // console.log(z3)
+      // COlor no hieght surface black
 
-        // if (face.vertexColors[0] == undefined) {
-        //   face.vertexColors[0] = new THREE.Color( 1, 1, 1 );
-        //   face.vertexColors[1] = new THREE.Color( 1, 1, 1 );
-        //   face.vertexColors[2] = new THREE.Color( 1, 1, 1 );
-        // }
-
-        if (z1 && z2 && z3) {
-          face.vertexColors[0] = new THREE.Color( 0, 0, 0 );
-          face.vertexColors[1] = new THREE.Color( 0, 0, 0 );
-          face.vertexColors[2] = new THREE.Color( 0, 0, 0 );
-        }
-      }
+      // for (let face of p.plane.geometry.faces) {
+      //   const black = new THREE.Color(0x000000) // 0xef626c
+      //   let z1 = Math.abs(p.plane.geometry.vertices[face.a].z) < 0.001
+      //   let z2 = Math.abs(p.plane.geometry.vertices[face.b].z) < 0.001
+      //   let z3 = Math.abs(p.plane.geometry.vertices[face.c].z) < 0.001
+      //   // console.log(z1)
+      //   // console.log(z2)
+      //   // console.log(z3)
+      //
+      //   // if (face.vertexColors[0] == undefined) {
+      //   //   face.vertexColors[0] = new THREE.Color( 1, 1, 1 );
+      //   //   face.vertexColors[1] = new THREE.Color( 1, 1, 1 );
+      //   //   face.vertexColors[2] = new THREE.Color( 1, 1, 1 );
+      //   // }
+      //
+      //   if (z1 && z2 && z3) {
+      //     face.vertexColors[0] = new THREE.Color( 0, 0, 0 );
+      //     face.vertexColors[1] = new THREE.Color( 0, 0, 0 );
+      //     face.vertexColors[2] = new THREE.Color( 0, 0, 0 );
+      //   }
+      // }
       // if (showMap.checked) {
         // p.plane.material.map = mapTexture
       // } else {
