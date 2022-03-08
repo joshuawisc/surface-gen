@@ -58,7 +58,7 @@ def calc_distance():
         # print(dist.shape)
         distances.append(dist.tolist())
         #TODO check reshape for extended plane
-        grad = np.gradient(dist.reshape(100, 50))
+        # grad = np.gradient(dist.reshape(100, 50))
         grad = np.gradient(dist)
         grads.append(grad.tolist())
     path_solver = pp3d.EdgeFlipGeodesicSolver(verts, tris)

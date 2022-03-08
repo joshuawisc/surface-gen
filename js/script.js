@@ -130,7 +130,7 @@ texture.rotation = -Math.PI/2
 //
 // }
 
-let ptGeom = new T.SphereGeometry(0.02, 32, 32) // 0.15 // 0.04 // 0.10
+let ptGeom = new T.SphereGeometry(0.02, 32, 32) // 0.15 // 0.04 // 0.10 // 0.02
 let ptMat = new T.MeshBasicMaterial({color: vertexcolor})
 
 
@@ -204,6 +204,7 @@ var geometry = new T.PlaneGeometry(planeW, planeH, divisions-1, divisions-1)
 var contGeom = new T.PlaneGeometry(planeW/2, planeH/2, divisions-1, divisions-1)
 var material = new T.MeshBasicMaterial( { color: graphcolor, side: T.DoubleSide} )
 var contMat = new T.MeshBasicMaterial( { color: contcolor, side: T.DoubleSide} )
+//TODO: change back
 var planeMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5],
   vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0,
   wireframe: false, map: texture, transparent: true, opacity: 1.0}) //, alphaMap: T.ImageUtils.loadTexture("images/grayscale.png")} )
@@ -229,6 +230,10 @@ controls.update();
 let light = new T.PointLight( 0xffffff, 0.5)
 light.position.set( -7, 8, 0)  // -7, 10, 0 // 7 3 -5
 scene.add(light)
+
+const directionalLight = new T.DirectionalLight( 0xffffff, 0.6 );
+directionalLight.position.set(1.5, 0.1 , 10)
+scene.add( directionalLight );
 
 // const pointLightHelper = new T.PointLightHelper( light, 1 );
 // scene.add( pointLightHelper );
@@ -293,7 +298,7 @@ let current_edges = {}
 // edgecolor_sec = 0x6decaf
 edgecolor_sec = 0x2cc57c
 edgecolor = 0x178e51
-
+// lineWidth = 6 //
 var lineMat = new T.LineBasicMaterial({color: edgecolor, linewidth: 6, clippingPlanes: [clipPlane] })
 // var lineMatSec = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, opacity: 0.3, transparent: true})
 var lineMatSec = new T.LineBasicMaterial({color: edgecolor_sec, linewidth: 1.5, depthFunc: T.LessDepth})
@@ -329,6 +334,9 @@ for (let i = 0 ; i < heightMap.length ; i++) {
   contX.push(i)
   contY.push(i)
 }
+
+var ref_used_cur = false
+var ref_used = false
 
 // Composers and FXAA shader
 {
@@ -778,10 +786,7 @@ window.onload = function() {
     }
 
 
-    // smoothHeightMap()
-    // smoothHeightMap()
-    // smoothHeightMap()
-    // smoothHeightMap()
+    //TODO: change two back
     // console.log(negative_edges)
 
     // Set height map for -ve edges
@@ -806,15 +811,18 @@ window.onload = function() {
       let neg_mod = edge.neg_mod
       let nrw_mod = edge.nrw_mod
       let nheight_mod = edge.nheigt_mod
-      if (refine_data[startname] && refine_data[startname][endname]) {
+      if (!ref_used && refine_data[startname] && refine_data[startname][endname]) {
+        ref_used_cur = true
         let ref = refine_data[startname][endname]
         if (ref > 0) {
           neg_mod = 1.2*neg_mod
           nrw_mod = 1.2*nrw_mod
           nheight_mod = 1.2*nheight_mod
+          console.log("refine")
         } else if (ref < -1) {
           neg_mod = 0.8*neg_mod
           nrw_mod = 0.8*nrw_mod
+          console.log("refine")
         }
         edge.neg_mod = neg_mod
         edge.nrw_mod = nrw_mod
@@ -856,14 +864,16 @@ window.onload = function() {
         setHeights(newStartPt, newMidPt, newEndPt, edge.weight, heightMap, 1, neg_mod, nrw_mod, nheight_mod)
       }
     }
-    refine_data = []
+    if (ref_used_cur)
+      ref_used = true
+    // refine_data = []
 
 
 
-    smoothHeightMap(heightMap)
-    smoothHeightMap(heightMap)
     // smoothHeightMap(heightMap)
     // smoothHeightMap(heightMap)
+    smoothHeightMap(heightMap)
+    smoothHeightMap(heightMap)
 
     // TODO: doesn't work / use BufferGeom?
 
@@ -1591,10 +1601,13 @@ function calcDistanceOnSurface(plane, vertices, edges) {
   for (let vert in vertices) {
     // Convert Graph node position to specific vertex
     let cur_node = vertices[vert]
-    let converted = convert3JStoVertsExtended(cur_node.mesh.position.x, cur_node.mesh.position.z)
+    // let converted = convert3JStoVertsExtended(cur_node.mesh.position.x, cur_node.mesh.position.z)
+    // nodes.push(converted[0])
+    // nodes.push(converted[1])
+
+    let converted = convert3JStoVerts(cur_node.mesh.position.x, cur_node.mesh.position.z)
+    nodes.push(converted)
     // TODO push
-    nodes.push(converted[0])
-    nodes.push(converted[1])
     console.log(converted)
     console.log(cur_node.name + " " + convert3JStoLatLong(cur_node.mesh.position.x, cur_node.mesh.position.z))
   }
@@ -1646,20 +1659,21 @@ function calcDistanceOnSurface(plane, vertices, edges) {
             let csv_row = [vertices[i].name]
             console.log(csv_row)
             for (let j = 0 ; j < length ; j++) {
-              // if (nodes[vert] < nodes[vert2])
-              //   csv_row.push(distances[vert][nodes[vert2]])
-              // else
-              //   csv_row.push(distances[vert2][nodes[vert]])
+              if (nodes[i] < nodes[j])
+                csv_row.push(distances[i][nodes[j]])
+              else
+                csv_row.push(distances[j][nodes[i]])
               // Min of dist b/w (A and B) and (A and alt B)
-              let min_dist = Math.min(distances[2*i][nodes[2*j]], distances[2*i][nodes[2*j+1]])
+              // TODO: change for full plane
+              // let min_dist = Math.min(distances[2*i][nodes[2*j]], distances[2*i][nodes[2*j+1]])
 
               // Min of current min and dist(B and A)
-              min_dist = Math.min(min_dist, distances[2*j][nodes[2*i]])
+              // min_dist = Math.min(min_dist, distances[2*j][nodes[2*i]])
 
               // Min of current min and dist(B and alt A)
-              min_dist = Math.jcmamin(min_dist, distances[2*j][nodes[2*i+1]])
-              csv_row.push(min_dist)
-              console.log(csv_row)
+              // min_dist = Math.min(min_dist, distances[2*j][nodes[2*i+1]])
+              // csv_row.push(min_dist)
+              // console.log(csv_row)
             }
             csv_data.push(csv_row)
           }
@@ -1901,8 +1915,10 @@ function subgraphSelect(selected) {
 
       let startname = Math.min(nodes[start].name, nodes[end].name)
       let endname = Math.max(nodes[start].name, nodes[end].name)
+      console.log(startname, endname)
 
       if (refine_data[startname] && refine_data[startname][endname]) {
+        console.log("refine start")
         let ref = refine_data[startname][endname]
         if (weight < 0)
           console.log(startname, endname, ref)
@@ -1911,9 +1927,12 @@ function subgraphSelect(selected) {
           neg_mod = 1.2*neg_mod
           nrw_mod = 1.2*nrw_mod
           nheight_mod = 1.2*nheight_mod
+          console.log("subrefine")
         } else if (ref < -1) {
           neg_mod = 0.8*neg_mod
           nrw_mod = 0.8*nrw_mod
+          console.log("subrefine")
+
         }
         selected[id].userData.neg_mod = neg_mod
         selected[id].userData.nrw_mod = nrw_mod
@@ -1962,6 +1981,7 @@ function subgraphSelect(selected) {
   var subMat = new THREE.MeshPhongMaterial( { color: graphcolor, clippingPlanes: [clipPlane2, clipPlane3, clipPlane4, clipPlane5], vertexColors: T.VertexColors, side: THREE.DoubleSide,  flatShading: false, shininess: 0, wireframe: false, map: subTexture} )
   var subPlane = new T.Mesh( subGeom, subMat )
 
+  // TODO: change
   subPlane.position.set(mid[0], 2, mid[1])
   subPlane.rotation.set(-Math.PI/2, 0., 0.)
   let spObj = {}
@@ -1981,6 +2001,7 @@ function subgraphSelect(selected) {
 
   // plane.position.set(0, -10, 0)
 
+//TODO: change back
 
   gsap.to( camera, {
 				duration: 1,
@@ -1989,6 +2010,7 @@ function subgraphSelect(selected) {
 					camera.updateProjectionMatrix();
 				}
 	})
+
   gsap.to( controls.target, {
 				duration: 1,
 				x: subPlane.position.x,
@@ -1998,6 +2020,7 @@ function subgraphSelect(selected) {
 					controls.update();
 				}
 	})
+
   gsap.to( plane.position, {
         duration: 1,
         y: -20,
@@ -2007,6 +2030,7 @@ function subgraphSelect(selected) {
           plane.visible = false
         }
   })
+
   gsap.to( subPlane.scale, {
         duration: 1,
         x: 1,
@@ -2030,6 +2054,9 @@ function subgraphSelect(selected) {
   let chkCalcSurface = document.getElementById("use-calc-surface")
   let newHeightMap = Array(divisions).fill().map(() => Array(divisions).fill(0.0));
 
+  let modifier = Math.max(width, height) / 20
+  console.log(modifier, width, height)
+  // modifier = 0.4
 
   if (!chkCalcSurface.checked) {
     let planeXMin = xRange[0]
@@ -2051,27 +2078,31 @@ function subgraphSelect(selected) {
       let start = {x: startPt[0], y: startPt[1]}
       let end = {x: endPt[0], y: endPt[1]}
       let mid = {x: Math.floor((startPt[0] + endPt[0])/2), y: Math.floor((startPt[1] + endPt[1])/2)}
-      setHeights(start, mid, end, edge.weight, newHeightMap, 0.4)
+      setHeights(start, mid, end, edge.weight, newHeightMap, modifier)
     }
-
 
 
 
     for (let edge of edges) {
       if (edge.weight > 0)
         continue
+        console.log(edge)
       let startname = Math.min(edge.start.name, edge.end.name)
       let endname = Math.max(edge.start.name, edge.end.name)
       let neg_mod = edge.neg_mod
+      console.log(neg_mod)
       let nrw_mod = edge.nrw_mod
       let nheight_mod = edge.nheight_mod
 
       let startPt = convert3JStoHMgeneric([edge.start.lat, edge.start.long], planeXMin, planeYMin, planeWidth, planeHeight)
       let endPt = convert3JStoHMgeneric([edge.end.lat, edge.end.long], planeXMin, planeYMin, planeWidth, planeHeight)
+      //TODO: remove
+      startPt[1] += 1
+      endPt[1] += 1
       let start = {x: startPt[0], y: startPt[1]}
       let end = {x: endPt[0], y: endPt[1]}
       let mid = {x: Math.floor((startPt[0] + endPt[0])/2), y: Math.floor((startPt[1] + endPt[1])/2)}
-      setHeights(start, mid, end, edge.weight, newHeightMap, 0.4, neg_mod, nrw_mod, nheight_mod)
+      setHeights(start, mid, end, edge.weight, newHeightMap, modifier, neg_mod, nrw_mod, nheight_mod)
     }
 
     // smoothHeightMap(newHeightMap)
@@ -2138,6 +2169,7 @@ function calcContours(xlimit, ylimit, heightMap) {
   }
 
   contcolor = 0x000000 // ffffff // 707070
+  // lineWidth = 4
   var lineMat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.5, clippingPlanes: [clipPlane, clipPlane2]})
   var conrec = new Conrec
   let nLevels = 26
@@ -2340,7 +2372,7 @@ function setHeights(start, mid, end, weight, heightMap, modifier = 1, neg_modifi
     let xLimit2 = ((2*Math.min(-weight+0.5, 1))/(xSpread)) * parseFloat(document.getElementById("xlimit2-slider").value) * neg_modifier
     // let xLimit = ((1.25*2*weight)/(xSpread)) * parseFloat(document.getElementById("xlimit-slider").value) // Def 1000// height along length Def 0.05
     // let xLimit2 = ((1.25*2*weight)/(xSpread)) * parseFloat(document.getElementById("xlimit2-slider").value)
-    let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) * narw_modifier // 0.7 // 0.55 // depth along width TODO: Change based on edge length
+    let yLimit = (0.1*0.7)  * parseFloat(document.getElementById("ylimit-slider").value) * narw_modifier// 0.7 // 0.55 // depth along width TODO: Change based on edge length
     let addHeight = (-0.5) + parseFloat(document.getElementById("height-slider").value)
     // console.log(addHeight)
     // console.log(document.getElementById("height-slider").value)
@@ -2361,6 +2393,7 @@ function setHeights(start, mid, end, weight, heightMap, modifier = 1, neg_modifi
         // newHeight *= -1
         newHeight += addHeight
         newHeight *= modifier
+        // newHeight = 1*modifier
         let x_pos = j
         let y_pos = i
 
@@ -2788,14 +2821,14 @@ function generateGraph() {
   }
   */
 
-/*
+
   {
     // Graph 1
-    addVertex(null, 0.5, -7, true, name="A")
-    addVertex(null, 1.5, -6, true, name="B")
-    addVertex(null, -0.4, -5.5, true, name="C")
+    addVertex(null, 0.5, -6, true, name="A")
+    addVertex(null, 1.5, -5, true, name="B")
+    addVertex(null, -0.4, -4.5, true, name="C")
     addVertex(null, 0.5, -5, true, name="E")
-    addVertex(null, 0.5, -3, true, name="F")
+    addVertex(null, 0.5, -4, true, name="F")
     addVertex(null, -0.5, 2, true, name="G")
     addVertex(null, 1, 1.5, true, name="H")
     addVertex(null, -0.5, 3, true, name="I")
@@ -2823,21 +2856,23 @@ function generateGraph() {
     addEdge(null, 7, 8, 0.33)
 
   }
-  */
-/*
-  {
+
+
+/*  {
     // Graph 1
-    addVertex(null, 2.5, -7, true, name="A")
-    addVertex(null, 3.5, -6, true, name="B")
-    addVertex(null, -3, -4, true, name="C")
-    addVertex(null, -2, -5.5, true, name="D")
-    addVertex(null, 2.5, -3, true, name="E")
-    addVertex(null, 1.5, 2.5, true, name="F")
-    addVertex(null, 3, 1.5, true, name="G")
-    addVertex(null, 2.75, 3, true, name="H")
-    addVertex(null, 1, 4.4, true, name="I")
-    addVertex(null, 1.8, -6, true, name="J")
-    addVertex(null, -3.5, -6.5, true, name="K")
+    addVertex(null, 0, -8, true, name="A")  // 0
+    addVertex(null, 1.0, -7, true, name="B")  // 1
+    addVertex(null, -3, 6.5, true, name="C") // 2
+    addVertex(null, -2, 7, true, name="D") // 3
+    addVertex(null, 0, -6.5, true, name="E")// 4
+    addVertex(null, 1.5, 1.5, true, name="F") // 5
+    addVertex(null, 3, 0.5, true, name="G") // 6
+    addVertex(null, 4.5, 1.5, true, name="H") // 7
+    addVertex(null, 2, 2, true, name="I") // 8
+    addVertex(null, -1.5, -7, true, name="J") //9
+    addVertex(null, -3.5, 8, true, name="K") // 10
+    //addVertex(null, 4, 3, true, name="L") // 11
+
 
 
 
@@ -2847,6 +2882,8 @@ function generateGraph() {
     addEdge(null, 0, 4, 0.49)
     addEdge(null, 0, 9, 0.91)
     addEdge(null, 1, 9, 0.66)
+    addEdge(null, 7, 6, 0.77)
+
 
 
 
@@ -2864,22 +2901,31 @@ function generateGraph() {
 
     addEdge(null, 4, 6, -0.833)
 
+    // addEdge(null, 11, 6, 0.77)
+    // addEdge(null, 11, 8, 0.77)
+    // addEdge(null, 11, 5, 0.77)
+
+
+
+    addEdge(null, 5, 7, 0.99)
     addEdge(null, 5, 6, 0.33)
-    addEdge(null, 5, 7, 0.66)
     addEdge(null, 5, 8, 0.33)
-    addEdge(null, 6, 7, 0.33)
-    addEdge(null, 7, 8, 0.33)
-    addEdge(null, 2, 8, -1)
+    addEdge(null, 6, 7, 0.66)
+    addEdge(null, 7, 8, 0.77)
+    addEdge(null, 3, 8, -0.7)
 
 
-  }
-*/
+  }  */
+
+
+/*
  {
    addVertex(null, 3, 5, true, name="A")
    addVertex(null, -3, -5, true, name="B")
    addEdge(null, 0, 1, -1)
 
  }
+ */
 
 /*
   // {
@@ -3046,9 +3092,10 @@ function drawEdge(edge, lineMat) {
 	// 			} );
   //
   // let line = new Line2(geom, matLine)
+  // linewidth = 4
   // 0x2cc57c
   let mat = new T.LineBasicMaterial({color: contcolor, linewidth: 4, depthFunc: T.LessEqualDepth, transparent: true, opacity: 0.05, clippingPlanes: [clipPlane, clipPlane2]})
-  mat = new T.LineBasicMaterial({color: edgecolor, linewidth: 4, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane5, ] })
+  mat = new T.LineBasicMaterial({color: edgecolor, linewidth: 5, clippingPlanes: [clipPlane, clipPlane2, clipPlane3, clipPlane4, clipPlane5, ] })
   let line = new T.Line(geom, mat)
   let color = new T.Color("hsl(0, 0%, 100%)")
   if (edge.weight >= 0)
